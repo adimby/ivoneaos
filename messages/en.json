@@ -7,5 +7,40 @@
     "title": "Find, win, deliver, get paid.",
     "subtitle": "Clients, quotes, invoices and payment by MVola, Orange Money or Airtel Money, from your phone.",
     "cta": "Coming soon"
+  },
+  "errors": {
+    "db": {
+      "document_frozen": "This document has already been issued and can no longer be changed. Create a new document if you need to change something.",
+      "document_empty": "Add at least one line with an amount before sending this document. A sent document cannot go back to 0.",
+      "invalid_status_transition": "This status change is not possible for this document. Reload the page to see its current status.",
+      "immutable_field": "This information cannot be changed.",
+      "workspace_tax_info_missing": "Add your NIF, STAT and tax regime in Settings before issuing an invoice.",
+      "quote_not_accepted": "An invoice can only be created from an accepted quote.",
+      "exchange_rate_required": "Enter the exchange rate for this currency (for example 1 EUR = 5,000 Ar) before issuing the invoice.",
+      "invoice_due_before_issue": "The due date has already passed. Pick a date from today onwards.",
+      "invoice_not_fully_paid": "The payment received does not cover the total. Record a payment for the remaining amount to mark the invoice paid.",
+      "free_limit_reached": "You have sent 3 quotes or invoices this month, the limit of the Découverte plan. Contact Ivonea to move to the Lancement plan.",
+      "invoice_not_payable": "This invoice cannot receive a payment yet: send it first.",
+      "currency_mismatch": "The payment must be in the same currency as the invoice.",
+      "amount_too_large": "This amount is too large. Check the quantity and the price.",
+      "default_currency_locked": "Your main currency can no longer change: invoices have already been issued with it.",
+      "contact_limit_reached": "You have 20 active contacts, the limit of the Découverte plan. Archive a contact or contact Ivonea to move to the Lancement plan.",
+      "quote_valid_until_past": "This quote's validity date has already passed. Pick a date from today onwards before sending it.",
+      "payment_exceeds_balance": "This payment is more than the amount still due on the invoice. Check the amount.",
+      "payment_date_in_future": "The payment date is in the future. Enter the day you received the money.",
+      "quantity_too_precise": "The quantity can have at most 2 decimals (for example 1.25).",
+      "not_authenticated": "Your session has expired. Sign in again to continue.",
+      "unknown": "Something went wrong. Try again in a moment."
+    }
+  },
+  "pipeline": {
+    "stages": {
+      "prospect": "Lead",
+      "contacted": "Contacted",
+      "call": "Call",
+      "quote": "Quote",
+      "won": "Won",
+      "lost": "Lost"
+    }
   }
 }

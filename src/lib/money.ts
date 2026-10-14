@@ -33,3 +33,29 @@ export function formatMoney(
 export function lineTotal(quantity: number, unitPriceMinor: number): number {
   return Math.round(quantity * unitPriceMinor);
 }
+
+// Conversion vers la devise par défaut du workspace avec invoices.exchange_rate.
+// Le taux est exprimé par unité MAJEURE : unités de la devise cible pour 1 unité de la
+// devise source (1 EUR = 5000 MGA → 5000). Les montants restent en unités mineures :
+// montant × taux × 10^(décimales cible − décimales source), arrondi à l'unité.
+export function convertMinor(
+  amountMinor: number,
+  from: Currency,
+  to: Currency,
+  rate: number,
+): number {
+  if (!Number.isSafeInteger(amountMinor)) {
+    throw new RangeError(`Montant invalide : ${amountMinor}`);
+  }
+  if (!(rate > 0) || !Number.isFinite(rate)) {
+    throw new RangeError(`Taux invalide : ${rate}`);
+  }
+  if (from === to) return amountMinor;
+  const result = Math.round(
+    amountMinor * rate * 10 ** (MINOR_DIGITS[to] - MINOR_DIGITS[from]),
+  );
+  if (!Number.isSafeInteger(result)) {
+    throw new RangeError(`Montant converti hors plage : ${result}`);
+  }
+  return result;
+}
