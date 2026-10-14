@@ -19,3 +19,22 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.121.0
+      # Applique les migrations au démarrage ; services inutiles aux tests exclus.
+      - run: supabase start -x realtime,imgproxy,mailpit,studio,edge-runtime,logflare,vector,supavisor
+      - run: supabase test db
+      - name: Numérotation à deux sessions réelles
+        run: |
+          command -v psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+          bash scripts/test-db-concurrency.sh
+      - name: Types TypeScript à jour
+        run: |
+          supabase gen types typescript --local --schema public > "$RUNNER_TEMP/database.types.ts"
+          diff -u src/lib/supabase/database.types.ts "$RUNNER_TEMP/database.types.ts"

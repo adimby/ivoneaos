@@ -7,5 +7,40 @@
     "title": "Trouve, décroche, livre, encaisse.",
     "subtitle": "Clients, devis, factures et paiement par MVola, Orange Money ou Airtel Money, depuis ton téléphone.",
     "cta": "Bientôt disponible"
+  },
+  "errors": {
+    "db": {
+      "document_frozen": "Ce document est déjà émis : il ne peut plus être modifié. Crée un nouveau document si tu dois changer quelque chose.",
+      "document_empty": "Ajoute au moins une ligne avec un montant avant d'envoyer ce document. Un document envoyé ne peut pas revenir à 0.",
+      "invalid_status_transition": "Ce changement de statut n'est pas possible pour ce document. Recharge la page pour voir son statut actuel.",
+      "immutable_field": "Cette information ne peut pas être modifiée.",
+      "workspace_tax_info_missing": "Ajoute ton NIF, ton STAT et ton régime fiscal dans Réglages avant d'émettre une facture.",
+      "quote_not_accepted": "Une facture ne peut être créée qu'à partir d'un devis accepté.",
+      "exchange_rate_required": "Indique le taux de change de cette devise (par exemple 1 EUR = 5 000 Ar) avant d'émettre la facture.",
+      "invoice_due_before_issue": "La date d'échéance est déjà passée. Choisis une date à partir d'aujourd'hui.",
+      "invoice_not_fully_paid": "Le paiement reçu ne couvre pas le total. Enregistre le paiement du reste dû pour marquer la facture payée.",
+      "free_limit_reached": "Tu as envoyé 3 devis ou factures ce mois-ci, la limite de l'offre Découverte. Contacte Ivonea pour passer à l'offre Lancement.",
+      "invoice_not_payable": "Cette facture ne peut pas recevoir de paiement : envoie-la d'abord.",
+      "currency_mismatch": "Le paiement doit être dans la même devise que la facture.",
+      "amount_too_large": "Ce montant est trop élevé. Vérifie la quantité et le prix.",
+      "default_currency_locked": "Ta devise principale ne peut plus changer : des factures ont déjà été émises avec elle.",
+      "contact_limit_reached": "Tu as 20 contacts actifs, la limite de l'offre Découverte. Archive un contact ou contacte Ivonea pour passer à l'offre Lancement.",
+      "quote_valid_until_past": "La date de validité de ce devis est déjà passée. Choisis une date à partir d'aujourd'hui avant de l'envoyer.",
+      "payment_exceeds_balance": "Ce paiement dépasse le reste à payer de la facture. Vérifie le montant.",
+      "payment_date_in_future": "La date du paiement est dans le futur. Indique le jour où tu as reçu l'argent.",
+      "quantity_too_precise": "La quantité accepte au plus 2 décimales (par exemple 1,25).",
+      "not_authenticated": "Ta session a expiré. Reconnecte-toi pour continuer.",
+      "unknown": "Une erreur est survenue. Réessaie dans un instant."
+    }
+  },
+  "pipeline": {
+    "stages": {
+      "prospect": "Prospect",
+      "contacted": "Contacté",
+      "call": "Appel",
+      "quote": "Devis",
+      "won": "Gagné",
+      "lost": "Perdu"
+    }
   }
 }

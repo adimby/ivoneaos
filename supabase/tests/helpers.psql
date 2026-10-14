@@ -1,0 +1,102 @@
+-- Aides partagées par les tests pgTAP (incluses par \ir dans chaque fichier,
+-- donc créées puis annulées dans la transaction du test).
+
+set local client_min_messages = warning;
+create extension if not exists pgtap with schema extensions;
+
+create schema tests;
+grant usage on schema tests to anon, authenticated, service_role;
+
+-- Crée un utilisateur Auth (le trigger crée son profil) et renvoie son id.
+create function tests.create_user(email text, meta jsonb default '{}'::jsonb)
+returns uuid
+language plpgsql
+as $$
+declare
+  uid uuid := gen_random_uuid();
+begin
+  insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, created_at, updated_at)
+  values (uid, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+          email, meta, now(), now());
+  return uid;
+end;
+$$;
+
+-- Bascule sur le rôle authenticated avec l'identité donnée.
+create function tests.authenticate_as(uid uuid)
+returns void
+language plpgsql
+as $$
+begin
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', uid, 'role', 'authenticated')::text, true);
+  perform set_config('role', 'authenticated', true);
+end;
+$$;
+
+create function tests.as_anon()
+returns void
+language plpgsql
+as $$
+begin
+  perform set_config('request.jwt.claims', json_build_object('role', 'anon')::text, true);
+  perform set_config('role', 'anon', true);
+end;
+$$;
+
+create function tests.as_service_role()
+returns void
+language plpgsql
+as $$
+begin
+  perform set_config('request.jwt.claims', json_build_object('role', 'service_role')::text, true);
+  perform set_config('role', 'service_role', true);
+end;
+$$;
+
+-- Nombre de lignes touchées par une requête d'écriture (exécutée avec le rôle courant).
+create function tests.affected(query text)
+returns integer
+language plpgsql
+as $$
+declare
+  n integer;
+begin
+  execute query;
+  get diagnostics n = row_count;
+  return n;
+end;
+$$;
+
+grant execute on all functions in schema tests to anon, authenticated, service_role;
+
+-- Document brouillon avec une ligne (droits de l'appelant : RLS appliquée).
+create function tests.new_quote(ws uuid, contact uuid, amount bigint default 100000)
+returns uuid
+language plpgsql
+as $$
+declare
+  qid uuid;
+begin
+  insert into public.quotes (workspace_id, contact_id) values (ws, contact) returning id into qid;
+  insert into public.document_lines (workspace_id, quote_id, description, unit_price)
+  values (ws, qid, 'Prestation', amount);
+  return qid;
+end;
+$$;
+
+create function tests.new_invoice(ws uuid, contact uuid, amount bigint default 100000, quote uuid default null)
+returns uuid
+language plpgsql
+as $$
+declare
+  iid uuid;
+begin
+  insert into public.invoices (workspace_id, contact_id, quote_id) values (ws, contact, quote) returning id into iid;
+  insert into public.document_lines (workspace_id, invoice_id, description, unit_price)
+  values (ws, iid, 'Prestation', amount);
+  return iid;
+end;
+$$;
+
+grant execute on all functions in schema tests to anon, authenticated, service_role;
