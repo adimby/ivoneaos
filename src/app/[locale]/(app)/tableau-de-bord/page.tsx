@@ -6,7 +6,8 @@ import { CheckIcon, ChevronRightIcon } from "@/components/icons";
 import { cn } from "@/components/ui/cn";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
-import { hasQuote } from "@/modules/billing/queries";
+import { formatMoney } from "@/lib/money";
+import { hasQuote, listRecentlyPaidInvoices } from "@/modules/billing/queries";
 import { TodayReminders } from "@/modules/crm/components/today-reminders";
 import { hasActiveContact } from "@/modules/crm/queries";
 import { checklistTextLevel, startChecklist } from "@/modules/onboarding/checklist";
@@ -25,10 +26,11 @@ const BLOCKS = ["collected", "pending", "deals"] as const;
 export default async function DashboardPage({ params }: PageProps<"/[locale]/tableau-de-bord">) {
   const locale = (await params).locale as Locale;
   const workspace = await requireWorkspace(locale);
-  const [hasContact, papiConnected, quote, t, tLevels, tCommon] = await Promise.all([
+  const [hasContact, papiConnected, quote, paidInvoices, t, tLevels, tCommon] = await Promise.all([
     hasActiveContact(workspace.id),
     isPapiConnected(workspace.id),
     hasQuote(workspace.id),
+    listRecentlyPaidInvoices(workspace.id),
     getTranslations({ locale, namespace: "Dashboard" }),
     getTranslations({ locale, namespace: "Levels" }),
     getTranslations({ locale, namespace: "Common" }),
@@ -44,6 +46,26 @@ export default async function DashboardPage({ params }: PageProps<"/[locale]/tab
         <h1 className="text-2xl font-bold text-lagoon">{workspace.name}</h1>
         <Badge className="self-start">{t("level", { level: tLevels(`${workspace.level}.name`) })}</Badge>
       </div>
+
+      {paidInvoices.length > 0 && (
+        <section aria-labelledby="paid-title" className="flex flex-col gap-2 rounded-card bg-success-soft p-4" data-testid="recently-paid">
+          <h2 id="paid-title" className="text-base font-bold text-success">
+            {t("paid.title")}
+          </h2>
+          <ul className="flex flex-col gap-1">
+            {paidInvoices.map((invoice) => (
+              <li key={invoice.id}>
+                <Link
+                  href={`/factures/${invoice.id}`}
+                  className="inline-flex min-h-11 items-center text-base font-semibold text-ink underline-offset-4 hover:underline"
+                >
+                  {t("paid.item", { number: invoice.number ?? "", amount: formatMoney(invoice.amount_paid, invoice.currency, locale) })}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <TodayReminders workspaceId={workspace.id} locale={locale} />
 

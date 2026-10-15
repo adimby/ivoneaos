@@ -198,7 +198,7 @@ function DocumentPdf({ view, t, logo }: { view: DocumentView; t: Translate; logo
             {view.payment.instructions.map((line) => (
               <Text key={line}>{line}</Text>
             ))}
-            {view.payment.linkUrl && view.publicUrl && (
+            {view.payment.online && view.publicUrl && (
               <Text style={{ marginTop: 4 }}>
                 {t("payment.online")}{" "}
                 <Link src={view.publicUrl} style={s.link}>

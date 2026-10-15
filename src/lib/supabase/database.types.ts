@@ -235,14 +235,14 @@ isOneToOne: false
                   ]
                 },"payment_links": {
                   Row: {
-                    "created_at": string,"expires_at": string | null,"id": string,"invoice_id": string,"merchant_reference": string,"notification_token": string | null,"payment_account_id": string,"provider": Database["public"]['Enums']["payment_provider"],"provider_url": string | null,"status": Database["public"]['Enums']["payment_link_status"],"updated_at": string,"workspace_id": string
+                    "amount": number | null,"created_at": string,"encrypted_api_key": string | null,"encrypted_signing_secret": string | null,"expires_at": string | null,"id": string,"invoice_id": string,"last_checked_at": string | null,"last_error": string | null,"merchant_reference": string,"notification_token": string | null,"payment_account_id": string,"provider": Database["public"]['Enums']["payment_provider"],"provider_url": string | null,"status": Database["public"]['Enums']["payment_link_status"],"updated_at": string,"workspace_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"expires_at"?: string | null,"id"?: string,"invoice_id": string,"merchant_reference": string,"notification_token"?: string | null,"payment_account_id": string,"provider": Database["public"]['Enums']["payment_provider"],"provider_url"?: string | null,"status"?: Database["public"]['Enums']["payment_link_status"],"updated_at"?: string,"workspace_id": string
+                    "amount"?: number | null,"created_at"?: string,"encrypted_api_key"?: string | null,"encrypted_signing_secret"?: string | null,"expires_at"?: string | null,"id"?: string,"invoice_id": string,"last_checked_at"?: string | null,"last_error"?: string | null,"merchant_reference": string,"notification_token"?: string | null,"payment_account_id": string,"provider": Database["public"]['Enums']["payment_provider"],"provider_url"?: string | null,"status"?: Database["public"]['Enums']["payment_link_status"],"updated_at"?: string,"workspace_id": string
                   }
                   Update: {
-                    "created_at"?: string,"expires_at"?: string | null,"id"?: string,"invoice_id"?: string,"merchant_reference"?: string,"notification_token"?: string | null,"payment_account_id"?: string,"provider"?: Database["public"]['Enums']["payment_provider"],"provider_url"?: string | null,"status"?: Database["public"]['Enums']["payment_link_status"],"updated_at"?: string,"workspace_id"?: string
+                    "amount"?: number | null,"created_at"?: string,"encrypted_api_key"?: string | null,"encrypted_signing_secret"?: string | null,"expires_at"?: string | null,"id"?: string,"invoice_id"?: string,"last_checked_at"?: string | null,"last_error"?: string | null,"merchant_reference"?: string,"notification_token"?: string | null,"payment_account_id"?: string,"provider"?: Database["public"]['Enums']["payment_provider"],"provider_url"?: string | null,"status"?: Database["public"]['Enums']["payment_link_status"],"updated_at"?: string,"workspace_id"?: string
                   }
                   Relationships: [
                     {
@@ -509,6 +509,9 @@ isOneToOne: false
                            },
 "quote_version":
 { Args: { "p_quote_id": string }; Returns: string
+                           },
+"record_papi_payment":
+{ Args: { "p_amount": number,"p_fee": number,"p_merchant_reference": string,"p_method": Database["public"]['Enums']["payment_method"],"p_paid_at"?: string,"p_provider_reference": string }; Returns: string
                            },
 "release_document_email":
 { Args: { "p_claimed_at": string,"p_document_id": string }; Returns: undefined

@@ -53,6 +53,22 @@ export async function listInvoices(workspaceId: string) {
   return { invoices: await withClients(workspaceId, data), total: count ?? data.length };
 }
 
+// Accueil : factures payées ces 7 derniers jours (« Facture F-2026-0001 payée : 450 000 Ar »).
+export async function listRecentlyPaidInvoices(workspaceId: string) {
+  const supabase = await createClient();
+  const since = new Date(Date.now() - 7 * 24 * 3600_000).toISOString();
+  const { data, error } = await supabase
+    .from("invoices")
+    .select("id, number, currency, amount_paid, paid_at")
+    .eq("workspace_id", workspaceId)
+    .eq("status", "paid")
+    .gte("paid_at", since)
+    .order("paid_at", { ascending: false })
+    .limit(3);
+  if (error) throw error;
+  return data.map((row) => ({ ...row, currency: row.currency as Currency }));
+}
+
 export type QuoteListItem = Awaited<ReturnType<typeof listQuotes>>["quotes"][number];
 export type InvoiceListItem = Awaited<ReturnType<typeof listInvoices>>["invoices"][number];
 

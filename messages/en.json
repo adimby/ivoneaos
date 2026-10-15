@@ -242,6 +242,10 @@
       "collected": "Collected this month",
       "pending": "Pending invoices",
       "deals": "Open opportunities"
+    },
+    "paid": {
+      "title": "Payments received",
+      "item": "Invoice {number} paid: {amount}"
     }
   },
   "Placeholder": {
@@ -279,8 +283,76 @@
   "Payments": {
     "metaTitle": "Payment methods",
     "title": "Payment methods",
-    "body": "Connecting Papi is coming soon. Meanwhile, the MVola number and bank details from your profile are shown on your invoices.",
-    "backToSettings": "Back to settings"
+    "backToSettings": "Back to settings",
+    "status": {
+      "connected": "Papi connected",
+      "notConnected": "Not connected",
+      "needsReconnect": "Reconnect needed"
+    },
+    "papi": {
+      "intro": "With Papi, your clients pay your invoices in ariary by MVola, Orange Money or Airtel Money, in one tap from the invoice page. The money goes to your Papi account: Ivonea OS never touches it.",
+      "checkedOn": "Key checked on {date}.",
+      "disconnect": "Disconnect Papi",
+      "disconnectConfirm": "Your clients will no longer see the “Pay with Papi” button. Your key and secret are erased from Ivonea OS. A client who still pays a link they already opened will still be recorded. Your MVola number and bank details stay on your invoices.",
+      "disconnectOk": "Yes, disconnect Papi",
+      "needsReconnect": "Papi no longer recognises your key (revoked or regenerated). The “Pay with Papi” button has been removed from your invoices: paste your new key below to bring it back."
+    },
+    "results": {
+      "connected": "Papi connected. Your next invoices in ariary will have a “Pay with Papi” button.",
+      "disconnected": "Papi is disconnected.",
+      "invalid_key": "Papi doesn't recognise this key. Copy the whole “API key” from your shop's Developer tab again.",
+      "invalid_key_format": "This doesn't look like a Papi key: it is too short or contains spaces. Copy the whole key again.",
+      "invalid_secret": "This doesn't look like a Papi signing secret. It starts with “pwhsec_” followed by 64 characters.",
+      "unavailable": "Papi isn't responding right now. Check your connection and try again in a few minutes.",
+      "disabled": "Connecting Papi isn't enabled on Ivonea OS yet. Your MVola number and bank details stay on your invoices.",
+      "error": "Something went wrong while saving your connection. Please try again in a moment."
+    },
+    "guide": {
+      "title": "Connect Papi in 5 steps",
+      "titleReplace": "Replace your Papi key",
+      "openPapi": "Open Papi (dashboard.papi.mg)",
+      "steps": {
+        "account": {
+          "title": "Open your Papi account",
+          "body": "Sign up on Papi's website. Papi will ask for documents to check your identity and business, and charges a fee on each payment: check the list of documents and the fees directly with Papi before you start."
+        },
+        "shop": {
+          "title": "Create your shop",
+          "body": "In Papi, a “shop” (or application) receives your payments. Create it once your account is approved."
+        },
+        "key": {
+          "title": "Copy your API key",
+          "body": "Tap your avatar at the top right, then “Shops”, pick your shop and open the “Developer” tab. Copy the long string under “API key”."
+        },
+        "secret": {
+          "title": "Copy your signing secret",
+          "body": "Just below, under “Notification signing secret”, copy the secret starting with “pwhsec_”. It lets Ivonea OS check that each payment really comes from Papi."
+        },
+        "paste": {
+          "title": "Paste them here",
+          "body": "Ivonea OS checks your key with Papi, then stores it encrypted. Nobody can read it back, not even you: to change it, paste a new key."
+        }
+      },
+      "replaceHint": "With the key of another shop, the Papi links already sent are replaced: your clients will pay into the new shop."
+    },
+    "form": {
+      "apiKey": "Papi API key",
+      "apiKeyHint": "Your shop's “Developer” tab, under “API key”.",
+      "secret": "Signing secret",
+      "secretHint": "Starts with “pwhsec_”.",
+      "privacy": "Your key and secret are encrypted and never shown again. Never send them by WhatsApp or email.",
+      "connect": "Check and connect Papi",
+      "replace": "Check and replace the key"
+    },
+    "manual": {
+      "title": "Direct payment details",
+      "intro": "Always shown on your invoices: without Papi, for invoices in euros or dollars, or when your client prefers paying you directly. You then mark the invoice as paid yourself.",
+      "none": "No payment details yet.",
+      "edit": "Edit my MVola number and bank details",
+      "mvola": "MVola: {number}",
+      "rib": "Bank details: {rib}"
+    },
+    "disabled": "Connecting Papi isn't enabled on Ivonea OS yet. Meanwhile, your MVola number and bank details are shown on your invoices."
   },
   "errors": {
     "db": {
@@ -306,7 +378,8 @@
       "not_authenticated": "Your session has expired. Sign in again to continue.",
       "payment_date_before_invoice": "The payment date is before the invoice was sent. Enter the day you received the money.",
       "too_many_lines": "A document can have at most 50 lines. Group some items together.",
-      "unknown": "Something went wrong. Try again in a moment."
+      "unknown": "Something went wrong. Try again in a moment.",
+      "provider_reference_required": "Missing payment reference."
     }
   },
   "pipeline": {
@@ -707,7 +780,20 @@
       "sentAt": "Sent on {date}",
       "acceptedHint": "Your client said yes. Turn the quote into an invoice: same lines, same client.",
       "sentHint": "Waiting for your client's answer. They can accept online, or you can mark it accepted yourself.",
-      "quantityTimes": "{quantity} × {price}"
+      "quantityTimes": "{quantity} × {price}",
+      "paidNotice": "Invoice {number} paid: {amount}",
+      "paidOnline": "Paid online with Papi ({method}).",
+      "paidOnlineAny": "Paid online with Papi.",
+      "papiOpen": "Your client can pay this invoice with Papi (MVola, Orange Money, Airtel Money) from its page. It will switch to “paid” on its own.",
+      "papiReconnect": "Papi no longer recognises your key: the “Pay with Papi” button has been removed from your invoices.",
+      "papiReconnectLink": "Reconnect Papi",
+      "papiLinkStillPayable": "Note: the Papi link already sent to your client can still be paid at Papi until it expires. Ask them not to use it; if they pay anyway, the payment will show here.",
+      "overpaid": "Overpayment: your client paid {amount} more than the total (for example with Papi after a direct payment). Refund them or deduct this amount from your next invoice.",
+      "paidWhileCancelled": "Payment received on a cancelled invoice: {amount}. Your client paid a Papi link sent before the cancellation. Refund them or issue a new invoice.",
+      "papiIssue": {
+        "amount_mismatch": "Papi reported a payment (reference {reference}) for a different amount than requested: it was not recorded. Check it in your Papi dashboard, then mark the invoice paid yourself if it is correct.",
+        "not_payable": "Papi reported a payment (reference {reference}) that could not be recorded on this invoice. Check it in your Papi dashboard."
+      }
     },
     "share": {
       "title": "Share with your client",
@@ -744,7 +830,8 @@
         "manual": "Cash or bank transfer",
         "MVOLA": "MVola",
         "ORANGE_MONEY": "Orange Money",
-        "AIRTEL_MONEY": "Airtel Money"
+        "AIRTEL_MONEY": "Airtel Money",
+        "CARD": "Bank card"
       },
       "ok": "Confirm payment",
       "cancel": "Back"
@@ -777,6 +864,13 @@
       "title": "Quotes",
       "newQuote": "Create a quote",
       "none": "No quotes for this deal."
+    },
+    "papi": {
+      "unauthorized": "Invoice sent, but Papi rejected your key: no “Pay with Papi” button on this invoice. {manual, select, yes {Your client sees your direct payment details.} other {Add your MVola number or bank details in Settings so your client can pay you directly.}} Reconnect Papi in Settings > Payment methods.",
+      "rejected": "Invoice sent, but Papi refused to create the payment link: the “Pay with Papi” button will try again when your client opens the invoice, with no guarantee. {manual, select, yes {Your client also sees your direct payment details.} other {Add your MVola number or bank details in Settings so your client can pay you directly.}}",
+      "conflict": "Invoice sent, but Papi already has a link for this invoice with another amount: the “Pay with Papi” button will try again when your client opens the invoice, with no guarantee. {manual, select, yes {Your client also sees your direct payment details.} other {Add your MVola number or bank details in Settings so your client can pay you directly.}}",
+      "unavailable": "Invoice sent, but Papi isn't responding. When your client opens the invoice, the “Pay with Papi” button will try again. {manual, select, yes {Your client also sees your direct payment details.} other {Add your MVola number or bank details in Settings so your client can pay you directly.}}",
+      "disabled": "Invoice sent without a Papi link: Papi payments aren't enabled on Ivonea OS. {manual, select, yes {Your client sees your direct payment details.} other {Add your MVola number or bank details in Settings so your client can pay you directly.}}"
     }
   },
   "Pdf": {
@@ -872,10 +966,16 @@
       "title": "How to pay",
       "amountDue": "Amount due:",
       "manual": "Payment details",
-      "payOnline": "Pay now",
       "none": "Contact {business} to arrange payment.",
       "paid": "This invoice is paid. Thank you!",
-      "cancelled": "This invoice has been cancelled."
+      "cancelled": "This invoice has been cancelled.",
+      "payWithPapi": "Pay {amount} with Papi",
+      "methods": "MVola, Orange Money or Airtel Money",
+      "online": "Pay online with Papi: MVola, Orange Money or Airtel Money.",
+      "manualOr": "Or pay directly",
+      "returned": "Thank you! Your payment is being confirmed. This page will show “Paid” as soon as Papi confirms it.",
+      "failed": "The payment did not go through. You can try again, or pay with the details below.",
+      "unavailable": "Online payment is temporarily unavailable. Try again later, or pay with the details below."
     },
     "download": "Download PDF",
     "legal": "Issuer's legal details",

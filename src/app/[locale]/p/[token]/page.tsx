@@ -37,6 +37,8 @@ export default function PublicDocumentPage({ params, searchParams }: Props) {
 }
 
 const RESULTS = ["accepted", "outdated", "unavailable", "error"] as const;
+// Retour de Papi (successUrl, failureUrl) ou paiement en ligne indisponible.
+const PAYMENT_RESULTS = ["ok", "echec", "indisponible"] as const;
 
 async function PublicDocument({ params, searchParams }: Props) {
   const { locale: rawLocale, token } = await params;
@@ -58,13 +60,24 @@ async function PublicDocument({ params, searchParams }: Props) {
   const business = view.freelancer.name;
   const otherLocale = routing.locales.find((l) => l !== locale)!;
   const canAccept = doc.type === "quote" && view.status === "sent" && Boolean(doc.version);
+  // Paiement en ligne Papi : lien préparé (ou recréé s'il a expiré) au moment du clic.
+  const canPayOnline = doc.type === "invoice" && (view.status === "sent" || view.status === "overdue") && Boolean(view.payment?.online);
+  const payment = typeof query.paiement === "string" && (PAYMENT_RESULTS as readonly string[]).includes(query.paiement) ? query.paiement : null;
   const statusKey = view.status === "draft" ? null : view.status;
 
   return (
     <PublicShell
       madeWith={tDoc("madeWith")}
       bottom={
-        canAccept && (
+        canPayOnline ? (
+          <div className="sticky bottom-0 z-10 -mx-4 mt-auto border-t border-sand/70 bg-spray/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
+            <a href={`/${locale}/p/${token}/payer`} rel="nofollow noreferrer" className={buttonClasses("primary", true)} data-testid="pay-online">
+              {t("payment.payWithPapi", { amount: view.amountDue ?? view.total })}
+            </a>
+            <p className="mt-2 text-center text-sm text-ink-muted">{t("payment.methods")}</p>
+          </div>
+        ) : (
+          canAccept && (
           <form
             action={acceptQuotePublic}
             className="sticky bottom-0 z-10 -mx-4 mt-auto border-t border-sand/70 bg-spray/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur"
@@ -94,6 +107,7 @@ async function PublicDocument({ params, searchParams }: Props) {
               </button>
             </details>
           </form>
+          )
         )
       }
       languageLink={{ href: `/${otherLocale}/p/${token}`, label: otherLocale === "fr" ? "Français" : "English", lang: otherLocale }}
@@ -139,6 +153,9 @@ async function PublicDocument({ params, searchParams }: Props) {
       {result === "outdated" && <Alert tone="error">{t("accept.outdated")}</Alert>}
       {result === "unavailable" && view.status !== "accepted" && <Alert tone="error">{t("accept.unavailable", { business })}</Alert>}
       {result === "error" && <Alert tone="error">{t("accept.error")}</Alert>}
+      {payment === "ok" && view.status !== "paid" && <Alert tone="success">{t("payment.returned")}</Alert>}
+      {payment === "echec" && canPayOnline && <Alert tone="error">{t("payment.failed")}</Alert>}
+      {payment === "indisponible" && canPayOnline && <Alert tone="error">{t("payment.unavailable")}</Alert>}
       {view.status === "accepted" && doc.type === "quote" && doc.accepted_at && (
         <Alert tone="success">{t("accept.done", { date: view.dates.find((d) => d.key === "acceptedAt")?.value ?? "" })}</Alert>
       )}
@@ -207,15 +224,10 @@ async function PublicDocument({ params, searchParams }: Props) {
                 <span className="text-ink-muted">{t("payment.amountDue")} </span>
                 <strong>{view.amountDue ?? view.total}</strong>
               </p>
-              {/* Lien de paiement en ligne (Papi, MGA) : posé par la base quand il existe. */}
-              {view.payment?.linkUrl && (
-                <a href={view.payment.linkUrl} rel="noopener noreferrer" className={buttonClasses("primary", true)} data-testid="pay-online">
-                  {t("payment.payOnline")}
-                </a>
-              )}
+              {canPayOnline && <p className="text-base text-ink">{t("payment.online")}</p>}
               {view.payment && view.payment.instructions.length > 0 ? (
                 <div data-testid="manual-payment">
-                  <p className="text-sm font-semibold text-ink">{t("payment.manual")}</p>
+                  <p className="text-sm font-semibold text-ink">{canPayOnline ? t("payment.manualOr") : t("payment.manual")}</p>
                   <ul className="mt-1 flex flex-col gap-0.5 text-base break-words text-ink select-all">
                     {view.payment.instructions.map((line) => (
                       <li key={line}>{line}</li>
@@ -223,7 +235,7 @@ async function PublicDocument({ params, searchParams }: Props) {
                   </ul>
                 </div>
               ) : (
-                !view.payment?.linkUrl && <p className="text-base text-ink-muted">{t("payment.none", { business })}</p>
+                !canPayOnline && <p className="text-base text-ink-muted">{t("payment.none", { business })}</p>
               )}
             </>
           )}
