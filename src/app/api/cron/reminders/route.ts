@@ -1,6 +1,6 @@
-import { timingSafeEqual } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { publicAppUrl } from "@/lib/app-url";
+import { sameSecret } from "@/lib/same-secret";
 import { sendEmail } from "@/lib/email";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notifyDueReminders, renderDigest } from "@/modules/crm/reminder-notifications";
@@ -26,10 +26,4 @@ export async function GET(request: NextRequest) {
     now,
   });
   return Response.json(result);
-}
-
-function sameSecret(given: string, expected: string): boolean {
-  const a = Buffer.from(given);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
 }

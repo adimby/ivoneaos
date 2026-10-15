@@ -14,9 +14,11 @@ import { createPublicClient } from "@/lib/supabase/public";
 import { localDate } from "@/lib/time";
 import { markDealWon } from "@/modules/crm/deal-won";
 import { getContact, getDeal } from "@/modules/crm/queries";
+import { ensureInvoicePapiLink, type PayableInvoice } from "@/modules/payments/papi/service";
 import { getCurrentWorkspace, isOnboarded, type Workspace } from "@/modules/workspace/queries";
 import { safeNextPath } from "@/modules/auth/next-path";
 import { documentEmail } from "./email";
+import { PAYABLE_COLUMNS, payableInvoice } from "./payment-link";
 import { appDocument, documentPdf } from "./render";
 import { getInvoice, getQuote } from "./queries";
 import { parseDocumentForm, readDocumentForm } from "./schemas";
@@ -192,13 +194,28 @@ export async function sendInvoice(formData: FormData) {
     .eq("id", id)
     .eq("workspace_id", workspace.id)
     .eq("status", "draft")
-    .select("id");
+    .select(PAYABLE_COLUMNS);
   if (error) backTo(locale, path, { erreur: dbErrorKey(error) });
   if (!data?.length) backTo(locale, path, { erreur: "invalid_status_transition" });
+  // Facture en ariary et Papi connecté : lien de paiement créé maintenant (spec P5.5).
+  // En cas d'échec, la facture reste envoyée avec les coordonnées manuelles ; la page
+  // publique retentera à l'ouverture par le client.
+  const papi = await createPapiLink(payableInvoice(data[0], await appOrigin()));
   // Archivage du PDF après la réponse : la freelance n'attend pas le rendu et le
   // téléversement (connexion lente) ; la facture est déjà envoyée.
   after(() => archiveInvoicePdf(workspace, id));
-  backTo(locale, path, { ok: "sent" });
+  backTo(locale, path, { ok: "sent", ...(papi && { papi }) });
+}
+
+// null : lien prêt ou Papi non concerné ; sinon la raison de l'échec (?papi=…).
+async function createPapiLink(invoice: PayableInvoice): Promise<string | null> {
+  try {
+    const outcome = await ensureInvoicePapiLink(invoice, { origin: new URL(invoice.publicUrl).origin });
+    return outcome.status === "failed" ? outcome.reason : null;
+  } catch (error) {
+    console.error("[billing] lien Papi non créé", error instanceof Error ? error.message : "");
+    return "unavailable";
+  }
 }
 
 // Copie PDF de la facture émise, conservée dans le bucket « documents » (nom nouveau à

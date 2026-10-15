@@ -242,6 +242,10 @@
       "collected": "Encaissé ce mois-ci",
       "pending": "Factures en attente",
       "deals": "Opportunités ouvertes"
+    },
+    "paid": {
+      "title": "Paiements reçus",
+      "item": "Facture {number} payée : {amount}"
     }
   },
   "Placeholder": {
@@ -279,8 +283,76 @@
   "Payments": {
     "metaTitle": "Moyens de paiement",
     "title": "Moyens de paiement",
-    "body": "La connexion à Papi arrive bientôt. En attendant, ton numéro MVola et ton RIB saisis dans ton profil s'affichent sur tes factures.",
-    "backToSettings": "Retour aux réglages"
+    "backToSettings": "Retour aux réglages",
+    "status": {
+      "connected": "Papi connecté",
+      "notConnected": "Non connecté",
+      "needsReconnect": "À reconnecter"
+    },
+    "papi": {
+      "intro": "Avec Papi, ton client paie tes factures en ariary par MVola, Orange Money ou Airtel Money, en un clic depuis la page de la facture. L'argent arrive sur ton compte Papi : Ivonea OS n'y touche jamais.",
+      "checkedOn": "Clé vérifiée le {date}.",
+      "disconnect": "Déconnecter Papi",
+      "disconnectConfirm": "Tes clients ne verront plus le bouton « Payer avec Papi ». Ta clé et ton secret sont effacés d'Ivonea OS. Un client qui paie encore un lien déjà ouvert sera tout de même enregistré. Tes coordonnées MVola et RIB restent affichées.",
+      "disconnectOk": "Oui, déconnecter Papi",
+      "needsReconnect": "Papi ne reconnaît plus ta clé (révoquée ou régénérée). Le bouton « Payer avec Papi » est retiré de tes factures : colle ta nouvelle clé ci-dessous pour le remettre."
+    },
+    "results": {
+      "connected": "Papi connecté. Tes prochaines factures en ariary auront un bouton « Payer avec Papi ».",
+      "disconnected": "Papi est déconnecté.",
+      "invalid_key": "Papi ne reconnaît pas cette clé. Recopie la « Clé API » de l'onglet Développeur de ta boutique, en entier.",
+      "invalid_key_format": "Cette clé ne ressemble pas à une clé Papi : elle est trop courte ou contient des espaces. Recopie-la en entier.",
+      "invalid_secret": "Ce secret ne ressemble pas au secret de signature Papi. Il commence par « pwhsec_ » suivi de 64 caractères.",
+      "unavailable": "Papi ne répond pas pour le moment. Vérifie ta connexion et réessaie dans quelques minutes.",
+      "disabled": "La connexion à Papi n'est pas encore activée sur Ivonea OS. Tes coordonnées MVola et RIB restent affichées sur tes factures.",
+      "error": "Une erreur nous a empêchés d'enregistrer ta connexion. Réessaie dans un instant."
+    },
+    "guide": {
+      "title": "Connecter Papi en 5 étapes",
+      "titleReplace": "Remplacer ta clé Papi",
+      "openPapi": "Ouvrir Papi (dashboard.papi.mg)",
+      "steps": {
+        "account": {
+          "title": "Ouvre ton compte Papi",
+          "body": "Inscris-toi sur le site de Papi. Papi te demandera des pièces pour vérifier ton identité et ton activité, et prend des frais sur chaque paiement : vérifie la liste des pièces et le montant des frais directement avec Papi avant de commencer."
+        },
+        "shop": {
+          "title": "Crée ta boutique",
+          "body": "Dans Papi, une « boutique » (ou application) reçoit tes paiements. Crée-la une fois ton compte validé."
+        },
+        "key": {
+          "title": "Copie ta clé API",
+          "body": "Touche ton avatar en haut à droite, puis « Boutiques », choisis ta boutique et ouvre l'onglet « Développeur ». Copie la longue suite de caractères sous « Clé API »."
+        },
+        "secret": {
+          "title": "Copie ton secret de signature",
+          "body": "Juste en dessous, dans « Secret de signature des notifications », copie le secret qui commence par « pwhsec_ ». Il permet à Ivonea OS de vérifier que chaque paiement vient bien de Papi."
+        },
+        "paste": {
+          "title": "Colle-les ici",
+          "body": "Ivonea OS vérifie ta clé auprès de Papi, puis la garde chiffrée. Personne ne peut la relire, pas même toi : pour la changer, colle une nouvelle clé."
+        }
+      },
+      "replaceHint": "Avec la clé d'une autre boutique, les liens Papi déjà envoyés sont remplacés : tes clients paieront dans la nouvelle boutique."
+    },
+    "form": {
+      "apiKey": "Clé API Papi",
+      "apiKeyHint": "Onglet « Développeur » de ta boutique, sous « Clé API ».",
+      "secret": "Secret de signature",
+      "secretHint": "Commence par « pwhsec_ ».",
+      "privacy": "Ta clé et ton secret sont chiffrés et ne sont jamais réaffichés. Ne les envoie jamais par WhatsApp ou e-mail.",
+      "connect": "Vérifier et connecter Papi",
+      "replace": "Vérifier et remplacer la clé"
+    },
+    "manual": {
+      "title": "Coordonnées directes",
+      "intro": "Toujours affichées sur tes factures : sans Papi, pour les factures en euros ou en dollars, ou si ton client préfère payer en direct. Tu marques alors la facture payée toi-même.",
+      "none": "Aucune coordonnée pour l'instant.",
+      "edit": "Modifier mon numéro MVola et mon RIB",
+      "mvola": "MVola : {number}",
+      "rib": "RIB : {rib}"
+    },
+    "disabled": "La connexion à Papi n'est pas encore activée sur Ivonea OS. En attendant, tes coordonnées MVola et RIB s'affichent sur tes factures."
   },
   "errors": {
     "db": {
@@ -306,7 +378,8 @@
       "not_authenticated": "Ta session a expiré. Reconnecte-toi pour continuer.",
       "payment_date_before_invoice": "La date du paiement est antérieure à l'envoi de la facture. Indique le jour où tu as reçu l'argent.",
       "too_many_lines": "Un document compte 50 lignes au plus. Regroupe certaines prestations.",
-      "unknown": "Une erreur est survenue. Réessaie dans un instant."
+      "unknown": "Une erreur est survenue. Réessaie dans un instant.",
+      "provider_reference_required": "Référence de paiement manquante."
     }
   },
   "pipeline": {
@@ -707,7 +780,20 @@
       "sentAt": "Envoyé le {date}",
       "acceptedHint": "Ton client a dit oui. Transforme le devis en facture : mêmes lignes, même client.",
       "sentHint": "En attente de la réponse de ton client. Il peut accepter en ligne, ou tu peux le marquer accepté toi-même.",
-      "quantityTimes": "{quantity} × {price}"
+      "quantityTimes": "{quantity} × {price}",
+      "paidNotice": "Facture {number} payée : {amount}",
+      "paidOnline": "Payée en ligne avec Papi ({method}).",
+      "paidOnlineAny": "Payée en ligne avec Papi.",
+      "papiOpen": "Ton client peut payer cette facture avec Papi (MVola, Orange Money, Airtel Money) depuis sa page. Elle passera à « payée » toute seule.",
+      "papiReconnect": "Papi ne reconnaît plus ta clé : le bouton « Payer avec Papi » est retiré de tes factures.",
+      "papiReconnectLink": "Reconnecter Papi",
+      "papiLinkStillPayable": "Attention : le lien Papi déjà envoyé à ton client reste payable chez Papi jusqu'à son expiration. Préviens-le de ne plus l'utiliser ; s'il paie quand même, le paiement s'affichera ici.",
+      "overpaid": "Trop-perçu : ton client a payé {amount} de plus que le total (par exemple par Papi après un paiement direct). Rembourse-le ou déduis ce montant de ta prochaine facture.",
+      "paidWhileCancelled": "Paiement reçu sur une facture annulée : {amount}. Ton client a payé un lien Papi envoyé avant l'annulation. Rembourse-le ou établis une nouvelle facture.",
+      "papiIssue": {
+        "amount_mismatch": "Papi a signalé un paiement (référence {reference}) d'un montant différent de celui demandé : il n'a pas été enregistré. Vérifie-le dans ton tableau de bord Papi, puis marque la facture payée toi-même si c'est bon.",
+        "not_payable": "Papi a signalé un paiement (référence {reference}) qui n'a pas pu être enregistré sur cette facture. Vérifie-le dans ton tableau de bord Papi."
+      }
     },
     "share": {
       "title": "Partager avec ton client",
@@ -744,7 +830,8 @@
         "manual": "Espèces ou virement",
         "MVOLA": "MVola",
         "ORANGE_MONEY": "Orange Money",
-        "AIRTEL_MONEY": "Airtel Money"
+        "AIRTEL_MONEY": "Airtel Money",
+        "CARD": "Carte bancaire"
       },
       "ok": "Confirmer le paiement",
       "cancel": "Retour"
@@ -777,6 +864,13 @@
       "title": "Devis",
       "newQuote": "Créer un devis",
       "none": "Aucun devis pour cette opportunité."
+    },
+    "papi": {
+      "unauthorized": "Facture envoyée, mais Papi a refusé ta clé : pas de bouton « Payer avec Papi » sur cette facture. {manual, select, yes {Ton client voit tes coordonnées de paiement direct.} other {Ajoute ton numéro MVola ou ton RIB dans Réglages pour que ton client puisse te payer en direct.}} Reconnecte Papi dans Réglages > Moyens de paiement.",
+      "rejected": "Facture envoyée, mais Papi a refusé de créer le lien de paiement : le bouton « Payer avec Papi » réessaiera quand ton client ouvrira la facture, sans garantie. {manual, select, yes {Ton client voit aussi tes coordonnées de paiement direct.} other {Ajoute ton numéro MVola ou ton RIB dans Réglages pour que ton client puisse te payer en direct.}}",
+      "conflict": "Facture envoyée, mais Papi a déjà un lien pour cette facture avec un autre montant : le bouton « Payer avec Papi » réessaiera quand ton client ouvrira la facture, sans garantie. {manual, select, yes {Ton client voit aussi tes coordonnées de paiement direct.} other {Ajoute ton numéro MVola ou ton RIB dans Réglages pour que ton client puisse te payer en direct.}}",
+      "unavailable": "Facture envoyée, mais Papi ne répond pas. Quand ton client ouvrira la facture, le bouton « Payer avec Papi » réessaiera. {manual, select, yes {Ton client voit aussi tes coordonnées de paiement direct.} other {Ajoute ton numéro MVola ou ton RIB dans Réglages pour que ton client puisse te payer en direct.}}",
+      "disabled": "Facture envoyée sans lien Papi : le paiement Papi n'est pas activé sur Ivonea OS. {manual, select, yes {Ton client voit tes coordonnées de paiement direct.} other {Ajoute ton numéro MVola ou ton RIB dans Réglages pour que ton client puisse te payer en direct.}}"
     }
   },
   "Pdf": {
@@ -872,10 +966,16 @@
       "title": "Comment payer",
       "amountDue": "Montant à payer :",
       "manual": "Coordonnées de paiement",
-      "payOnline": "Payer maintenant",
       "none": "Contactez {business} pour convenir du paiement.",
       "paid": "Cette facture est payée. Merci !",
-      "cancelled": "Cette facture a été annulée."
+      "cancelled": "Cette facture a été annulée.",
+      "payWithPapi": "Payer {amount} avec Papi",
+      "methods": "MVola, Orange Money ou Airtel Money",
+      "online": "Payez en ligne avec Papi : MVola, Orange Money ou Airtel Money.",
+      "manualOr": "Ou payez directement",
+      "returned": "Merci ! Votre paiement est en cours de confirmation. Cette page indiquera « Payée » dès que Papi l'aura confirmé.",
+      "failed": "Le paiement n'a pas abouti. Vous pouvez réessayer, ou payer avec les coordonnées ci-dessous.",
+      "unavailable": "Le paiement en ligne est momentanément indisponible. Réessayez plus tard, ou payez avec les coordonnées ci-dessous."
     },
     "download": "Télécharger le PDF",
     "legal": "Mentions légales de l'émetteur",

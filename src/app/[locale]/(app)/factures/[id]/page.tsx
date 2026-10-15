@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArrowRightIcon } from "@/components/icons";
+import { Alert } from "@/components/ui/alert";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { buttonClasses } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -26,7 +27,9 @@ import { invoiceDisplayStatus } from "@/modules/billing/status";
 import { inDefaultCurrency } from "@/modules/billing/totals";
 import { formatDay } from "@/modules/billing/view";
 import { getContact } from "@/modules/crm/queries";
-import { getCurrentWorkspace, requireWorkspace } from "@/modules/workspace/queries";
+import { PAPI_MIN_AMOUNT } from "@/modules/payments/papi/adapter";
+import { getInvoicePapiLinks, getOnlinePayments, getPapiAccount } from "@/modules/payments/queries";
+import { getCurrentWorkspace, getManualPayment, requireWorkspace } from "@/modules/workspace/queries";
 
 type Props = PageProps<"/[locale]/factures/[id]">;
 
@@ -55,9 +58,14 @@ export default async function InvoicePage({ params, searchParams }: Props) {
   const today = localDate(new Date());
   const status = invoiceDisplayStatus(invoice.status, invoice.due_on, today);
 
-  const [contact, quoteNumber, t, tShare] = await Promise.all([
+  const open = invoice.status === "sent" || invoice.status === "overdue";
+  const [contact, quoteNumber, onlinePayments, papiAccount, papiLinks, manual, t, tShare] = await Promise.all([
     getContact(workspace.id, invoice.contact_id),
     invoice.quote_id ? getQuoteNumber(workspace.id, invoice.quote_id) : null,
+    invoice.status === "paid" || invoice.status === "cancelled" ? getOnlinePayments(workspace.id, invoice.id) : null,
+    open ? getPapiAccount(workspace.id) : null,
+    invoice.status === "draft" ? null : getInvoicePapiLinks(workspace.id, invoice.id),
+    typeof query.papi === "string" ? getManualPayment(workspace.id) : null,
     getTranslations({ locale, namespace: "Billing" }),
     getTranslations({ locale: invoice.language, namespace: "Share" }),
   ]);
@@ -65,6 +73,14 @@ export default async function InvoicePage({ params, searchParams }: Props) {
   const hidden = Object.entries(fields).map(([name, value]) => <input key={name} type="hidden" name={name} value={value} />);
   const money = (amount: number) => formatMoney(amount, invoice.currency, locale);
   const due = invoice.total - invoice.amount_paid;
+  const papiEligible = invoice.currency === "MGA" && due >= PAPI_MIN_AMOUNT;
+  // Lien Papi déjà envoyé : il reste payable chez Papi même si la facture est réglée
+  // autrement ou annulée ici (Papi ne permet pas de le désactiver).
+  const papiLinkWarning = papiLinks?.payable ? ` ${t("detail.papiLinkStillPayable")}` : "";
+  const onlinePayment = invoice.status === "paid" ? onlinePayments?.[0] : undefined;
+  // Facture annulée : seuls les paiements en ligne (lien Papi envoyé avant l'annulation) sont
+  // signalés, pas un paiement direct enregistré avant d'annuler.
+  const paidWhileCancelled = invoice.status === "cancelled" ? (onlinePayments ?? []).reduce((sum, p) => sum + p.amount, 0) : 0;
 
   // Autre devise que la devise principale : montant converti au taux saisi.
   const foreign = invoice.currency !== workspace.default_currency;
@@ -108,7 +124,7 @@ export default async function InvoicePage({ params, searchParams }: Props) {
         variant="primary"
         block
         title={t("paid.title")}
-        body={t("paid.body", { amount: money(due) })}
+        body={t("paid.body", { amount: money(due) }) + papiLinkWarning}
         confirmLabel={t("paid.ok")}
         cancelLabel={t("paid.cancel")}
       >
@@ -132,7 +148,36 @@ export default async function InvoicePage({ params, searchParams }: Props) {
       <Link href="/factures" className="inline-flex min-h-11 items-center self-start text-base font-semibold text-lagoon">
         ← {t("backToList")}
       </Link>
-      <Notices query={query} />
+      <Notices query={query} manualPayment={manual ? Boolean(manual.mvola || manual.rib || manual.other) : undefined} />
+      {invoice.status === "paid" && invoice.number && (
+        <Alert tone="success">
+          <span className="block text-base font-bold" data-testid="paid-notice">
+            {t("detail.paidNotice", { number: invoice.number, amount: money(invoice.amount_paid) })}
+          </span>
+          {onlinePayment && (
+            <span className="block">
+              {onlinePayment.method === "manual"
+                ? t("detail.paidOnlineAny")
+                : t("detail.paidOnline", { method: t(`paid.methods.${onlinePayment.method}`) })}
+            </span>
+          )}
+        </Alert>
+      )}
+      {invoice.status === "paid" && invoice.amount_paid > invoice.total && (
+        <Alert tone="error">
+          <span data-testid="overpaid-notice">{t("detail.overpaid", { amount: money(invoice.amount_paid - invoice.total) })}</span>
+        </Alert>
+      )}
+      {paidWhileCancelled > 0 && (
+        <Alert tone="error">
+          <span data-testid="paid-while-cancelled">{t("detail.paidWhileCancelled", { amount: money(paidWhileCancelled) })}</span>
+        </Alert>
+      )}
+      {papiLinks?.issues.map((issue) => (
+        <Alert key={issue.reference} tone="error">
+          <span data-testid="papi-issue">{t(`detail.papiIssue.${issue.error}`, { reference: issue.reference })}</span>
+        </Alert>
+      ))}
 
       <div className="flex flex-col gap-2">
         <StatusBadge kind="invoice" status={status} className="self-start" />
@@ -173,6 +218,21 @@ export default async function InvoicePage({ params, searchParams }: Props) {
           {invoice.paid_at && <li>{t("detail.paidAt", { date: formatDay(localDate(new Date(invoice.paid_at)), locale) })}</li>}
         </ul>
       </div>
+
+      {/* Pas juste après un échec de création du lien : la notice d'échec dit déjà quoi faire. */}
+      {papiAccount?.status === "connected" && papiEligible && typeof query.papi !== "string" && (
+        <p role="note" className="rounded-xl bg-turquoise-soft px-4 py-3 text-sm font-medium text-ink" data-testid="papi-note">
+          {t("detail.papiOpen")}
+        </p>
+      )}
+      {papiAccount?.status === "error" && papiEligible && (
+        <p role="note" className="rounded-xl bg-turquoise-soft px-4 py-3 text-sm font-medium text-ink" data-testid="papi-reconnect">
+          {t("detail.papiReconnect")}{" "}
+          <Link href="/reglages/paiements" className="font-semibold text-lagoon underline underline-offset-4">
+            {t("detail.papiReconnectLink")}
+          </Link>
+        </p>
+      )}
 
       {invoice.status === "draft" && foreign && converted === null && (
         <p role="note" className="rounded-xl bg-turquoise-soft px-4 py-3 text-sm font-medium text-ink">
@@ -222,7 +282,7 @@ export default async function InvoicePage({ params, searchParams }: Props) {
               variant="danger"
               block
               title={t("confirmCancel.title")}
-              body={t("confirmCancel.body")}
+              body={t("confirmCancel.body") + papiLinkWarning}
               confirmLabel={t("confirmCancel.ok")}
               cancelLabel={t("confirmCancel.cancel")}
             />

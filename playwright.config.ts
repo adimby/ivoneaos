@@ -6,6 +6,8 @@ import { defineConfig, devices } from "@playwright/test";
 // la suite construit et lance toujours la version testée, et échoue clairement si le
 // port est déjà occupé (E2E_PORT pour en choisir un autre).
 const port = Number(process.env.E2E_PORT ?? 3100);
+// Papi simulé (e2e/papi-mock.mjs) : l'application le joint via PAPI_API_BASE_URL.
+const papiPort = Number(process.env.PAPI_MOCK_PORT ?? 3199);
 
 export default defineConfig({
   testDir: "e2e",
@@ -25,10 +27,19 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: [{ name: "chromium-mobile" }],
-  webServer: {
-    command: `npm run build && npm run start -- --port ${port}`,
-    url: `http://127.0.0.1:${port}/fr`,
-    reuseExistingServer: false,
-    timeout: 300_000,
-  },
+  webServer: [
+    {
+      command: "node e2e/papi-mock.mjs",
+      url: `http://127.0.0.1:${papiPort}/__mock/health`,
+      env: { PAPI_MOCK_PORT: String(papiPort) },
+      reuseExistingServer: false,
+    },
+    {
+      command: `npm run build && npm run start -- --port ${port}`,
+      url: `http://127.0.0.1:${port}/fr`,
+      env: { PAPI_API_BASE_URL: `http://127.0.0.1:${papiPort}` },
+      reuseExistingServer: false,
+      timeout: 300_000,
+    },
+  ],
 });

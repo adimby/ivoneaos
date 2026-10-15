@@ -101,7 +101,7 @@ describe("documentView (PDF et page publique)", () => {
     ]);
     expect(view.payment).toEqual({
       instructions: ["MVola : 034 12 345 67", "RIB : 00005000011234567890123"],
-      linkUrl: null,
+      online: false,
     });
   });
 
@@ -123,6 +123,39 @@ describe("documentView (PDF et page publique)", () => {
     expect(plain(view.amountDue)).toBe("300 000 Ar");
     // Ni coordonnées ni lien : pas de bloc paiement vide.
     expect(view.payment).toBeNull();
+  });
+
+  it("facture en ariary avec Papi : paiement en ligne proposé, même sans lien encore créé", () => {
+    const doc = parsePublicDocument({
+      ...publicQuote,
+      type: "invoice",
+      number: "F-2026-0002",
+      status: "sent",
+      issued_on: "2026-10-15",
+      due_on: "2026-10-30",
+      paid_at: null,
+      amount_paid: 0,
+      payment: { manual_instructions: null, payment_link_url: null, papi_available: true },
+    })!;
+    expect(documentView(doc, { locale: "fr", now, publicUrl: null }).payment).toEqual({ instructions: [], online: true });
+  });
+
+  it("lien Papi encore actif mais Papi plus proposé (clé révoquée, reste dû < 300 Ar) : pas de bouton", () => {
+    const doc = parsePublicDocument({
+      ...publicQuote,
+      type: "invoice",
+      number: "F-2026-0003",
+      status: "sent",
+      issued_on: "2026-10-15",
+      due_on: "2026-10-30",
+      paid_at: null,
+      amount_paid: 0,
+      payment: { manual_instructions: "MVola : 034 12 345 67", payment_link_url: "https://payment-form.papi.mg/s/x", papi_available: false },
+    })!;
+    expect(documentView(doc, { locale: "fr", now, publicUrl: null }).payment).toEqual({
+      instructions: ["MVola : 034 12 345 67"],
+      online: false,
+    });
   });
 
   it("refuse une réponse vide (jeton inconnu ou brouillon)", () => {

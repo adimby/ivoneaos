@@ -50,8 +50,9 @@ export type InvoiceDocument = Common & {
   due_on: string | null;
   paid_at: string | null;
   amount_paid: number;
-  // Coordonnées de paiement, seulement tant que la facture est à payer.
-  payment: { manual_instructions: string | null; payment_link_url: string | null } | null;
+  // Coordonnées de paiement, seulement tant que la facture est à payer. papi_available :
+  // paiement Papi proposé (lien créé ou recréé à la demande, page /p/<jeton>/payer).
+  payment: { manual_instructions: string | null; payment_link_url: string | null; papi_available?: boolean } | null;
 };
 
 export type BillingDocument = QuoteDocument | InvoiceDocument;

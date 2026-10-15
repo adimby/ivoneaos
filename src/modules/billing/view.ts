@@ -32,7 +32,8 @@ export type DocumentView = {
   // Facture partiellement payée : déjà reçu et reste à payer.
   amountPaid: string | null;
   amountDue: string | null;
-  payment: { instructions: string[]; linkUrl: string | null } | null;
+  // online : paiement en ligne proposé (Papi : MVola, Orange Money, Airtel Money).
+  payment: { instructions: string[]; online: boolean } | null;
   publicUrl: string | null;
 };
 
@@ -75,8 +76,11 @@ export function documentView(
         .split("\n")
         .map((line) => line.trim())
         .filter(Boolean);
-      if (instructions.length > 0 || doc.payment.payment_link_url) {
-        payment = { instructions, linkUrl: doc.payment.payment_link_url };
+      // Seul papi_available compte : un lien encore actif ne suffit pas (compte à reconnecter,
+      // reste dû sous le minimum Papi), le bouton mènerait à « paiement indisponible ».
+      const online = Boolean(doc.payment.papi_available);
+      if (instructions.length > 0 || online) {
+        payment = { instructions, online };
       }
     }
   }
