@@ -192,8 +192,8 @@ select is(tests.affected(format($$ update storage.objects set metadata = '{}' wh
 select set_config('storage.allow_delete_query', 'true', true);
 select is(tests.affected(format($$ delete from storage.objects where bucket_id = 'documents' and name like %L $$, :'wa' || '/%')), 0,
   'Alice ne supprime pas un PDF déposé');
-select is(tests.affected(format($$ update storage.objects set metadata = '{}' where bucket_id = 'logos' and name = %L $$, :'wa' || '/logo.png')), 1,
-  'Alice remplace son logo');
+select is(tests.affected(format($$ update storage.objects set metadata = '{}' where bucket_id = 'logos' and name = %L $$, :'wa' || '/logo.png')), 0,
+  'logo : ajouts seulement, pas de remplacement (nouveau nom à chaque envoi, cf. 07)');
 select throws_ok(format($$ insert into storage.objects (bucket_id, name) values ('logos', %L) $$, :'wb' || '/logo.png'),
   '42501', null, 'Alice ne peut pas écrire dans le dossier de Bob');
 select throws_ok($$ insert into storage.objects (bucket_id, name) values ('logos', 'pas-un-uuid/logo.png') $$,

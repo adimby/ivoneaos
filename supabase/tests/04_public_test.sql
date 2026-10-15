@@ -2,6 +2,8 @@
 begin;
 \ir helpers.psql
 select plan(37);
+-- Date du jour à Antananarivo (comme les règles de la base), pas celle d'UTC.
+select (now() at time zone 'Indian/Antananarivo')::date as today \gset
 
 select tests.create_user('alice@example.test') as alice \gset
 select tests.authenticate_as(:'alice');
@@ -21,22 +23,22 @@ insert into public.deals (workspace_id, contact_id, stage_id, title) values (:'w
 returning id as deal \gset
 
 -- Devis envoyé, devis brouillon, devis expiré.
-insert into public.quotes (workspace_id, contact_id, deal_id, valid_until) values (:'wa', :'ca', :'deal', current_date + 30)
+insert into public.quotes (workspace_id, contact_id, deal_id, valid_until) values (:'wa', :'ca', :'deal', :'today'::date + 30)
 returning id as qs, public_token as tqs \gset
 insert into public.document_lines (workspace_id, quote_id, position, description, quantity, unit_price)
 values (:'wa', :'qs', 1, 'Cartes', 2, 25000), (:'wa', :'qs', 0, 'Logo', 1, 400000);
 update public.quotes set status = 'sent' where id = :'qs';
 insert into public.quotes (workspace_id, contact_id) values (:'wa', :'ca') returning public_token as tqd \gset
 select tests.new_quote(:'wa', :'ca') as qe \gset
-update public.quotes set status = 'sent', valid_until = current_date where id = :'qe';
+update public.quotes set status = 'sent', valid_until = :'today'::date where id = :'qe';
 -- Le temps passe : la validité est maintenant dépassée (garde désactivée le temps de l'écriture).
 alter table public.quotes disable trigger t10_guard;
-update public.quotes set valid_until = current_date - 1 where id = :'qe';
+update public.quotes set valid_until = :'today'::date - 1 where id = :'qe';
 alter table public.quotes enable trigger t10_guard;
 select public_token as tqe from public.quotes where id = :'qe' \gset
 
 -- Facture envoyée avec coordonnées manuelles et lien Papi actif (plus un lien expiré).
-insert into public.invoices (workspace_id, contact_id, due_on) values (:'wa', :'ca', current_date + 15)
+insert into public.invoices (workspace_id, contact_id, due_on) values (:'wa', :'ca', :'today'::date + 15)
 returning id as inv, public_token as ti \gset
 insert into public.document_lines (workspace_id, invoice_id, description, unit_price)
 values (:'wa', :'inv', 'Logo', 450000);
@@ -90,7 +92,7 @@ select is((:'pi'::jsonb) #>> '{payment,payment_link_url}', 'https://app.papi.mg/
   'facture : lien de paiement actif le plus récent');
 select is((:'pi'::jsonb) #>> '{payment,manual_instructions}', 'MVola 034 00 000 00 (Alice R.)',
   'facture : coordonnées de paiement manuelles');
-select is((:'pi'::jsonb) ->> 'due_on', (current_date + 15)::text, 'facture : échéance');
+select is((:'pi'::jsonb) ->> 'due_on', (:'today'::date + 15)::text, 'facture : échéance');
 select is((:'pi'::jsonb) -> 'client', '{"name": "Rakoto", "company_name": "Rakoto SARL"}'::jsonb,
   'facture : client tel qu''à l''émission');
 select is((:'pi'::jsonb) #>> '{freelancer,nif}', '1234567890', 'facture : NIF tel qu''à l''émission');

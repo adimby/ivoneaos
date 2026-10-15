@@ -244,6 +244,16 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# Connexion par code à 6 chiffres (OTP), sans lien magique : les deux modèles affichent {{ .Token }}.
+# En production, reprendre ces modèles dans le tableau de bord Supabase (Auth > Email Templates).
+[auth.email.template.magic_link]
+subject = "Ton code Ivonea OS / Your Ivonea OS code"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.confirmation]
+subject = "Ton code Ivonea OS / Your Ivonea OS code"
+content_path = "./supabase/templates/confirmation.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"

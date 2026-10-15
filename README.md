@@ -9,7 +9,8 @@ Conception : [Ivonea OS : conception](https://claude.ai/code/artifact/96b84522-b
 - Next.js 16 (App Router, Cache Components), TypeScript, Tailwind CSS 4
 - Supabase (Postgres, RLS, Auth, Storage) via `@supabase/ssr`
 - `next-intl` : français (par défaut) et anglais, routes `/fr` et `/en`
-- Vitest pour la logique métier
+- Vitest pour la logique métier, Playwright pour les parcours de bout en bout
+- zod pour valider les entrées des actions serveur
 
 ## Démarrer
 
@@ -24,6 +25,12 @@ npm run dev
 ```
 
 Les e-mails d'Auth (codes OTP) arrivent dans Mailpit : http://127.0.0.1:54324.
+
+Connexion par code à 6 chiffres (OTP Supabase, sans lien magique) : les modèles d'e-mail
+`supabase/templates/*.html` affichent `{{ .Token }}` (déclarés dans `supabase/config.toml` ;
+après les avoir modifiés, `npx supabase stop && npx supabase start`). En production, reprendre
+ces modèles dans le tableau de bord Supabase (Auth > Email Templates, « Magic Link » et
+« Confirm signup »).
 
 ## Base de données
 
@@ -43,8 +50,10 @@ Les e-mails d'Auth (codes OTP) arrivent dans Mailpit : http://127.0.0.1:54324.
   `AIRTEL_MONEY`) ; Papi et Whop : serveur, clé secrète, après vérification du webhook.
 - « Marquer payée » = insérer un paiement manuel du reste dû (`total − amount_paid`) ; la facture
   passe seule à « payée ». Un paiement manuel ne dépasse jamais le reste dû (`payment_exceeds_balance`)
-  et n'est pas daté de plus d'un jour dans le futur (`payment_date_in_future`). Un paiement Papi / Whop
-  (argent réellement reçu) est toujours enregistré, même en trop-perçu. `overdue` n'est accepté que si `due_on` est passée (heure d'Antananarivo).
+  et n'est pas daté de plus d'un jour dans le futur (`payment_date_in_future`), ni de plus d'un jour
+  avant l'envoi de la facture (`payment_date_before_invoice`). Un paiement Papi / Whop
+  (argent réellement reçu) est toujours enregistré, même en trop-perçu ou sur une facture annulée
+  (elle reste annulée, `amount_paid` est à jour). Annuler une facture annule ses liens de paiement actifs. `overdue` n'est accepté que si `due_on` est passée (heure d'Antananarivo).
 - Devis envoyé : reste modifiable jusqu'à l'acceptation (jamais vidé). Après une modification,
   l'interface doit le signaler, régénérer le PDF et proposer de renvoyer le lien. Le client accepte
   avec `accept_quote(token, version)` : `version` vient de `get_public_quote`, chaîne opaque à renvoyer
@@ -67,7 +76,9 @@ Les e-mails d'Auth (codes OTP) arrivent dans Mailpit : http://127.0.0.1:54324.
   (`contact_limit_reached`), contrôlés en base sous un verrou du workspace (pas de dépassement par
   deux requêtes simultanées). Mêmes valeurs à reprendre dans les constantes de `canUse`.
 - Storage : buckets `logos` et `documents` privés ; écriture dans le dossier `<workspace_id>/`
-  uniquement ; PDF sans remplacement ni suppression par le navigateur. La page publique affiche le
+  uniquement ; ajouts seulement (jamais de remplacement) : un nom nouveau à chaque envoi
+  (`<workspace_id>/logo-<version>.<ext>`, 1 Mo au plus) ; un ancien logo ne se supprime que s'il ne
+  figure sur aucun document émis ; PDF jamais supprimés par le navigateur. La page publique affiche le
   logo par une URL signée créée avec la clé publique (`createSignedUrl`) : anon ne lit que le logo
   figurant dans la copie figée d'un document émis (`is_public_logo`).
 - Suppression d'un compte (`auth.users`, côté serveur) : quand son dernier propriétaire disparaît, le
@@ -88,15 +99,57 @@ npm run typecheck
 npm test
 npm run build
 npm run test:db   # Supabase local démarré
+npm run test:e2e  # Supabase local démarré, .env.local renseigné
 ```
+
+Tests de bout en bout (`e2e/`, Playwright, Chromium) : chaque parcours de la spec devient un test,
+sur un écran de 360 × 780. `npm run test:e2e` construit l'application (`npm run build`, dans `.next`)
+puis la lance sur le port 3100 (`E2E_PORT` pour un autre). Aucun serveur déjà lancé n'est réutilisé :
+si le port est pris, la suite s'arrête avec une erreur. Ne pas lancer deux constructions en même
+temps dans le même dossier (`npm run build`, `npm run test:e2e`) : elles partagent `.next`. Les codes
+de connexion sont lus dans l'API de Mailpit (`MAILPIT_URL`, par défaut http://127.0.0.1:54324).
+Navigateur : `npx playwright install chromium` la première fois (ou `PLAYWRIGHT_BROWSERS_PATH` vers
+un Chromium déjà installé). Pas encore en CI.
+
+## Mise en production de la connexion (Supabase Auth)
+
+La connexion par code (P1) dépend de réglages du projet Supabase hébergé, à faire avant d'ouvrir
+l'inscription (tableau de bord Supabase, Authentication) :
+
+- **SMTP personnalisé** (Resend : `smtp.resend.com`, domaine d'envoi vérifié). Le service d'e-mail
+  intégré de Supabase n'envoie qu'aux adresses des membres de l'équipe du projet, avec une limite de
+  quelques e-mails par heure : sans SMTP personnalisé, personne d'autre ne reçoit son code.
+- **Modèles d'e-mail** « Magic Link » et « Confirm signup » : reprendre `supabase/templates/*.html`
+  et le sujet de `supabase/config.toml` (ils affichent le code `{{ .Token }}`, pas de lien).
+  Longueur du code (Email OTP Length) : 6.
+- **Limites** (Rate Limits). `signInWithOtp` et `verifyOtp` sont appelés par le serveur Next
+  (actions serveur) : Supabase compte alors les demandes par adresse IP du serveur, et toutes les
+  utilisatrices partagent les IP de sortie de Vercel. Relever « Sign-ups and sign-ins » et « Token
+  verifications » (30 par 5 min par défaut) selon le trafic attendu, et la limite d'envoi d'e-mails
+  (par heure) une fois le SMTP en place. Si les abus deviennent un problème, ajouter un captcha
+  (Turnstile) à l'étape e-mail plutôt que de baisser ces limites.
+- **URL du site** (Site URL) : l'adresse de production, pour les e-mails.
 
 ## Organisation
 
 ```
-src/app/[locale]/   pages (fr, en)
-src/i18n/           routage et chargement des traductions
-src/lib/            supabase (clients serveur et navigateur), money (montants et devises)
-src/proxy.ts        langue + rafraîchissement de la session Supabase
-messages/           textes fr.json et en.json
-supabase/migrations/
+src/app/[locale]/             page d'accueil, connexion, demarrage (accueil guidé)
+src/app/[locale]/(app)/       écrans connectés : coquille (en-tête, onglets), garde d'accès
+src/components/ui/            primitives (Button, Input, Select, Field, Card, Badge, Alert)
+src/modules/auth/             connexion par code, déconnexion, langue
+src/modules/onboarding/       diagnostic, niveau, liste de démarrage
+src/modules/workspace/        profil pro, logo, coordonnées de paiement direct
+src/modules/crm|billing|payments/  requêtes exposées aux autres modules
+src/i18n/                     routage et chargement des traductions
+src/lib/                      supabase, money, session, formulaires, erreurs de la base
+src/proxy.ts                  langue, session Supabase, redirection vers la connexion
+messages/                     textes fr.json et en.json (tutoiement)
+supabase/migrations/, supabase/tests/, supabase/templates/
+e2e/                          parcours Playwright
 ```
+
+Thème « Océan » : variables `@theme` de `src/app/globals.css` (`bg-lagoon`, `bg-terracotta`,
+`text-ink`, `bg-sand-light`…), contrastes vérifiés en tête du fichier. Accès : toute page sous
+`(app)` exige une session (proxy, puis `requireWorkspace` côté serveur) et l'accueil guidé terminé
+(`workspaces.profile_completed_at`) ; toutes les lectures et écritures passent par le client
+Supabase de l'utilisatrice (RLS), jamais par la clé secrète.

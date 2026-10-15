@@ -1,9 +1,13 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "./database.types";
 
 export async function createClient() {
+  // Requête réelle uniquement : la session Supabase lit l'heure (Date.now()), refusée
+  // pendant un prérendu, y compris le préchargement au moment de l'exécution.
+  await connection();
   const cookieStore = await cookies();
 
   return createServerClient<Database>(
