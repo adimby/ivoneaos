@@ -238,10 +238,30 @@
       }
     },
     "blocks": {
-      "title": "Your business",
       "collected": "Collected this month",
       "pending": "Pending invoices",
-      "deals": "Open opportunities"
+      "deals": "Open opportunities",
+      "payments": "{count, plural, one {# payment received} other {# payments received}}",
+      "invoices": "{count, plural, one {# invoice to collect} other {# invoices to collect}}",
+      "overdue": "{count, plural, one {# overdue} other {# overdue}}: {amount}",
+      "unconverted": "Plus {amounts} (no exchange rate)",
+      "dealCount": "{count, plural, one {# open} other {# open}}",
+      "seeInvoices": "See invoices",
+      "seePipeline": "See pipeline",
+      "empty": {
+        "connectPapi": "Connect Papi to get paid by MVola, Orange Money or Airtel Money.",
+        "connectPapiLink": "Connect Papi",
+        "noPayment": "No payment received this month yet.",
+        "firstQuote": "Nothing to collect yet. Start with a quote: once accepted, it becomes an invoice.",
+        "firstQuoteLink": "Prepare my first quote",
+        "noPending": "No invoice waiting for payment.",
+        "firstContact": "First add the person you are offering your services to.",
+        "firstContactLink": "Add my first contact",
+        "firstDeal": "No open opportunity. Note a possible project to follow it through to signature.",
+        "firstDealLink": "Create an opportunity",
+        "connectWhop": "Connect Whop so your clients can pay your invoices in euros or dollars by card.",
+        "connectWhopLink": "Connect Whop"
+      }
     },
     "paid": {
       "title": "Payments received",
@@ -269,8 +289,7 @@
       "limits": {
         "decouverte": "Free: 20 active contacts and 3 quotes or invoices sent per month.",
         "paid": "Unlimited contacts, quotes and invoices."
-      },
-      "change": "To change plan, write to Ivonea."
+      }
     },
     "payments": {
       "title": "Payment methods",
@@ -352,7 +371,24 @@
       "mvola": "MVola: {number}",
       "rib": "Bank details: {rib}"
     },
-    "disabled": "Connecting Papi isn't enabled on Ivonea OS yet. Meanwhile, your MVola number and bank details are shown on your invoices."
+    "disabled": "Connecting Papi isn't enabled on Ivonea OS yet. Meanwhile, your MVola number and bank details are shown on your invoices.",
+    "whop": {
+      "title": "Card payment (Whop)",
+      "intro": "For your invoices in euros or dollars, your client pays by bank card in one click from the invoice page. The money goes to your Whop account, which takes a fee on each payment. {fee, plural, =0 {Ivonea OS takes nothing.} other {Ivonea OS also takes {fee}% of each card payment.}} Whop will ask you to verify your identity.",
+      "connect": "Connect Whop",
+      "resume": "Resume Whop sign-up",
+      "connected": "Whop connected",
+      "pending": "Sign-up in progress",
+      "results": {
+        "connected": "Whop connected. Your next invoices in euros or dollars will have a “Pay by card” button.",
+        "pending": "Your Whop sign-up is not finished yet or is being reviewed. Come back here once Whop has approved it.",
+        "expired": "The Whop sign-up link has expired. Tap “Resume Whop sign-up” to get a new one.",
+        "unavailable": "Whop is not responding right now. Try again in a few minutes.",
+        "disabled": "Card payment is not enabled on Ivonea OS.",
+        "error": "An error prevented us from connecting Whop. Try again in a moment."
+      },
+      "checkStatus": "Check my status"
+    }
   },
   "errors": {
     "db": {
@@ -788,8 +824,16 @@
       "papiReconnect": "Papi no longer recognises your key: the “Pay with Papi” button has been removed from your invoices.",
       "papiReconnectLink": "Reconnect Papi",
       "papiLinkStillPayable": "Note: the Papi link already sent to your client can still be paid at Papi until it expires. Ask them not to use it; if they pay anyway, the payment will show here.",
-      "overpaid": "Overpayment: your client paid {amount} more than the total (for example with Papi after a direct payment). Refund them or deduct this amount from your next invoice.",
-      "paidWhileCancelled": "Payment received on a cancelled invoice: {amount}. Your client paid a Papi link sent before the cancellation. Refund them or issue a new invoice.",
+      "overpaid": "Overpayment: your client paid {amount} more than the total (for example with Papi or by card after a direct payment). Refund them or deduct this amount from your next invoice.",
+      "paidWhileCancelled": "Payment received on a cancelled invoice: {amount}. Your client paid a payment link (Papi or card) sent before the cancellation. Refund them or issue a new invoice.",
+      "whopIssue": {
+        "amount_mismatch": "Whop reported a card payment (reference {reference}) for a different amount or currency than requested: it was not recorded. Check it in your Whop dashboard, then refund your client or mark the invoice paid yourself if it is correct.",
+        "not_payable": "Whop reported a card payment (reference {reference}) that could not be recorded on this invoice. Check it in your Whop dashboard, then refund your client or reconcile it by hand.",
+        "currency_mismatch": "Whop reported a card payment (reference {reference}) charged in a different currency than the invoice: it was not recorded. Check it in your Whop dashboard, then refund your client or mark the invoice paid yourself if it is correct.",
+        "incomplete_payment": "Whop reported a card payment (reference {reference}) with an unreadable amount: it was not recorded. Check it in your Whop dashboard, then refund your client or mark the invoice paid yourself if it is correct.",
+        "account_mismatch": "Whop reported a card payment (reference {reference}) received on a Whop account other than yours: it was not recorded. Check in your Whop dashboard whether your client was charged, then contact Ivonea OS support.",
+        "unknown_link": "Whop reported a card payment (reference {reference}) from a different payment link than this invoice's: it was not recorded. Check it in your Whop dashboard, then refund your client or mark the invoice paid yourself if it is correct."
+      },
       "papiIssue": {
         "amount_mismatch": "Papi reported a payment (reference {reference}) for a different amount than requested: it was not recorded. Check it in your Papi dashboard, then mark the invoice paid yourself if it is correct.",
         "not_payable": "Papi reported a payment (reference {reference}) that could not be recorded on this invoice. Check it in your Papi dashboard."
@@ -871,6 +915,9 @@
       "conflict": "Invoice sent, but Papi already has a link for this invoice with another amount: the “Pay with Papi” button will try again when your client opens the invoice, with no guarantee. {manual, select, yes {Your client also sees your direct payment details.} other {Add your MVola number or bank details in Settings so your client can pay you directly.}}",
       "unavailable": "Invoice sent, but Papi isn't responding. When your client opens the invoice, the “Pay with Papi” button will try again. {manual, select, yes {Your client also sees your direct payment details.} other {Add your MVola number or bank details in Settings so your client can pay you directly.}}",
       "disabled": "Invoice sent without a Papi link: Papi payments aren't enabled on Ivonea OS. {manual, select, yes {Your client sees your direct payment details.} other {Add your MVola number or bank details in Settings so your client can pay you directly.}}"
+    },
+    "whop": {
+      "failed": "Invoice sent, but Whop could not prepare the card payment: the “Pay by card” button will try again when your client opens the invoice. {manual, select, yes {Your client also sees your direct payment details.} other {Add your bank details in Settings so your client can pay you directly.}}"
     }
   },
   "Pdf": {
@@ -973,9 +1020,12 @@
       "methods": "MVola, Orange Money or Airtel Money",
       "online": "Pay online with Papi: MVola, Orange Money or Airtel Money.",
       "manualOr": "Or pay directly",
-      "returned": "Thank you! Your payment is being confirmed. This page will show “Paid” as soon as Papi confirms it.",
+      "returned": "Thank you! Your payment is being confirmed. This page will show “Paid” as soon as it is confirmed.",
       "failed": "The payment did not go through. You can try again, or pay with the details below.",
-      "unavailable": "Online payment is temporarily unavailable. Try again later, or pay with the details below."
+      "unavailable": "Online payment is temporarily unavailable. Try again later, or pay with the details below.",
+      "payByCard": "Pay {amount} by card",
+      "cardMethods": "Bank card, secure payment by Whop",
+      "onlineCard": "Pay online by bank card, secure payment by Whop."
     },
     "download": "Download PDF",
     "legal": "Issuer's legal details",
@@ -983,5 +1033,38 @@
       "title": "Document not found",
       "body": "This link doesn't exist or is no longer valid. Ask the person who sent it for a new link."
     }
+  },
+  "Plan": {
+    "metaTitle": "Plan",
+    "title": "Your plan",
+    "backToSettings": "Back to settings",
+    "current": "Current plan",
+    "usage": {
+      "contacts": "Active contacts",
+      "documents": "Quotes and invoices sent this month",
+      "count": "{used} / {limit}",
+      "unlimited": "{used} · unlimited",
+      "monthNote": "The quote and invoice count resets on the 1st of each month. An archived contact no longer counts."
+    },
+    "limitReached": "You have reached a limit of the Découverte plan. To keep going without limits, move to the Lancement plan.",
+    "offers": "Plans",
+    "yours": "Your plan",
+    "price": {
+      "free": "Free",
+      "monthly": "{amount} per month",
+      "onRequest": "Price: ask Ivonea"
+    },
+    "includes": {
+      "limited": "{contacts} active contacts, {documents} quotes or invoices sent per month.",
+      "unlimited": "Unlimited contacts, quotes and invoices."
+    },
+    "contact": {
+      "body": "No online payment for the subscription: Ivonea changes your plan herself.",
+      "upgrade": "Move to the Lancement plan",
+      "write": "Write to Ivonea",
+      "noEmail": "To change plan, write to Ivonea.",
+      "subject": "Ivonea OS: {plan} plan for {business}"
+    },
+    "seeOffers": "See the plans"
   }
 }

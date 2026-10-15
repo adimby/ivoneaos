@@ -239,5 +239,6 @@ test("Facture en euros (taux, coordonnées manuelles) et limite Découverte au 4
   await page.getByRole("button", { name: "Enregistrer le brouillon" }).click();
   await page.getByRole("button", { name: "Envoyer le devis" }).click();
   await expect(page.getByText("Tu as envoyé 3 devis ou factures ce mois-ci", { exact: false })).toBeVisible();
+  await expect(page.getByTestId("plan-limit-link").filter({ visible: true })).toHaveAttribute("href", "/fr/reglages/offre");
   await expect(page.getByRole("heading", { name: "Devis (brouillon)" })).toBeVisible();
 });

@@ -137,7 +137,24 @@ describe("documentView (PDF et page publique)", () => {
       amount_paid: 0,
       payment: { manual_instructions: null, payment_link_url: null, papi_available: true },
     })!;
-    expect(documentView(doc, { locale: "fr", now, publicUrl: null }).payment).toEqual({ instructions: [], online: true });
+    expect(documentView(doc, { locale: "fr", now, publicUrl: null }).payment).toEqual({ instructions: [], online: "papi" });
+  });
+
+  it("facture EUR avec Whop : carte proposée seulement si Whop est activé", () => {
+    const doc = parsePublicDocument({
+      ...publicQuote,
+      type: "invoice",
+      number: "F-2026-0003",
+      currency: "EUR",
+      status: "sent",
+      issued_on: "2026-10-15",
+      due_on: "2026-10-30",
+      paid_at: null,
+      amount_paid: 0,
+      payment: { manual_instructions: null, payment_link_url: null, papi_available: false, whop_available: true },
+    })!;
+    expect(documentView(doc, { locale: "fr", now, publicUrl: null, whop: true }).payment).toEqual({ instructions: [], online: "whop" });
+    expect(documentView(doc, { locale: "fr", now, publicUrl: null }).payment).toBeNull();
   });
 
   it("lien Papi encore actif mais Papi plus proposé (clé révoquée, reste dû < 300 Ar) : pas de bouton", () => {

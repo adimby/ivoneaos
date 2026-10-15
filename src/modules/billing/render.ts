@@ -5,6 +5,7 @@ import { publicAppUrl } from "@/lib/app-url";
 import { createClient } from "@/lib/supabase/server";
 import { localDate } from "@/lib/time";
 import { getContact } from "@/modules/crm/queries";
+import { whopEnabled } from "@/modules/payments/whop/service";
 import { composeManualInstructions } from "@/modules/workspace/manual-instructions";
 import { getCurrentWorkspace, getManualPayment, type Workspace } from "@/modules/workspace/queries";
 import { invoiceDocument, parsePublicDocument, quoteDocument, type BillingDocument, type DraftSource } from "./document";
@@ -55,7 +56,7 @@ export async function documentPdf(
   { publicUrl, logoAs, now = new Date() }: { publicUrl: string | null; logoAs: "public" | "member"; now?: Date },
 ): Promise<Buffer> {
   const t = await getTranslations({ locale: doc.language, namespace: "Pdf" });
-  const view = documentView(doc, { locale: doc.language, now, publicUrl });
+  const view = documentView(doc, { locale: doc.language, now, publicUrl, whop: whopEnabled() });
   const format = logoFormat(view.freelancer.logoPath);
   const data = format && view.freelancer.logoPath ? await downloadLogo(view.freelancer.logoPath, logoAs) : null;
   return renderDocumentPdf(view, t as unknown as Translate, data && format ? { data, format } : null);

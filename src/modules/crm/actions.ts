@@ -10,7 +10,7 @@ import { formValues, parseWith, type FieldErrors } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
 import { toLocalInputValue } from "@/lib/time";
 import { safeNextPath } from "@/modules/auth/next-path";
-import { getCurrentWorkspace, isOnboarded } from "@/modules/workspace/queries";
+import { canUseNow, getCurrentWorkspace, isOnboarded } from "@/modules/workspace/queries";
 import { pickedSchema, toContact } from "./picked-contacts";
 import { quickDueAt, QUICK_CHOICES, snoozeDueAt, SNOOZE_DAYS, type SnoozeDays } from "./reminder-dates";
 import {
@@ -47,7 +47,7 @@ async function context(formData: FormData) {
   }
   const workspace = await getCurrentWorkspace();
   if (!workspace || !isOnboarded(workspace)) return redirect({ href: "/demarrage", locale });
-  return { supabase, locale, back, workspaceId: workspace.id };
+  return { supabase, locale, back, workspace, workspaceId: workspace.id };
 }
 
 // Après un changement fait par un simple formulaire (étape, rappel fait ou repoussé).
@@ -69,11 +69,13 @@ function readId(formData: FormData, key: string): string | null {
 // ---------------------------------------------------------------------------
 
 export async function saveContact(_prev: CrmFormState, formData: FormData): Promise<CrmFormState> {
-  const { supabase, locale, workspaceId } = await context(formData);
+  const { supabase, locale, workspace, workspaceId } = await context(formData);
   const parsed = parseWith(contactSchema, formValues(formData, CONTACT_FIELDS));
   if (!parsed.ok) return { fieldErrors: parsed.fieldErrors, formError: "fix_errors" };
 
   const id = readId(formData, "id");
+  // Offre Découverte : 20 contacts actifs au plus (canUse), la base refuse aussi le 21e.
+  if (!id && !(await canUseNow(workspace, "create_contact"))) return { formError: "contact_limit_reached" };
   // Contact archivé : non modifiable (le désarchiver d'abord).
   const { data, error } = id
     ? await supabase
@@ -89,7 +91,6 @@ export async function saveContact(_prev: CrmFormState, formData: FormData): Prom
         .insert({ ...parsed.data, workspace_id: workspaceId })
         .select("id")
         .single();
-  // Offre Découverte : la base refuse le 21e contact actif (contact_limit_reached).
   if (error) return { formError: dbErrorKey(error) };
   return redirect({ href: `/contacts/${data.id}`, locale });
 }

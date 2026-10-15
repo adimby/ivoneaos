@@ -1,6 +1,8 @@
-// Interface commune des prestataires de paiement en ligne (Papi aujourd'hui, Whop ensuite).
-// Les montants sont en unités mineures (ariary pour Papi). Aucune donnée secrète dans les
-// erreurs : la clé et le secret ne sortent jamais de l'adaptateur.
+// Interface commune des prestataires de paiement en ligne : Papi (ariary, clé de la
+// freelance) et Whop (euros et dollars, clé de la plateforme, compte connecté de la
+// freelance ; seul createLink est commun). Les montants sont en unités mineures (ariary,
+// centimes). Aucune donnée secrète dans les erreurs : la clé et le secret ne sortent
+// jamais de l'adaptateur.
 
 export type PaymentMethod = "MVOLA" | "ORANGE_MONEY" | "AIRTEL_MONEY" | "CARD" | "manual";
 
@@ -17,6 +19,11 @@ export type CreateLinkInput = {
   failureUrl: string;
   notificationUrl: string;
   validDurationHours: number;
+  // Whop : devise de la facture, compte connecté (biz_…) qui encaisse, et commission de la
+  // plateforme en unités mineures (0 : aucune).
+  currency?: string;
+  accountId?: string;
+  applicationFee?: number;
 };
 
 export type CreatedLink = { url: string; notificationToken: string | null; expiresAt: Date | null };

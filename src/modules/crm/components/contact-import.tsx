@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { formErrorMessage } from "@/modules/workspace/components/profile-form";
+import { PlanLimitLink } from "@/modules/workspace/components/plan-limit-link";
 import { ContactsIcon } from "@/components/icons";
 import { importContacts, type ImportResult } from "../actions";
 import type { PickedContact } from "../picked-contacts";
@@ -62,6 +63,7 @@ export function ContactImport() {
           </Alert>
         )}
         {result?.error && !pending && <Alert tone="error">{formErrorMessage(tAll, result.error)}</Alert>}
+        {!pending && <PlanLimitLink error={result?.error} />}
       </div>
     </div>
   );

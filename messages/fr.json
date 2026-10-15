@@ -238,10 +238,30 @@
       }
     },
     "blocks": {
-      "title": "Ton activité",
       "collected": "Encaissé ce mois-ci",
       "pending": "Factures en attente",
-      "deals": "Opportunités ouvertes"
+      "deals": "Opportunités ouvertes",
+      "payments": "{count, plural, one {# paiement reçu} other {# paiements reçus}}",
+      "invoices": "{count, plural, one {# facture à encaisser} other {# factures à encaisser}}",
+      "overdue": "{count, plural, one {# en retard} other {# en retard}} : {amount}",
+      "unconverted": "En plus : {amounts} (sans taux de change)",
+      "dealCount": "{count, plural, one {# en cours} other {# en cours}}",
+      "seeInvoices": "Voir les factures",
+      "seePipeline": "Voir le pipeline",
+      "empty": {
+        "connectPapi": "Connecte Papi pour être payé par MVola, Orange Money ou Airtel Money.",
+        "connectPapiLink": "Connecter Papi",
+        "noPayment": "Aucun paiement reçu ce mois-ci pour l'instant.",
+        "firstQuote": "Rien à encaisser pour l'instant. Commence par un devis : accepté, il devient une facture.",
+        "firstQuoteLink": "Préparer mon premier devis",
+        "noPending": "Aucune facture en attente de paiement.",
+        "firstContact": "Ajoute d'abord la personne à qui tu proposes tes services.",
+        "firstContactLink": "Ajouter mon premier contact",
+        "firstDeal": "Aucune opportunité en cours. Note un projet possible pour le suivre jusqu'à la signature.",
+        "firstDealLink": "Créer une opportunité",
+        "connectWhop": "Connecte Whop pour que tes clients paient tes factures en euros ou en dollars par carte.",
+        "connectWhopLink": "Connecter Whop"
+      }
     },
     "paid": {
       "title": "Paiements reçus",
@@ -269,8 +289,7 @@
       "limits": {
         "decouverte": "Gratuit : 20 contacts actifs et 3 devis ou factures envoyés par mois.",
         "paid": "Contacts, devis et factures illimités."
-      },
-      "change": "Pour changer d'offre, écris à Ivonea."
+      }
     },
     "payments": {
       "title": "Moyens de paiement",
@@ -352,7 +371,24 @@
       "mvola": "MVola : {number}",
       "rib": "RIB : {rib}"
     },
-    "disabled": "La connexion à Papi n'est pas encore activée sur Ivonea OS. En attendant, tes coordonnées MVola et RIB s'affichent sur tes factures."
+    "disabled": "La connexion à Papi n'est pas encore activée sur Ivonea OS. En attendant, tes coordonnées MVola et RIB s'affichent sur tes factures.",
+    "whop": {
+      "title": "Paiement par carte (Whop)",
+      "intro": "Pour tes factures en euros ou en dollars, ton client paie par carte bancaire en un clic depuis la page de la facture. L'argent arrive sur ton compte Whop, qui prend ses frais sur chaque paiement. {fee, plural, =0 {Ivonea OS ne prend rien.} other {Ivonea OS prélève en plus {fee} % de chaque paiement par carte.}} Whop te demandera de vérifier ton identité.",
+      "connect": "Connecter Whop",
+      "resume": "Reprendre l'inscription Whop",
+      "connected": "Whop connecté",
+      "pending": "Inscription en cours",
+      "results": {
+        "connected": "Whop connecté. Tes prochaines factures en euros ou en dollars auront un bouton « Payer par carte ».",
+        "pending": "Ton inscription Whop n'est pas encore terminée ou est en cours de vérification. Reviens ici quand Whop l'aura validée.",
+        "expired": "Le lien d'inscription Whop a expiré. Touche « Reprendre l'inscription Whop » pour en obtenir un nouveau.",
+        "unavailable": "Whop ne répond pas pour le moment. Réessaie dans quelques minutes.",
+        "disabled": "Le paiement par carte n'est pas activé sur Ivonea OS.",
+        "error": "Une erreur nous a empêchés de connecter Whop. Réessaie dans un instant."
+      },
+      "checkStatus": "Vérifier mon statut"
+    }
   },
   "errors": {
     "db": {
@@ -788,8 +824,16 @@
       "papiReconnect": "Papi ne reconnaît plus ta clé : le bouton « Payer avec Papi » est retiré de tes factures.",
       "papiReconnectLink": "Reconnecter Papi",
       "papiLinkStillPayable": "Attention : le lien Papi déjà envoyé à ton client reste payable chez Papi jusqu'à son expiration. Préviens-le de ne plus l'utiliser ; s'il paie quand même, le paiement s'affichera ici.",
-      "overpaid": "Trop-perçu : ton client a payé {amount} de plus que le total (par exemple par Papi après un paiement direct). Rembourse-le ou déduis ce montant de ta prochaine facture.",
-      "paidWhileCancelled": "Paiement reçu sur une facture annulée : {amount}. Ton client a payé un lien Papi envoyé avant l'annulation. Rembourse-le ou établis une nouvelle facture.",
+      "overpaid": "Trop-perçu : ton client a payé {amount} de plus que le total (par exemple par Papi ou par carte après un paiement direct). Rembourse-le ou déduis ce montant de ta prochaine facture.",
+      "paidWhileCancelled": "Paiement reçu sur une facture annulée : {amount}. Ton client a payé un lien de paiement (Papi ou carte) envoyé avant l'annulation. Rembourse-le ou établis une nouvelle facture.",
+      "whopIssue": {
+        "amount_mismatch": "Whop a signalé un paiement par carte (référence {reference}) d'un montant ou d'une devise différents de ceux demandés : il n'a pas été enregistré. Vérifie-le dans ton tableau de bord Whop, puis rembourse ton client ou marque la facture payée toi-même si c'est bon.",
+        "not_payable": "Whop a signalé un paiement par carte (référence {reference}) qui n'a pas pu être enregistré sur cette facture. Vérifie-le dans ton tableau de bord Whop, puis rembourse ton client ou rapproche-le à la main.",
+        "currency_mismatch": "Whop a signalé un paiement par carte (référence {reference}) débité dans une autre devise que celle de la facture : il n'a pas été enregistré. Vérifie-le dans ton tableau de bord Whop, puis rembourse ton client ou marque la facture payée toi-même si c'est bon.",
+        "incomplete_payment": "Whop a signalé un paiement par carte (référence {reference}) dont le montant est illisible : il n'a pas été enregistré. Vérifie-le dans ton tableau de bord Whop, puis rembourse ton client ou marque la facture payée toi-même si c'est bon.",
+        "account_mismatch": "Whop a signalé un paiement par carte (référence {reference}) reçu sur un autre compte Whop que le tien : il n'a pas été enregistré. Vérifie dans ton tableau de bord Whop si ton client a bien été débité, puis contacte le support d'Ivonea OS.",
+        "unknown_link": "Whop a signalé un paiement par carte (référence {reference}) venant d'un autre lien de paiement que celui de cette facture : il n'a pas été enregistré. Vérifie-le dans ton tableau de bord Whop, puis rembourse ton client ou marque la facture payée toi-même si c'est bon."
+      },
       "papiIssue": {
         "amount_mismatch": "Papi a signalé un paiement (référence {reference}) d'un montant différent de celui demandé : il n'a pas été enregistré. Vérifie-le dans ton tableau de bord Papi, puis marque la facture payée toi-même si c'est bon.",
         "not_payable": "Papi a signalé un paiement (référence {reference}) qui n'a pas pu être enregistré sur cette facture. Vérifie-le dans ton tableau de bord Papi."
@@ -871,6 +915,9 @@
       "conflict": "Facture envoyée, mais Papi a déjà un lien pour cette facture avec un autre montant : le bouton « Payer avec Papi » réessaiera quand ton client ouvrira la facture, sans garantie. {manual, select, yes {Ton client voit aussi tes coordonnées de paiement direct.} other {Ajoute ton numéro MVola ou ton RIB dans Réglages pour que ton client puisse te payer en direct.}}",
       "unavailable": "Facture envoyée, mais Papi ne répond pas. Quand ton client ouvrira la facture, le bouton « Payer avec Papi » réessaiera. {manual, select, yes {Ton client voit aussi tes coordonnées de paiement direct.} other {Ajoute ton numéro MVola ou ton RIB dans Réglages pour que ton client puisse te payer en direct.}}",
       "disabled": "Facture envoyée sans lien Papi : le paiement Papi n'est pas activé sur Ivonea OS. {manual, select, yes {Ton client voit tes coordonnées de paiement direct.} other {Ajoute ton numéro MVola ou ton RIB dans Réglages pour que ton client puisse te payer en direct.}}"
+    },
+    "whop": {
+      "failed": "Facture envoyée, mais Whop n'a pas pu préparer le paiement par carte : le bouton « Payer par carte » réessaiera quand ton client ouvrira la facture. {manual, select, yes {Ton client voit aussi tes coordonnées de paiement direct.} other {Ajoute tes coordonnées bancaires dans Réglages pour que ton client puisse te payer en direct.}}"
     }
   },
   "Pdf": {
@@ -973,9 +1020,12 @@
       "methods": "MVola, Orange Money ou Airtel Money",
       "online": "Payez en ligne avec Papi : MVola, Orange Money ou Airtel Money.",
       "manualOr": "Ou payez directement",
-      "returned": "Merci ! Votre paiement est en cours de confirmation. Cette page indiquera « Payée » dès que Papi l'aura confirmé.",
+      "returned": "Merci ! Votre paiement est en cours de confirmation. Cette page indiquera « Payée » dès qu'il sera confirmé.",
       "failed": "Le paiement n'a pas abouti. Vous pouvez réessayer, ou payer avec les coordonnées ci-dessous.",
-      "unavailable": "Le paiement en ligne est momentanément indisponible. Réessayez plus tard, ou payez avec les coordonnées ci-dessous."
+      "unavailable": "Le paiement en ligne est momentanément indisponible. Réessayez plus tard, ou payez avec les coordonnées ci-dessous.",
+      "payByCard": "Payer {amount} par carte",
+      "cardMethods": "Carte bancaire, paiement sécurisé par Whop",
+      "onlineCard": "Payez en ligne par carte bancaire, paiement sécurisé par Whop."
     },
     "download": "Télécharger le PDF",
     "legal": "Mentions légales de l'émetteur",
@@ -983,5 +1033,38 @@
       "title": "Document introuvable",
       "body": "Ce lien n'existe pas ou n'est plus valable. Demandez un nouveau lien à la personne qui vous l'a envoyé."
     }
+  },
+  "Plan": {
+    "metaTitle": "Offre",
+    "title": "Ton offre",
+    "backToSettings": "Retour aux réglages",
+    "current": "Offre actuelle",
+    "usage": {
+      "contacts": "Contacts actifs",
+      "documents": "Devis et factures envoyés ce mois-ci",
+      "count": "{used} / {limit}",
+      "unlimited": "{used} · illimité",
+      "monthNote": "Le compteur des devis et factures repart à zéro le 1er de chaque mois. Un contact archivé ne compte plus."
+    },
+    "limitReached": "Tu as atteint une limite de l'offre Découverte. Pour continuer sans limite, passe à l'offre Lancement.",
+    "offers": "Les offres",
+    "yours": "Ton offre",
+    "price": {
+      "free": "Gratuit",
+      "monthly": "{amount} par mois",
+      "onRequest": "Tarif : demande à Ivonea"
+    },
+    "includes": {
+      "limited": "{contacts} contacts actifs, {documents} devis ou factures envoyés par mois.",
+      "unlimited": "Contacts, devis et factures illimités."
+    },
+    "contact": {
+      "body": "Pas de paiement en ligne pour l'abonnement : Ivonea change ton offre elle-même.",
+      "upgrade": "Passer à l'offre Lancement",
+      "write": "Écrire à Ivonea",
+      "noEmail": "Pour changer d'offre, écris à Ivonea.",
+      "subject": "Ivonea OS : offre {plan} pour {business}"
+    },
+    "seeOffers": "Voir les offres"
   }
 }

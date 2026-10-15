@@ -11,6 +11,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { useFocusFirstInvalid } from "@/lib/use-focus-invalid";
 import { useHydrated } from "@/lib/use-hydrated";
 import { formErrorMessage } from "@/modules/workspace/components/profile-form";
+import { PlanLimitLink } from "@/modules/workspace/components/plan-limit-link";
 import { saveContact, type CrmFormState } from "../actions";
 import { formatPhone } from "../phone";
 import { CONTACT_KINDS } from "../constants";
@@ -139,6 +140,7 @@ export function ContactForm({
       <BottomBar>
         <div aria-live="polite">
           {state.formError && !pending && <Alert tone="error">{formErrorMessage(tAll, state.formError)}</Alert>}
+          {!pending && <PlanLimitLink error={state.formError} />}
         </div>
         <SubmitButton pending={pending} disabled={!hydrated} block>
           {defaults.id ? t("save") : t("create")}
