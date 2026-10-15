@@ -89,6 +89,26 @@ isOneToOne: false
       referencedColumns: ["workspace_id","id"]
     }
                   ]
+                },"document_emails": {
+                  Row: {
+                    "document_id": string,"sent_at": string,"workspace_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "document_id": string,"sent_at"?: string,"workspace_id": string
+                  }
+                  Update: {
+                    "document_id"?: string,"sent_at"?: string,"workspace_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "document_emails_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "workspaces"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"document_lines": {
                   Row: {
                     "created_at": string,"description": string,"id": string,"invoice_id": string | null,"line_total": number,"position": number,"quantity": number,"quote_id": string | null,"unit_price": number,"updated_at": string,"workspace_id": string
@@ -123,14 +143,14 @@ isOneToOne: false
                   ]
                 },"invoices": {
                   Row: {
-                    "amount_paid": number,"contact_id": string,"created_at": string,"currency": Database["public"]['Enums']["currency"],"discount": number,"due_on": string | null,"exchange_rate": number,"id": string,"issued_on": string | null,"number": string | null,"paid_at": string | null,"pdf_path": string | null,"public_token": string,"quote_id": string | null,"sent_at": string | null,"snapshot": Json | null,"status": Database["public"]['Enums']["invoice_status"],"subtotal": number,"total": number,"updated_at": string,"workspace_id": string
+                    "amount_paid": number,"contact_id": string,"created_at": string,"currency": Database["public"]['Enums']["currency"],"discount": number,"due_on": string | null,"exchange_rate": number,"id": string,"issued_on": string | null,"language": Database["public"]['Enums']["locale"],"number": string | null,"paid_at": string | null,"pdf_path": string | null,"public_token": string,"quote_id": string | null,"sent_at": string | null,"snapshot": Json | null,"status": Database["public"]['Enums']["invoice_status"],"subtotal": number,"total": number,"updated_at": string,"workspace_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "amount_paid"?: number,"contact_id": string,"created_at"?: string,"currency"?: Database["public"]['Enums']["currency"],"discount"?: number,"due_on"?: string | null,"exchange_rate"?: number,"id"?: string,"issued_on"?: string | null,"number"?: string | null,"paid_at"?: string | null,"pdf_path"?: string | null,"public_token"?: string,"quote_id"?: string | null,"sent_at"?: string | null,"snapshot"?: Json | null,"status"?: Database["public"]['Enums']["invoice_status"],"subtotal"?: number,"total"?: number,"updated_at"?: string,"workspace_id": string
+                    "amount_paid"?: number,"contact_id": string,"created_at"?: string,"currency"?: Database["public"]['Enums']["currency"],"discount"?: number,"due_on"?: string | null,"exchange_rate"?: number,"id"?: string,"issued_on"?: string | null,"language"?: Database["public"]['Enums']["locale"],"number"?: string | null,"paid_at"?: string | null,"pdf_path"?: string | null,"public_token"?: string,"quote_id"?: string | null,"sent_at"?: string | null,"snapshot"?: Json | null,"status"?: Database["public"]['Enums']["invoice_status"],"subtotal"?: number,"total"?: number,"updated_at"?: string,"workspace_id": string
                   }
                   Update: {
-                    "amount_paid"?: number,"contact_id"?: string,"created_at"?: string,"currency"?: Database["public"]['Enums']["currency"],"discount"?: number,"due_on"?: string | null,"exchange_rate"?: number,"id"?: string,"issued_on"?: string | null,"number"?: string | null,"paid_at"?: string | null,"pdf_path"?: string | null,"public_token"?: string,"quote_id"?: string | null,"sent_at"?: string | null,"snapshot"?: Json | null,"status"?: Database["public"]['Enums']["invoice_status"],"subtotal"?: number,"total"?: number,"updated_at"?: string,"workspace_id"?: string
+                    "amount_paid"?: number,"contact_id"?: string,"created_at"?: string,"currency"?: Database["public"]['Enums']["currency"],"discount"?: number,"due_on"?: string | null,"exchange_rate"?: number,"id"?: string,"issued_on"?: string | null,"language"?: Database["public"]['Enums']["locale"],"number"?: string | null,"paid_at"?: string | null,"pdf_path"?: string | null,"public_token"?: string,"quote_id"?: string | null,"sent_at"?: string | null,"snapshot"?: Json | null,"status"?: Database["public"]['Enums']["invoice_status"],"subtotal"?: number,"total"?: number,"updated_at"?: string,"workspace_id"?: string
                   }
                   Relationships: [
                     {
@@ -313,14 +333,14 @@ isOneToOne: false
                   ]
                 },"quotes": {
                   Row: {
-                    "accepted_at": string | null,"contact_id": string,"created_at": string,"currency": Database["public"]['Enums']["currency"],"deal_id": string | null,"discount": number,"id": string,"number": string | null,"pdf_path": string | null,"public_token": string,"sent_at": string | null,"snapshot": Json | null,"status": Database["public"]['Enums']["quote_status"],"subtotal": number,"total": number,"updated_at": string,"valid_until": string | null,"workspace_id": string
+                    "accepted_at": string | null,"contact_id": string,"created_at": string,"currency": Database["public"]['Enums']["currency"],"deal_id": string | null,"discount": number,"id": string,"language": Database["public"]['Enums']["locale"],"number": string | null,"pdf_path": string | null,"public_token": string,"sent_at": string | null,"snapshot": Json | null,"status": Database["public"]['Enums']["quote_status"],"subtotal": number,"total": number,"updated_at": string,"valid_until": string | null,"workspace_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "accepted_at"?: string | null,"contact_id": string,"created_at"?: string,"currency"?: Database["public"]['Enums']["currency"],"deal_id"?: string | null,"discount"?: number,"id"?: string,"number"?: string | null,"pdf_path"?: string | null,"public_token"?: string,"sent_at"?: string | null,"snapshot"?: Json | null,"status"?: Database["public"]['Enums']["quote_status"],"subtotal"?: number,"total"?: number,"updated_at"?: string,"valid_until"?: string | null,"workspace_id": string
+                    "accepted_at"?: string | null,"contact_id": string,"created_at"?: string,"currency"?: Database["public"]['Enums']["currency"],"deal_id"?: string | null,"discount"?: number,"id"?: string,"language"?: Database["public"]['Enums']["locale"],"number"?: string | null,"pdf_path"?: string | null,"public_token"?: string,"sent_at"?: string | null,"snapshot"?: Json | null,"status"?: Database["public"]['Enums']["quote_status"],"subtotal"?: number,"total"?: number,"updated_at"?: string,"valid_until"?: string | null,"workspace_id": string
                   }
                   Update: {
-                    "accepted_at"?: string | null,"contact_id"?: string,"created_at"?: string,"currency"?: Database["public"]['Enums']["currency"],"deal_id"?: string | null,"discount"?: number,"id"?: string,"number"?: string | null,"pdf_path"?: string | null,"public_token"?: string,"sent_at"?: string | null,"snapshot"?: Json | null,"status"?: Database["public"]['Enums']["quote_status"],"subtotal"?: number,"total"?: number,"updated_at"?: string,"valid_until"?: string | null,"workspace_id"?: string
+                    "accepted_at"?: string | null,"contact_id"?: string,"created_at"?: string,"currency"?: Database["public"]['Enums']["currency"],"deal_id"?: string | null,"discount"?: number,"id"?: string,"language"?: Database["public"]['Enums']["locale"],"number"?: string | null,"pdf_path"?: string | null,"public_token"?: string,"sent_at"?: string | null,"snapshot"?: Json | null,"status"?: Database["public"]['Enums']["quote_status"],"subtotal"?: number,"total"?: number,"updated_at"?: string,"valid_until"?: string | null,"workspace_id"?: string
                   }
                   Relationships: [
                     {
@@ -435,10 +455,16 @@ isOneToOne: false
 "accept_quote":
 { Args: { "token": string,"version": string }; Returns: string
                            },
+"claim_document_email":
+{ Args: { "p_document_id": string }; Returns: string
+                           },
 "claim_due_reminders":
 { Args: { "p_cutoff": string,"p_lease"?: string,"p_limit"?: number }; Returns: {
               "claimed_at": string,"contact_name": string,"deal_title": string,"due_at": string,"id": string,"title": string,"workspace_id": string
             }[]
+                           },
+"create_invoice_from_quote":
+{ Args: { "p_quote_id": string }; Returns: string
                            },
 "create_workspace":
 { Args: { "default_currency"?: Database["public"]['Enums']["currency"],"name": string,"trade"?: string }; Returns: string
@@ -478,14 +504,29 @@ isOneToOne: false
               "amount_sum": number,"currency": Database["public"]['Enums']["currency"],"deal_count": number,"stage_id": string
             }[]
                            },
+"public_document_exists":
+{ Args: { "token": string }; Returns: boolean
+                           },
 "quote_version":
 { Args: { "p_quote_id": string }; Returns: string
+                           },
+"release_document_email":
+{ Args: { "p_claimed_at": string,"p_document_id": string }; Returns: undefined
                            },
 "release_reminders":
 { Args: { "p_claimed_at": string,"p_failed": boolean,"p_ids": (string)[] }; Returns: string[]
                            },
+"save_invoice":
+{ Args: { "p_contact_id": string,"p_currency": Database["public"]['Enums']["currency"],"p_discount": number,"p_due_on": string,"p_exchange_rate": number,"p_id"?: string,"p_language": Database["public"]['Enums']["locale"],"p_lines": Json,"p_workspace_id": string }; Returns: string
+                           },
+"save_quote":
+{ Args: { "p_contact_id": string,"p_currency": Database["public"]['Enums']["currency"],"p_deal_id"?: string,"p_discount": number,"p_id"?: string,"p_language": Database["public"]['Enums']["locale"],"p_lines": Json,"p_valid_until": string,"p_workspace_id": string }; Returns: string
+                           },
 "search_text":
 { Args: { "": Database["public"]['Tables']["contacts"]['Row'] }; Returns: { error: true } & "the function public.search_text with parameter or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache"
+                           },
+"stage_document_lines":
+{ Args: { "p_invoice_id": string,"p_lines": Json,"p_quote_id": string,"p_workspace_id": string }; Returns: (string)[]
                            }
           }
           Enums: {

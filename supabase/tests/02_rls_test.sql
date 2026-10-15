@@ -237,8 +237,8 @@ select is(
   (select array_agg(p.proname::text order by p.proname)
    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
    where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'EXECUTE')),
-  array['accept_quote', 'get_public_invoice', 'get_public_quote', 'is_public_logo'],
-  'anon n''exécute que les 3 fonctions des pages publiques et le contrôle du logo public'
+  array['accept_quote', 'get_public_invoice', 'get_public_quote', 'is_public_logo', 'public_document_exists'],
+  'anon n''exécute que les 4 fonctions des pages publiques et le contrôle du logo public'
 );
 
 select * from finish();

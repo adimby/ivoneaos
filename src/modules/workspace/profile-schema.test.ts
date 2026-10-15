@@ -12,6 +12,7 @@ const valid = {
   tax_regime: "impot_synthetique",
   mvola: "",
   rib: "",
+  other: "",
 };
 
 describe("profileSchema", () => {
@@ -73,6 +74,14 @@ describe("profileSchema", () => {
     const bad = parseWith(profileSchema, { ...valid, mvola: "032 12 345 67", rib: "1234" });
     expect(bad.ok).toBe(false);
     if (!bad.ok) expect(bad.fieldErrors).toEqual({ mvola: "mvola_format", rib: "rib_format" });
+  });
+
+  it("garde une ligne libre de coordonnées (IBAN, PayPal…) sur une seule ligne", () => {
+    const ok = parseWith(profileSchema, { ...valid, other: "  IBAN FR76 3000\n BIC AGRIFRPP  " });
+    expect(ok.ok && ok.data.other).toBe("IBAN FR76 3000 BIC AGRIFRPP");
+    const long = parseWith(profileSchema, { ...valid, other: "x".repeat(301) });
+    if (!long.ok) expect(long.fieldErrors).toEqual({ other: "too_long" });
+    expect(long.ok).toBe(false);
   });
 });
 

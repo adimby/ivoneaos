@@ -18,6 +18,7 @@ export type ProfileDefaults = {
   tax_regime: string;
   mvola: string;
   rib: string;
+  other: string;
 };
 
 export const EMPTY_PROFILE: ProfileDefaults = {
@@ -30,6 +31,7 @@ export const EMPTY_PROFILE: ProfileDefaults = {
   tax_regime: "",
   mvola: "",
   rib: "",
+  other: "",
 };
 
 // Champs du profil pro (accueil guidé et Réglages). Le métier peut être piloté par le
@@ -106,6 +108,9 @@ export function ProfileFields({
         </Field>
         <Field id="rib" label={t("rib.label")} hint={t("rib.hint")} error={error("rib")}>
           {(c) => <Input {...c} name="rib" inputMode="numeric" autoComplete="off" defaultValue={defaults.rib} maxLength={40} />}
+        </Field>
+        <Field id="other" label={t("otherPayment.label")} hint={t("otherPayment.hint")} error={error("other")}>
+          {(c) => <Input {...c} name="other" autoComplete="off" defaultValue={defaults.other} maxLength={300} />}
         </Field>
       </fieldset>
     </div>

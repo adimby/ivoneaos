@@ -1,4 +1,5 @@
 import { Suspense, type ReactNode } from "react";
+import { NextIntlClientProvider } from "next-intl";
 import { AppHeader } from "@/components/app-shell/app-header";
 import { BottomNav } from "@/components/app-shell/bottom-nav";
 import { PageSkeleton } from "@/components/app-shell/page-skeleton";
@@ -11,13 +12,16 @@ import { requireWorkspace } from "@/modules/workspace/queries";
 // balise meta refresh si la page a commencé à s'afficher : pas besoin de JavaScript).
 export default async function AppLayout({ children, params }: LayoutProps<"/[locale]">) {
   const { locale } = await params;
+  // Catalogue complet pour les formulaires et composants client de l'application.
   return (
-    <div className="flex min-h-dvh flex-col">
-      <AppHeader />
-      <Suspense fallback={<ShellFallback />}>
-        <OnboardedGate locale={locale as Locale}>{children}</OnboardedGate>
-      </Suspense>
-    </div>
+    <NextIntlClientProvider>
+      <div className="flex min-h-dvh flex-col">
+        <AppHeader />
+        <Suspense fallback={<ShellFallback />}>
+          <OnboardedGate locale={locale as Locale}>{children}</OnboardedGate>
+        </Suspense>
+      </div>
+    </NextIntlClientProvider>
   );
 }
 

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
-import { getTranslations } from "next-intl/server";
+import { getMessages, getTranslations } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import "../globals.css";
 
@@ -37,10 +37,15 @@ export default async function LocaleLayout({
     notFound();
   }
 
+  // Composants client hors application : seulement la page d'erreur (Errors). Les
+  // segments qui en ont besoin (application, connexion, accueil guidé) reçoivent tout le
+  // catalogue par leur propre provider ; la page publique /p/[token] n'en reçoit rien.
+  const { Errors } = await getMessages({ locale });
+
   return (
     <html lang={locale} className="h-full antialiased">
       <body className="flex min-h-full flex-col bg-spray text-ink">
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider messages={{ Errors }}>{children}</NextIntlClientProvider>
       </body>
     </html>
   );

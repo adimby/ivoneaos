@@ -152,7 +152,11 @@
     },
     "choose": "Choose…",
     "save": "Save",
-    "saved": "Profile saved."
+    "saved": "Profile saved.",
+    "otherPayment": {
+      "label": "Other payment details (optional)",
+      "hint": "For clients abroad: IBAN and BIC, PayPal, Wise… Shown as is on your invoices."
+    }
   },
   "FormErrors": {
     "required": "This field is required.",
@@ -172,7 +176,13 @@
     "phone_format": "Invalid number. Example: 034 12 345 67, or +33 6 12 34 56 78 abroad.",
     "email_format": "Invalid email address (example: name@gmail.com).",
     "reachable_required": "Enter a phone number or an email so you can reach this contact.",
-    "date_format": "Invalid date."
+    "date_format": "Invalid date.",
+    "date_past": "This date has already passed. Pick today or a later date.",
+    "discount_too_large": "The discount must be smaller than the subtotal.",
+    "lines_required": "Add at least one line with a description and a price.",
+    "quantity_format": "Invalid quantity: a positive number with at most 2 decimals (for example 1 or 2.5).",
+    "rate_format": "Invalid rate. For example 5000 for €1 = 5,000 Ar.",
+    "too_many_lines": "50 lines at most per document."
   },
   "Nav": {
     "label": "Main navigation",
@@ -295,6 +305,7 @@
       "quantity_too_precise": "The quantity can have at most 2 decimals (for example 1.25).",
       "not_authenticated": "Your session has expired. Sign in again to continue.",
       "payment_date_before_invoice": "The payment date is before the invoice was sent. Enter the day you received the money.",
+      "too_many_lines": "A document can have at most 50 lines. Group some items together.",
       "unknown": "Something went wrong. Try again in a moment."
     }
   },
@@ -550,5 +561,327 @@
     "overdue": "overdue since {date}",
     "cta": "Open Ivonea OS",
     "footer": "You are receiving this email because you scheduled these reminders in Ivonea OS."
+  },
+  "Billing": {
+    "metaList": "Quotes and invoices",
+    "title": "Quotes and invoices",
+    "tabs": {
+      "label": "Document type",
+      "invoices": "Invoices",
+      "quotes": "Quotes"
+    },
+    "newQuote": "New quote",
+    "newInvoice": "New invoice",
+    "empty": {
+      "quotes": {
+        "title": "No quotes yet",
+        "body": "Create a quote from a pipeline deal: the client is already filled in."
+      },
+      "invoices": {
+        "title": "No invoices yet",
+        "body": "An accepted quote becomes an invoice in one tap. You can also create one directly."
+      }
+    },
+    "truncated": "Showing the {shown} most recent of {total}.",
+    "draft": "Draft",
+    "status": {
+      "quote": {
+        "draft": "Draft",
+        "sent": "Sent",
+        "accepted": "Accepted",
+        "declined": "Declined",
+        "expired": "Expired"
+      },
+      "invoice": {
+        "draft": "Draft",
+        "sent": "Sent",
+        "paid": "Paid",
+        "overdue": "Overdue",
+        "cancelled": "Cancelled"
+      }
+    },
+    "quoteTitle": "Quote {number}",
+    "quoteDraftTitle": "Quote (draft)",
+    "quoteMetaTitle": "Quote",
+    "invoiceTitle": "Invoice {number}",
+    "invoiceDraftTitle": "Invoice (draft)",
+    "invoiceMetaTitle": "Invoice",
+    "validUntil": "Valid until {date}",
+    "dueOn": "Due by {date}",
+    "backToList": "Quotes and invoices",
+    "form": {
+      "newQuoteTitle": "New quote",
+      "editQuoteTitle": "Edit quote",
+      "newInvoiceTitle": "New invoice",
+      "editInvoiceTitle": "Edit invoice",
+      "back": "Back",
+      "client": {
+        "label": "Client",
+        "fixed": "Client of the deal “{deal}”.",
+        "fixedEdit": "The client of a saved document doesn't change here.",
+        "truncated": "Only the first {shown} contacts (of {total}) are listed."
+      },
+      "currency": {
+        "label": "Currency"
+      },
+      "language": {
+        "label": "Document language",
+        "hint": "Language of the PDF and of the page your client sees."
+      },
+      "languages": {
+        "fr": "Français",
+        "en": "English"
+      },
+      "lines": {
+        "title": "Items",
+        "line": "Line {n}",
+        "description": "Description",
+        "descriptionHint": "For example: Logo design.",
+        "quantity": "Quantity",
+        "unitPrice": "Unit price",
+        "lineTotal": "Line total",
+        "add": "Add a line",
+        "remove": "Remove line {n}"
+      },
+      "discount": {
+        "label": "Discount (optional)",
+        "hint": "Amount taken off the total, for example 50,000."
+      },
+      "validUntil": {
+        "label": "Valid until",
+        "hint": "After this date, your client can no longer accept the quote."
+      },
+      "dueOn": {
+        "label": "Due by"
+      },
+      "rate": {
+        "label": "Exchange rate to {default}",
+        "hint": "How much 1 {currency} is worth in {default}. Used for your dashboard, not shown to the client.",
+        "converted": "About {amount}."
+      },
+      "subtotal": "Subtotal",
+      "discountLine": "Discount",
+      "total": "Total",
+      "create": "Save draft",
+      "save": "Save",
+      "sentWarning": "This quote has already been sent. If you change it, your client will see the new version and must accept it again.",
+      "noContacts": {
+        "title": "Add a contact first",
+        "body": "A quote or invoice is always addressed to a contact.",
+        "action": "New contact"
+      }
+    },
+    "detail": {
+      "client": "Client:",
+      "deal": "Deal:",
+      "lines": "Items",
+      "preview": "View PDF preview",
+      "edit": "Edit",
+      "delete": "Delete draft",
+      "sendQuote": "Send quote",
+      "sendInvoice": "Send invoice",
+      "sendQuoteHint": "The quote gets its number and a short link to share with your client.",
+      "sendInvoiceHint": "The invoice gets its final number and can no longer be changed.",
+      "resendQuote": "Send quote again",
+      "expiredHint": "This quote's validity date has passed. Change the validity date, then send it again.",
+      "accept": "Mark as accepted",
+      "decline": "Mark as declined",
+      "convert": "Turn into invoice",
+      "openInvoice": "Open invoice {number}",
+      "openDraftInvoice": "Open invoice (draft)",
+      "markPaid": "Mark as paid",
+      "cancel": "Cancel invoice",
+      "fromQuote": "Created from quote {number}",
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "total": "Total",
+      "amountPaid": "Already paid: {amount}",
+      "amountDue": "Amount due: {amount}",
+      "inDefault": "About {amount} at a rate of {rate}.",
+      "rateMissing": "Enter the exchange rate to {default} before sending this invoice.",
+      "taxInfoMissing": "Add your NIF, STAT and tax regime in Settings before issuing an invoice.",
+      "openSettings": "Open settings",
+      "issuedOn": "Issued on {date}",
+      "paidAt": "Paid on {date}",
+      "acceptedAt": "Accepted on {date}",
+      "sentAt": "Sent on {date}",
+      "acceptedHint": "Your client said yes. Turn the quote into an invoice: same lines, same client.",
+      "sentHint": "Waiting for your client's answer. They can accept online, or you can mark it accepted yourself.",
+      "quantityTimes": "{quantity} × {price}"
+    },
+    "share": {
+      "title": "Share with your client",
+      "link": "Document link",
+      "copy": "Copy link",
+      "copied": "Link copied",
+      "whatsapp": "Send on WhatsApp",
+      "email": "Send by email",
+      "emailPhone": "Email from my phone",
+      "download": "Download PDF",
+      "open": "View my client's page"
+    },
+    "notices": {
+      "sent": "Sent! Now share the link with your client.",
+      "accepted": "Quote accepted. You can turn it into an invoice.",
+      "declined": "Quote marked as declined.",
+      "converted": "Invoice created from the quote. Check it, then send it.",
+      "paid": "Invoice marked as paid.",
+      "cancelled": "Invoice cancelled.",
+      "deleted": "Draft deleted."
+    },
+    "email": {
+      "sent": "Email sent to your client.",
+      "skipped": "Sending emails isn't enabled yet. Use the link, WhatsApp or your phone's email.",
+      "failed": "The email couldn't be sent. Try again, or share the link on WhatsApp.",
+      "no_email": "This client has no email address. Add it to their contact, or share the link on WhatsApp.",
+      "throttled": "This email was just sent. Wait 2 minutes before sending it again."
+    },
+    "paid": {
+      "title": "Mark the invoice as paid?",
+      "body": "Records the {amount} payment received directly from your client.",
+      "method": "Received by",
+      "methods": {
+        "manual": "Cash or bank transfer",
+        "MVOLA": "MVola",
+        "ORANGE_MONEY": "Orange Money",
+        "AIRTEL_MONEY": "Airtel Money"
+      },
+      "ok": "Confirm payment",
+      "cancel": "Back"
+    },
+    "confirmCancel": {
+      "title": "Cancel this invoice?",
+      "body": "It stays in your history with its number, marked as cancelled. This can't be undone.",
+      "ok": "Cancel invoice",
+      "cancel": "Keep invoice"
+    },
+    "confirmDelete": {
+      "title": "Delete this draft?",
+      "body": "It has no number yet: numbering isn't affected.",
+      "ok": "Delete",
+      "cancel": "Keep"
+    },
+    "confirmAccept": {
+      "title": "Mark this quote as accepted?",
+      "body": "Only if your client gave you their approval (message, call…). The deal moves to “won” and the quote can no longer be edited.",
+      "ok": "Mark as accepted",
+      "cancel": "Back"
+    },
+    "confirmDecline": {
+      "title": "Mark this quote as declined?",
+      "body": "Your client will no longer be able to accept it online. This can't be undone.",
+      "ok": "Mark as declined",
+      "cancel": "Back"
+    },
+    "deal": {
+      "title": "Quotes",
+      "newQuote": "Create a quote",
+      "none": "No quotes for this deal."
+    }
+  },
+  "Pdf": {
+    "lang": "en",
+    "quoteTitle": "Quote",
+    "invoiceTitle": "Invoice",
+    "draftNumber": "Draft",
+    "draftBanner": "PREVIEW: draft without a number, not a valid document",
+    "dates": {
+      "date": "Date",
+      "issuedOn": "Issue date",
+      "validUntil": "Valid until",
+      "dueOn": "Due date",
+      "paidAt": "Paid on",
+      "acceptedAt": "Accepted on"
+    },
+    "clientQuote": "Client",
+    "clientInvoice": "Billed to",
+    "columns": {
+      "description": "Description",
+      "quantity": "Qty",
+      "unitPrice": "Unit price",
+      "total": "Total"
+    },
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "total": "Total",
+    "amountPaid": "Already paid",
+    "amountDue": "Amount due",
+    "stamp": {
+      "paid": "PAID",
+      "accepted": "ACCEPTED",
+      "cancelled": "CANCELLED"
+    },
+    "payment": {
+      "title": "Payment",
+      "online": "Pay online:"
+    },
+    "online": {
+      "title": "View this document online",
+      "acceptTitle": "Accept this quote online"
+    },
+    "taxRegime": {
+      "tva": "VAT registered",
+      "impot_synthetique": "Synthetic tax (IS)"
+    },
+    "nif": "NIF: {value}",
+    "stat": "STAT: {value}",
+    "madeWith": "Invoiced with Ivonea OS",
+    "page": "Page {page} of {pages}"
+  },
+  "Share": {
+    "quoteMessage": "Hello {client}, here is quote {number} from {business} ({total}). You can view and accept it here: {url}",
+    "invoiceMessage": "Hello {client}, here is invoice {number} from {business} ({total}). You can view and pay it here: {url}",
+    "quoteSubject": "Quote {number} from {business}",
+    "invoiceSubject": "Invoice {number} from {business}",
+    "quoteCta": "View quote",
+    "invoiceCta": "View invoice",
+    "footer": "Sent with Ivonea OS."
+  },
+  "Public": {
+    "metaTitle": "Document",
+    "from": "From",
+    "to": "To",
+    "status": {
+      "quote": {
+        "sent": "Awaiting your approval",
+        "accepted": "Accepted",
+        "declined": "Declined",
+        "expired": "Expired"
+      },
+      "invoice": {
+        "sent": "To pay",
+        "overdue": "Overdue",
+        "paid": "Paid",
+        "cancelled": "Cancelled"
+      }
+    },
+    "accept": {
+      "title": "Your approval",
+      "intro": "By clicking “I accept”, you accept this {total} quote from {business}.",
+      "button": "I accept",
+      "done": "Thank you! You accepted this quote on {date}.",
+      "justAccepted": "Thank you, your approval has been recorded.",
+      "outdated": "This quote has just been updated. Please review this new version before accepting it.",
+      "unavailable": "This quote can no longer be accepted. Contact {business} to get a new one.",
+      "error": "Your approval couldn't be recorded. Please try again in a moment.",
+      "confirm": "I confirm my agreement",
+      "confirmIntro": "Confirm? Your agreement to quote {number} will be recorded and cannot be undone from this page.",
+      "cancel": "Not now"
+    },
+    "payment": {
+      "title": "How to pay",
+      "amountDue": "Amount due:",
+      "manual": "Payment details",
+      "payOnline": "Pay now",
+      "none": "Contact {business} to arrange payment.",
+      "paid": "This invoice is paid. Thank you!",
+      "cancelled": "This invoice has been cancelled."
+    },
+    "download": "Download PDF",
+    "legal": "Issuer's legal details",
+    "notFound": {
+      "title": "Document not found",
+      "body": "This link doesn't exist or is no longer valid. Ask the person who sent it for a new link."
+    }
   }
 }

@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import type { NextRequest } from "next/server";
+import { publicAppUrl } from "@/lib/app-url";
 import { sendEmail } from "@/lib/email";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notifyDueReminders, renderDigest } from "@/modules/crm/reminder-notifications";
@@ -25,17 +26,6 @@ export async function GET(request: NextRequest) {
     now,
   });
   return Response.json(result);
-}
-
-function publicAppUrl(): string | null {
-  const value = process.env.APP_URL?.trim();
-  if (!value) return null;
-  try {
-    return new URL(value).origin;
-  } catch {
-    console.error("[cron] APP_URL invalide, origine de la requête utilisée.");
-    return null;
-  }
 }
 
 function sameSecret(given: string, expected: string): boolean {

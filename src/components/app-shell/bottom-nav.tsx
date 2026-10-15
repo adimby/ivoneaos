@@ -18,7 +18,8 @@ import { cn } from "../ui/cn";
 const TABS = [
   { href: "/tableau-de-bord", label: "home", Icon: HomeIcon },
   { href: "/pipeline", label: "pipeline", Icon: PipelineIcon },
-  { href: "/factures", label: "invoices", Icon: InvoiceIcon },
+  // Devis et factures : le même onglet.
+  { href: "/factures", label: "invoices", Icon: InvoiceIcon, also: "/devis" },
 ] as const;
 
 const MORE = [
@@ -55,8 +56,9 @@ export function BottomNav({ locale }: { locale: string }) {
     <>
     <nav aria-label={t("label")} className="on-dark fixed inset-x-0 bottom-0 z-20 bg-lagoon pb-safe text-sand shadow-[0_-4px_16px_rgb(11_42_46/0.15)]">
       <ul className="px-safe mx-auto flex max-w-md gap-1 py-1">
-        {TABS.map(({ href, label, Icon }) => {
-          const active = isActive(href);
+        {TABS.map((tab) => {
+          const { href, label, Icon } = tab;
+          const active = isActive(href) || ("also" in tab && isActive(tab.also));
           return (
             <li key={href} className="flex flex-1">
               <Link

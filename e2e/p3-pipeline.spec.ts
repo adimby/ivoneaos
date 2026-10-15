@@ -69,6 +69,8 @@ test("P3 : contact → opportunité → étape suivante → note", async ({ page
   await expect(prospect.getByTestId("deal-card")).toContainText("Logo boutique");
   await expect(prospect.getByTestId("stage-total")).toHaveText(money("450 000 Ar"));
   await prospect.getByTestId("deal-card").click();
+  // Navigation client terminée avant de lire l'URL (sinon c'est encore /pipeline).
+  await expect(page).toHaveURL(/\/fr\/pipeline\/[0-9a-f-]{36}$/);
 
   // Étape suivante : formulaire simple, utilisable avant le chargement du JavaScript.
   const { plain, context } = await pageBeforeJavaScript(page);

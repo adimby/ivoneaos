@@ -27,6 +27,18 @@ describe("lineTotal", () => {
     expect(lineTotal(2, 50000)).toBe(100000);
     expect(lineTotal(1.5, 333)).toBe(500);
   });
+
+  it("arrondit comme la base, sans erreur de flottant", () => {
+    // 1,15 × 10 = 11,5 → 12 (Math.round(1.15 * 10) donnerait 11).
+    expect(lineTotal(1.15, 10)).toBe(12);
+    expect(lineTotal(2.5, 30001)).toBe(75003);
+    expect(lineTotal(0.01, 49)).toBe(0);
+    expect(lineTotal(0.01, 50)).toBe(1);
+  });
+
+  it("reste exact pour de grands montants", () => {
+    expect(lineTotal(99999999.99, 10_000_000)).toBe(999_999_999_900_000);
+  });
 });
 
 describe("convertMinor", () => {
