@@ -3,10 +3,272 @@
     "title": "Ivonea OS",
     "description": "The Malagasy freelancer's office: clients, quotes, invoices and payments in one place."
   },
+  "Common": {
+    "brand": "Ivonea OS",
+    "loading": "Loading…",
+    "back": "Back",
+    "close": "Close",
+    "comingSoon": "Coming soon",
+    "languages": {
+      "fr": "Français",
+      "en": "English"
+    },
+    "languageLabel": "Language"
+  },
   "Home": {
+    "eyebrow": "For freelancers in Madagascar",
     "title": "Find, win, deliver, get paid.",
     "subtitle": "Clients, quotes, invoices and payment by MVola, Orange Money or Airtel Money, from your phone.",
-    "cta": "Coming soon"
+    "cta": "Get started",
+    "ctaHint": "Free to start. An email is all you need, no password.",
+    "points": {
+      "crm": "Your leads and clients in one place, with reminders so none slips through.",
+      "quotes": "Professional quotes and invoices in ariary, euro or dollar, with NIF and STAT.",
+      "pay": "Your clients pay in one tap by mobile money."
+    }
+  },
+  "Auth": {
+    "metaTitle": "Sign in",
+    "title": "Sign in",
+    "intro": "Enter your email address: we will send you a 6-digit code. No password to remember.",
+    "emailLabel": "Email address",
+    "sendCode": "Send me a code",
+    "codeTitle": "Enter your code",
+    "codeIntro": "Code sent to {email}. Remember to check your spam folder.",
+    "codeLabel": "6-digit code",
+    "verify": "Sign in",
+    "resend": "Send a new code",
+    "resent": "New code sent.",
+    "changeEmail": "Use another address",
+    "signOut": "Sign out",
+    "errors": {
+      "invalid_email": "This email address is not valid. Check it (example: name@gmail.com).",
+      "invalid_code_format": "The code has 6 digits.",
+      "code_invalid": "This code is wrong or has expired. Check it, or ask for a new code.",
+      "rate_limited": "Too many requests at once. Wait a minute before trying again.",
+      "unknown": "Sign-in did not go through. Check your internet connection and try again."
+    }
+  },
+  "Onboarding": {
+    "metaTitle": "Welcome",
+    "progress": "Step {current} of {total}",
+    "step1": {
+      "title": "Let's get to know you",
+      "intro": "4 questions to fit Ivonea OS to your business."
+    },
+    "step2": {
+      "title": "Your business profile",
+      "intro": "This information appears on your quotes and invoices. NIF, STAT and tax regime are required to invoice."
+    },
+    "trade": {
+      "label": "Your trade",
+      "hint": "For example: graphic designer, developer, translator."
+    },
+    "experience": {
+      "label": "How long have you been freelancing?",
+      "lt1": "Less than a year",
+      "1to3": "1 to 3 years",
+      "gt3": "More than 3 years"
+    },
+    "clients": {
+      "label": "How many clients do you have right now?",
+      "hint": "0 if you are starting out: a great time to begin."
+    },
+    "incomeGoal": {
+      "label": "Your monthly income goal",
+      "hint": "In ariary, for example 1,500,000."
+    },
+    "levelIntro": "Your starting point",
+    "next": "Continue",
+    "submit": "Finish",
+    "fixErrors": "Fix the highlighted fields to continue."
+  },
+  "Levels": {
+    "lancer": {
+      "name": "Launch",
+      "description": "Find your first clients."
+    },
+    "remplir": {
+      "name": "Fill your calendar",
+      "description": "Have projects all year round."
+    },
+    "grandir": {
+      "name": "Grow",
+      "description": "Raise your prices and your income."
+    }
+  },
+  "Profile": {
+    "businessName": {
+      "label": "Business name",
+      "hint": "The name shown on your invoices."
+    },
+    "trade": {
+      "label": "Trade"
+    },
+    "logo": {
+      "label": "Logo (optional)",
+      "hint": "PNG, JPEG or WebP, 1 MB at most.",
+      "current": "Current logo",
+      "alt": "{name} logo",
+      "choose": "Choose an image",
+      "change": "Change image"
+    },
+    "address": {
+      "label": "Address",
+      "hint": "For example: Lot II A 12, Antananarivo."
+    },
+    "currency": {
+      "label": "Default currency",
+      "hint": "The currency of your dashboards. It can no longer change after your first invoice.",
+      "MGA": "Ariary (Ar)",
+      "EUR": "Euro (€)",
+      "USD": "US dollar ($)"
+    },
+    "nif": {
+      "label": "NIF",
+      "hint": "Tax identification number: 10 digits, on your tax card."
+    },
+    "stat": {
+      "label": "STAT",
+      "hint": "Statistical number: 17 digits. Spaces are accepted."
+    },
+    "taxRegime": {
+      "label": "Tax regime",
+      "hint": "Shown on your tax card.",
+      "tva": "VAT (TVA)",
+      "impot_synthetique": "Synthetic tax (impôt synthétique)"
+    },
+    "manual": {
+      "title": "Direct payment (optional)",
+      "intro": "Shown on your invoices for clients who pay without using a link."
+    },
+    "mvola": {
+      "label": "MVola number",
+      "hint": "10 digits, for example 034 12 345 67."
+    },
+    "rib": {
+      "label": "Bank details (RIB)",
+      "hint": "23 digits, on your bank details statement (RIB)."
+    },
+    "choose": "Choose…",
+    "save": "Save",
+    "saved": "Profile saved."
+  },
+  "FormErrors": {
+    "required": "This field is required.",
+    "too_long": "This text is too long.",
+    "invalid_number": "Enter a whole number, without decimals.",
+    "too_large": "This number is too large.",
+    "invalid_choice": "Choose an option.",
+    "nif_format": "The NIF has 10 digits.",
+    "stat_format": "The STAT has 17 digits.",
+    "mvola_format": "Invalid MVola number: 10 digits starting with 034 or 038.",
+    "rib_format": "Invalid bank details: 23 digits.",
+    "logo_too_large": "This logo is larger than 1 MB. Make it smaller and try again.",
+    "logo_type": "The logo must be a PNG, JPEG or WebP image.",
+    "logo_upload": "The logo could not be uploaded. Try again.",
+    "fix_errors": "Fix the highlighted fields."
+  },
+  "Nav": {
+    "label": "Main navigation",
+    "home": "Home",
+    "pipeline": "Pipeline",
+    "invoices": "Invoices",
+    "more": "More",
+    "contacts": "Contacts",
+    "settings": "Settings",
+    "signOut": "Sign out"
+  },
+  "Dashboard": {
+    "metaTitle": "Home",
+    "greeting": "Hello",
+    "level": "Level: {level}",
+    "checklist": {
+      "title": "Getting started",
+      "progress": "{done} of {total}",
+      "done": "Done",
+      "todo": "To do",
+      "allDone": "Well done, your getting-started list is complete."
+    },
+    "items": {
+      "contact": {
+        "lancer": {
+          "title": "Add your first lead",
+          "description": "Someone to offer your services to: a name and a phone number are enough."
+        },
+        "remplir": {
+          "title": "Add your current clients",
+          "description": "Find them here to follow up and invoice them."
+        }
+      },
+      "papi": {
+        "lancer": {
+          "title": "Connect Papi",
+          "description": "To get paid by MVola, Orange Money or Airtel Money."
+        },
+        "remplir": {
+          "title": "Connect Papi",
+          "description": "Your clients pay your invoices in one tap by mobile money."
+        }
+      },
+      "quote": {
+        "lancer": {
+          "title": "Prepare your first quote",
+          "description": "A clear proposal, sent by WhatsApp or email."
+        },
+        "remplir": {
+          "title": "Create a quote for your next project",
+          "description": "Once accepted, it becomes an invoice in one tap."
+        }
+      }
+    },
+    "blocks": {
+      "title": "Your business",
+      "collected": "Collected this month",
+      "pending": "Pending invoices",
+      "deals": "Open opportunities",
+      "reminders": "Today's reminders"
+    }
+  },
+  "Placeholder": {
+    "pipeline": "Pipeline",
+    "invoices": "Invoices",
+    "contacts": "Contacts",
+    "body": "This page is coming soon. You will follow your business here from your phone."
+  },
+  "Settings": {
+    "metaTitle": "Settings",
+    "title": "Settings",
+    "profile": "Business profile",
+    "language": {
+      "title": "Language",
+      "hint": "Language of the app."
+    },
+    "plan": {
+      "title": "Plan",
+      "decouverte": "Découverte",
+      "lancement": "Lancement",
+      "premier_client": "Premier client",
+      "contrat_signe": "Contrat signé",
+      "limits": {
+        "decouverte": "Free: 20 active contacts and 3 quotes or invoices sent per month.",
+        "paid": "Unlimited contacts, quotes and invoices."
+      },
+      "change": "To change plan, write to Ivonea."
+    },
+    "payments": {
+      "title": "Payment methods",
+      "description": "Papi for mobile money, and your direct payment details."
+    },
+    "account": {
+      "title": "Account"
+    }
+  },
+  "Payments": {
+    "metaTitle": "Payment methods",
+    "title": "Payment methods",
+    "body": "Connecting Papi is coming soon. Meanwhile, the MVola number and bank details from your profile are shown on your invoices.",
+    "backToSettings": "Back to settings"
   },
   "errors": {
     "db": {
@@ -20,7 +282,7 @@
       "invoice_due_before_issue": "The due date has already passed. Pick a date from today onwards.",
       "invoice_not_fully_paid": "The payment received does not cover the total. Record a payment for the remaining amount to mark the invoice paid.",
       "free_limit_reached": "You have sent 3 quotes or invoices this month, the limit of the Découverte plan. Contact Ivonea to move to the Lancement plan.",
-      "invoice_not_payable": "This invoice cannot receive a payment yet: send it first.",
+      "invoice_not_payable": "This invoice cannot receive a payment: it is still a draft or it has been cancelled.",
       "currency_mismatch": "The payment must be in the same currency as the invoice.",
       "amount_too_large": "This amount is too large. Check the quantity and the price.",
       "default_currency_locked": "Your main currency can no longer change: invoices have already been issued with it.",
@@ -30,6 +292,7 @@
       "payment_date_in_future": "The payment date is in the future. Enter the day you received the money.",
       "quantity_too_precise": "The quantity can have at most 2 decimals (for example 1.25).",
       "not_authenticated": "Your session has expired. Sign in again to continue.",
+      "payment_date_before_invoice": "The payment date is before the invoice was sent. Enter the day you received the money.",
       "unknown": "Something went wrong. Try again in a moment."
     }
   },
@@ -42,5 +305,16 @@
       "won": "Won",
       "lost": "Lost"
     }
+  },
+  "Errors": {
+    "title": "Oops, something went wrong",
+    "body": "This page couldn't load. Check your internet connection, then try again: your data is safe.",
+    "retry": "Try again",
+    "home": "Back to home"
+  },
+  "NotFound": {
+    "title": "Page not found",
+    "body": "This address doesn't lead to any page. It may have been mistyped.",
+    "home": "Back to home"
   }
 }

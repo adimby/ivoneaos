@@ -1,24 +1,80 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Palette de marque « Océan » (docs/spec-mvp.md). Contrastes AA vérifiés :
+ * - ink sur spray 12,9:1, sur sand-light 13,4:1 ; ink-muted sur spray 5,8:1, sur blanc 6,8:1
+ * - blanc sur terracotta 5,0:1 (bouton principal) ; blanc / spray sur lagoon 9,0:1 / 7,7:1
+ * - sand sur lagoon 5,2:1 (onglets inactifs) ; ink sur turquoise 4,5:1 (badges)
+ * - turquoise : accents, icônes et badges uniquement, jamais de texte blanc dessus (3,4:1)
+ * - terracotta en texte : seulement sur blanc (5,0:1), pas sur spray (4,3:1)
+ * - sand-strong sur blanc 4,3:1 : contour des champs (≥ 3:1 exigé)
+ * - danger sur blanc 7,3:1, sur spray 6,2:1
+ */
+@theme {
+  --color-lagoon: #01515a;
+  --color-lagoon-dark: #013c43;
+  --color-turquoise: #2e99ab;
+  --color-turquoise-soft: #d5ecf0;
+  --color-terracotta: #a45c36;
+  --color-terracotta-dark: #8a4a2a;
+  --color-spray: #e8edf0;
+  --color-sand: #c9c5ba;
+  --color-sand-strong: #7f7a6e;
+  --color-sand-light: #f4f1ea;
+  --color-ink: #0b2a2e;
+  --color-ink-muted: #45605f;
+  --color-danger: #a12a1f;
+  --color-danger-soft: #f8e4e1;
+  --color-success: #1e6b47;
+  --color-success-soft: #dcefe4;
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --radius-card: 1rem;
+  --shadow-card: 0 1px 2px rgb(11 42 46 / 0.06), 0 4px 16px rgb(11 42 46 / 0.06);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-}
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    color-scheme: light;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  body {
+    background: var(--color-spray);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-lagoon);
+    outline-offset: 2px;
+  }
+
+  /* Zones sombres (en-tête, barre de navigation) : anneau clair. */
+  .on-dark :focus-visible {
+    outline-color: var(--color-spray);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+@layer utilities {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .px-safe {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
