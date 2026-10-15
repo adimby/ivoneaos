@@ -7,7 +7,18 @@ const DEFAULT_FROM = "Ivonea OS <notifications@ivonea.com>";
 // skipped : envoi désactivé (pas de clé).
 export type SendResult = "sent" | "skipped" | "failed";
 
-export type Email = { to: string; subject: string; text: string; html: string };
+// fromName : nom affiché devant « via Ivonea OS » (document d'une freelance) ;
+// replyTo : où arrive la réponse du destinataire (la freelance, pas Ivonea).
+export type Email = { to: string; subject: string; text: string; html: string; fromName?: string; replyTo?: string };
+
+// Expéditeur « <Nom> via Ivonea OS <adresse> » : même adresse (domaine vérifié), nom entre
+// guillemets, échappé (guillemets, barres obliques inverses, retours à la ligne retirés).
+export function fromHeader(base: string, fromName?: string): string {
+  if (!fromName) return base;
+  const address = /<([^>]+)>/.exec(base)?.[1] ?? base.trim();
+  const name = `${fromName} via Ivonea OS`.replace(/[\r\n]+/g, " ").replace(/(["\\])/g, "\\$1");
+  return `"${name}" <${address}>`;
+}
 
 export async function sendEmail(email: Email): Promise<SendResult> {
   const key = process.env.RESEND_API_KEY;
@@ -20,8 +31,9 @@ export async function sendEmail(email: Email): Promise<SendResult> {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM || DEFAULT_FROM,
+        from: fromHeader(process.env.EMAIL_FROM || DEFAULT_FROM, email.fromName),
         to: [email.to],
+        ...(email.replyTo ? { reply_to: email.replyTo } : {}),
         subject: email.subject,
         text: email.text,
         html: email.html,

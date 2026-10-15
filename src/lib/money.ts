@@ -30,8 +30,15 @@ export function formatMoney(
   }).format(amount);
 }
 
+// Total d'une ligne, comme la base : round(quantité × prix unitaire), demi arrondi vers
+// le haut. Quantité à 2 décimales au plus : calcul exact en centièmes (BigInt), sans
+// l'erreur des flottants (1,15 × 10 = 11,499… en JavaScript, 11,5 → 12 en base).
 export function lineTotal(quantity: number, unitPriceMinor: number): number {
-  return Math.round(quantity * unitPriceMinor);
+  if (!Number.isSafeInteger(unitPriceMinor) || unitPriceMinor < 0 || !(quantity >= 0)) {
+    throw new RangeError(`Ligne invalide : ${quantity} × ${unitPriceMinor}`);
+  }
+  const hundredths = BigInt(Math.round(quantity * 100));
+  return Number((hundredths * BigInt(unitPriceMinor) + BigInt(50)) / BigInt(100));
 }
 
 // Conversion vers la devise par défaut du workspace avec invoices.exchange_rate.

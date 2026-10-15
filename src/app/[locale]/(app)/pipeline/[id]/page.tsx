@@ -11,6 +11,7 @@ import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { formatMoney, type Currency } from "@/lib/money";
 import { toLocalInputValue } from "@/lib/time";
+import { DealQuotes } from "@/modules/billing/components/deal-quotes";
 import { archiveDeal } from "@/modules/crm/actions";
 import { ActivityForm } from "@/modules/crm/components/activity-form";
 import { ReminderForm } from "@/modules/crm/components/reminder-form";
@@ -124,6 +125,8 @@ export default async function DealPage({ params }: Props) {
           )}
         </div>
       )}
+
+      <DealQuotes workspaceId={workspace.id} dealId={deal.id} client={contact?.name ?? ""} locale={locale} canCreate={active} />
 
       {active && (
         <>

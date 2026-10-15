@@ -226,3 +226,20 @@ export async function listTodayReminders(workspaceId: string, now: Date) {
 }
 
 export type Reminder = Awaited<ReturnType<typeof listTodayReminders>>["reminders"][number];
+
+// Exposé aux autres modules (listes de devis et factures) : nom et entreprise des
+// contacts demandés, archivés compris (un document reste lié à son client).
+export async function getContactNames(workspaceId: string, ids: string[]) {
+  const unique = [...new Set(ids)].filter((id) => UUID.test(id));
+  const names = new Map<string, { name: string; company_name: string | null }>();
+  if (unique.length === 0) return names;
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("contacts")
+    .select("id, name, company_name")
+    .eq("workspace_id", workspaceId)
+    .in("id", unique);
+  if (error) throw error;
+  data.forEach((c) => names.set(c.id, { name: c.name, company_name: c.company_name }));
+  return names;
+}

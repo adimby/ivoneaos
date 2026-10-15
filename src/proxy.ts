@@ -8,7 +8,10 @@ import { safeNextPath } from "./modules/auth/next-path";
 const handleI18n = createIntlMiddleware(routing);
 
 // Pages réservées aux personnes connectées (premier segment après la langue).
-const PROTECTED = new Set(["tableau-de-bord", "pipeline", "factures", "contacts", "reglages", "plus", "demarrage"]);
+const PROTECTED = new Set(["tableau-de-bord", "pipeline", "factures", "devis", "contacts", "reglages", "plus", "demarrage"]);
+// Page publique /fr/p/<jeton> (pas le PDF /p/<jeton>/pdf, qui répond 404 lui-même).
+const PUBLIC_PAGE = /^\/[a-z]{2}\/p\/([^/]+)\/?$/;
+const TOKEN = /^[A-Za-z0-9_-]{32}$/;
 
 export default async function proxy(request: NextRequest) {
   const response = handleI18n(request);
@@ -48,25 +51,39 @@ export default async function proxy(request: NextRequest) {
   // session et renvoie elle-même vers /connexion?next=… si elle a expiré.
   if (request.method === "POST" && request.headers.has("next-action")) return response;
 
+  // Page publique d'un document : un jeton inconnu ou un brouillon répond 404 avant tout
+  // envoi (une page qui s'affiche en streaming part en 200). Une requête légère ; en cas
+  // d'erreur de la base, la page décide elle-même.
+  if (section === "p" && request.method === "GET") {
+    const token = PUBLIC_PAGE.exec(request.nextUrl.pathname)?.[1];
+    if (token !== undefined) {
+      const { data: exists, error } = TOKEN.test(token)
+        ? await supabase.rpc("public_document_exists", { token })
+        : { data: false, error: null };
+      if (!error && !exists) {
+        return keepingCookies(NextResponse.rewrite(new URL(`/${locale}/p/introuvable`, request.url)), response);
+      }
+    }
+  }
+
   if (!signedIn && PROTECTED.has(section)) {
     const target = new URL(`/${locale}/connexion`, request.url);
     target.searchParams.set("next", request.nextUrl.pathname + request.nextUrl.search);
-    return redirectKeepingCookies(target, response);
+    return keepingCookies(NextResponse.redirect(target), response);
   }
   if (signedIn && section === "connexion") {
     const next = safeNextPath(request.nextUrl.searchParams.get("next")) ?? "/tableau-de-bord";
-    return redirectKeepingCookies(new URL(`/${locale}${next}`, request.url), response);
+    return keepingCookies(NextResponse.redirect(new URL(`/${locale}${next}`, request.url)), response);
   }
   return response;
 }
 
 // Conserve les cookies de session rafraîchis (et l'en-tête Cache-Control posé par Supabase).
-function redirectKeepingCookies(target: URL, from: NextResponse) {
-  const redirect = NextResponse.redirect(target);
-  from.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+function keepingCookies(to: NextResponse, from: NextResponse) {
+  from.cookies.getAll().forEach((cookie) => to.cookies.set(cookie));
   const cacheControl = from.headers.get("cache-control");
-  if (cacheControl) redirect.headers.set("cache-control", cacheControl);
-  return redirect;
+  if (cacheControl) to.headers.set("cache-control", cacheControl);
+  return to;
 }
 
 export const config = {

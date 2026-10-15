@@ -47,6 +47,11 @@ export const profileSchema = z.object({
   tax_regime: z.enum(["tva", "impot_synthetique"], { error: "invalid_choice" }),
   mvola: optionalMvola,
   rib: optionalRib,
+  // Une ligne libre (IBAN et BIC, PayPal, Wise…), espaces et retours à la ligne réduits.
+  other: z
+    .string()
+    .transform((v) => v.replace(/\s+/g, " ").trim())
+    .pipe(z.string().max(300, "too_long")),
 });
 
 export type ProfileInput = z.output<typeof profileSchema>;

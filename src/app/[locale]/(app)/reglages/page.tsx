@@ -100,6 +100,7 @@ export default async function SettingsPage({ params }: PageProps<"/[locale]/regl
             tax_regime: workspace.tax_regime ?? "",
             mvola: manual.mvola,
             rib: manual.rib,
+            other: manual.other,
           }}
         />
       </section>

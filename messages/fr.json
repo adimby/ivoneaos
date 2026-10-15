@@ -152,7 +152,11 @@
     },
     "choose": "Choisir…",
     "save": "Enregistrer",
-    "saved": "Profil enregistré."
+    "saved": "Profil enregistré.",
+    "otherPayment": {
+      "label": "Autres coordonnées (facultatif)",
+      "hint": "Pour tes clients à l'étranger : IBAN et BIC, PayPal, Wise… Affiché tel quel sur tes factures."
+    }
   },
   "FormErrors": {
     "required": "Ce champ est obligatoire.",
@@ -172,7 +176,13 @@
     "phone_format": "Numéro invalide. Exemple : 034 12 345 67, ou +33 6 12 34 56 78 pour l'étranger.",
     "email_format": "Adresse e-mail invalide (exemple : nom@gmail.com).",
     "reachable_required": "Indique un téléphone ou un e-mail pour pouvoir joindre ce contact.",
-    "date_format": "Date invalide."
+    "date_format": "Date invalide.",
+    "date_past": "Cette date est déjà passée. Choisis une date à partir d'aujourd'hui.",
+    "discount_too_large": "La remise doit être plus petite que le sous-total.",
+    "lines_required": "Ajoute au moins une ligne avec une description et un prix.",
+    "quantity_format": "Quantité invalide : un nombre positif, 2 décimales au plus (par exemple 1 ou 2,5).",
+    "rate_format": "Taux invalide. Par exemple 5 000 pour 1 € = 5 000 Ar.",
+    "too_many_lines": "50 lignes au plus par document."
   },
   "Nav": {
     "label": "Navigation principale",
@@ -295,6 +305,7 @@
       "quantity_too_precise": "La quantité accepte au plus 2 décimales (par exemple 1,25).",
       "not_authenticated": "Ta session a expiré. Reconnecte-toi pour continuer.",
       "payment_date_before_invoice": "La date du paiement est antérieure à l'envoi de la facture. Indique le jour où tu as reçu l'argent.",
+      "too_many_lines": "Un document compte 50 lignes au plus. Regroupe certaines prestations.",
       "unknown": "Une erreur est survenue. Réessaie dans un instant."
     }
   },
@@ -550,5 +561,327 @@
     "overdue": "en retard depuis le {date}",
     "cta": "Ouvrir Ivonea OS",
     "footer": "Tu reçois cet e-mail parce que tu as programmé ces rappels dans Ivonea OS."
+  },
+  "Billing": {
+    "metaList": "Devis et factures",
+    "title": "Devis et factures",
+    "tabs": {
+      "label": "Type de document",
+      "invoices": "Factures",
+      "quotes": "Devis"
+    },
+    "newQuote": "Nouveau devis",
+    "newInvoice": "Nouvelle facture",
+    "empty": {
+      "quotes": {
+        "title": "Aucun devis pour l'instant",
+        "body": "Crée un devis depuis une opportunité du pipeline : le client est déjà rempli."
+      },
+      "invoices": {
+        "title": "Aucune facture pour l'instant",
+        "body": "Un devis accepté devient une facture en un geste. Tu peux aussi en créer une directement."
+      }
+    },
+    "truncated": "Les {shown} plus récents sont affichés sur {total}.",
+    "draft": "Brouillon",
+    "status": {
+      "quote": {
+        "draft": "Brouillon",
+        "sent": "Envoyé",
+        "accepted": "Accepté",
+        "declined": "Refusé",
+        "expired": "Expiré"
+      },
+      "invoice": {
+        "draft": "Brouillon",
+        "sent": "Envoyée",
+        "paid": "Payée",
+        "overdue": "En retard",
+        "cancelled": "Annulée"
+      }
+    },
+    "quoteTitle": "Devis {number}",
+    "quoteDraftTitle": "Devis (brouillon)",
+    "quoteMetaTitle": "Devis",
+    "invoiceTitle": "Facture {number}",
+    "invoiceDraftTitle": "Facture (brouillon)",
+    "invoiceMetaTitle": "Facture",
+    "validUntil": "Valable jusqu'au {date}",
+    "dueOn": "À payer avant le {date}",
+    "backToList": "Devis et factures",
+    "form": {
+      "newQuoteTitle": "Nouveau devis",
+      "editQuoteTitle": "Modifier le devis",
+      "newInvoiceTitle": "Nouvelle facture",
+      "editInvoiceTitle": "Modifier la facture",
+      "back": "Retour",
+      "client": {
+        "label": "Client",
+        "fixed": "Client de l'opportunité « {deal} ».",
+        "fixedEdit": "Le client d'un document déjà enregistré ne change pas ici.",
+        "truncated": "Seuls les {shown} premiers contacts (sur {total}) sont proposés."
+      },
+      "currency": {
+        "label": "Devise"
+      },
+      "language": {
+        "label": "Langue du document",
+        "hint": "Langue du PDF et de la page vue par ton client."
+      },
+      "languages": {
+        "fr": "Français",
+        "en": "English"
+      },
+      "lines": {
+        "title": "Prestations",
+        "line": "Ligne {n}",
+        "description": "Description",
+        "descriptionHint": "Par exemple : Création du logo.",
+        "quantity": "Quantité",
+        "unitPrice": "Prix unitaire",
+        "lineTotal": "Total de la ligne",
+        "add": "Ajouter une ligne",
+        "remove": "Retirer la ligne {n}"
+      },
+      "discount": {
+        "label": "Remise (facultatif)",
+        "hint": "Montant retiré du total, par exemple 50 000."
+      },
+      "validUntil": {
+        "label": "Valable jusqu'au",
+        "hint": "Après cette date, ton client ne peut plus accepter le devis."
+      },
+      "dueOn": {
+        "label": "À payer avant le"
+      },
+      "rate": {
+        "label": "Taux de change vers {default}",
+        "hint": "Combien vaut 1 {currency} en {default}. Il sert à ton tableau de bord, pas au client.",
+        "converted": "Soit environ {amount}."
+      },
+      "subtotal": "Sous-total",
+      "discountLine": "Remise",
+      "total": "Total",
+      "create": "Enregistrer le brouillon",
+      "save": "Enregistrer",
+      "sentWarning": "Ce devis est déjà envoyé. Si tu le modifies, ton client verra la nouvelle version et devra l'accepter à nouveau.",
+      "noContacts": {
+        "title": "Ajoute d'abord un contact",
+        "body": "Un devis ou une facture est toujours adressé à un contact.",
+        "action": "Nouveau contact"
+      }
+    },
+    "detail": {
+      "client": "Client :",
+      "deal": "Opportunité :",
+      "lines": "Prestations",
+      "preview": "Voir l'aperçu PDF",
+      "edit": "Modifier",
+      "delete": "Supprimer le brouillon",
+      "sendQuote": "Envoyer le devis",
+      "sendInvoice": "Envoyer la facture",
+      "sendQuoteHint": "Le devis reçoit son numéro et un lien court à partager avec ton client.",
+      "sendInvoiceHint": "La facture reçoit son numéro définitif et ne pourra plus être modifiée.",
+      "resendQuote": "Renvoyer le devis",
+      "expiredHint": "La validité de ce devis est passée. Modifie la date de validité puis renvoie-le.",
+      "accept": "Marquer accepté",
+      "decline": "Marquer refusé",
+      "convert": "Transformer en facture",
+      "openInvoice": "Voir la facture {number}",
+      "openDraftInvoice": "Voir la facture (brouillon)",
+      "markPaid": "Marquer payée",
+      "cancel": "Annuler la facture",
+      "fromQuote": "Créée depuis le devis {number}",
+      "subtotal": "Sous-total",
+      "discount": "Remise",
+      "total": "Total",
+      "amountPaid": "Déjà payé : {amount}",
+      "amountDue": "Reste à payer : {amount}",
+      "inDefault": "Soit environ {amount} au taux de {rate}.",
+      "rateMissing": "Indique le taux de change vers {default} avant d'envoyer cette facture.",
+      "taxInfoMissing": "Ajoute ton NIF, ton STAT et ton régime fiscal dans Réglages avant d'émettre une facture.",
+      "openSettings": "Ouvrir les réglages",
+      "issuedOn": "Émise le {date}",
+      "paidAt": "Payée le {date}",
+      "acceptedAt": "Accepté le {date}",
+      "sentAt": "Envoyé le {date}",
+      "acceptedHint": "Ton client a dit oui. Transforme le devis en facture : mêmes lignes, même client.",
+      "sentHint": "En attente de la réponse de ton client. Il peut accepter en ligne, ou tu peux le marquer accepté toi-même.",
+      "quantityTimes": "{quantity} × {price}"
+    },
+    "share": {
+      "title": "Partager avec ton client",
+      "link": "Lien du document",
+      "copy": "Copier le lien",
+      "copied": "Lien copié",
+      "whatsapp": "Envoyer par WhatsApp",
+      "email": "Envoyer par e-mail",
+      "emailPhone": "E-mail depuis mon téléphone",
+      "download": "Télécharger le PDF",
+      "open": "Voir la page de mon client"
+    },
+    "notices": {
+      "sent": "C'est envoyé ! Partage maintenant le lien avec ton client.",
+      "accepted": "Devis accepté. Tu peux le transformer en facture.",
+      "declined": "Devis marqué refusé.",
+      "converted": "Facture créée depuis le devis. Vérifie-la, puis envoie-la.",
+      "paid": "Facture marquée payée.",
+      "cancelled": "Facture annulée.",
+      "deleted": "Brouillon supprimé."
+    },
+    "email": {
+      "sent": "E-mail envoyé à ton client.",
+      "skipped": "L'envoi d'e-mails n'est pas encore activé. Utilise le lien, WhatsApp ou l'e-mail de ton téléphone.",
+      "failed": "L'e-mail n'a pas pu partir. Réessaie, ou partage le lien par WhatsApp.",
+      "no_email": "Ce client n'a pas d'adresse e-mail. Ajoute-la sur sa fiche, ou partage le lien par WhatsApp.",
+      "throttled": "Cet e-mail vient déjà de partir. Attends 2 minutes avant de le renvoyer."
+    },
+    "paid": {
+      "title": "Marquer la facture payée ?",
+      "body": "Enregistre le paiement de {amount} reçu directement de ton client.",
+      "method": "Reçu par",
+      "methods": {
+        "manual": "Espèces ou virement",
+        "MVOLA": "MVola",
+        "ORANGE_MONEY": "Orange Money",
+        "AIRTEL_MONEY": "Airtel Money"
+      },
+      "ok": "Confirmer le paiement",
+      "cancel": "Retour"
+    },
+    "confirmCancel": {
+      "title": "Annuler cette facture ?",
+      "body": "Elle reste dans ton historique avec son numéro, marquée annulée. Ce choix est définitif.",
+      "ok": "Annuler la facture",
+      "cancel": "Garder la facture"
+    },
+    "confirmDelete": {
+      "title": "Supprimer ce brouillon ?",
+      "body": "Il n'a pas encore de numéro : la numérotation n'est pas touchée.",
+      "ok": "Supprimer",
+      "cancel": "Garder"
+    },
+    "confirmAccept": {
+      "title": "Marquer ce devis accepté ?",
+      "body": "Seulement si ton client t'a donné son accord (message, appel…). L'opportunité passe en « gagnée » et le devis ne peut plus être modifié.",
+      "ok": "Marquer accepté",
+      "cancel": "Retour"
+    },
+    "confirmDecline": {
+      "title": "Marquer ce devis refusé ?",
+      "body": "Ton client ne pourra plus l'accepter en ligne. Ce choix est définitif.",
+      "ok": "Marquer refusé",
+      "cancel": "Retour"
+    },
+    "deal": {
+      "title": "Devis",
+      "newQuote": "Créer un devis",
+      "none": "Aucun devis pour cette opportunité."
+    }
+  },
+  "Pdf": {
+    "lang": "fr",
+    "quoteTitle": "Devis",
+    "invoiceTitle": "Facture",
+    "draftNumber": "Brouillon",
+    "draftBanner": "APERÇU : brouillon sans numéro, sans valeur de document",
+    "dates": {
+      "date": "Date",
+      "issuedOn": "Date d'émission",
+      "validUntil": "Valable jusqu'au",
+      "dueOn": "Échéance",
+      "paidAt": "Payée le",
+      "acceptedAt": "Accepté le"
+    },
+    "clientQuote": "Client",
+    "clientInvoice": "Facturé à",
+    "columns": {
+      "description": "Description",
+      "quantity": "Qté",
+      "unitPrice": "Prix unitaire",
+      "total": "Total"
+    },
+    "subtotal": "Sous-total",
+    "discount": "Remise",
+    "total": "Total",
+    "amountPaid": "Déjà payé",
+    "amountDue": "Reste à payer",
+    "stamp": {
+      "paid": "PAYÉE",
+      "accepted": "ACCEPTÉ",
+      "cancelled": "ANNULÉE"
+    },
+    "payment": {
+      "title": "Paiement",
+      "online": "Payer en ligne :"
+    },
+    "online": {
+      "title": "Consulter ce document en ligne",
+      "acceptTitle": "Accepter ce devis en ligne"
+    },
+    "taxRegime": {
+      "tva": "Assujetti à la TVA",
+      "impot_synthetique": "Impôt synthétique"
+    },
+    "nif": "NIF : {value}",
+    "stat": "STAT : {value}",
+    "madeWith": "Facturé avec Ivonea OS",
+    "page": "Page {page} sur {pages}"
+  },
+  "Share": {
+    "quoteMessage": "Bonjour {client}, voici le devis {number} de {business} ({total}). Vous pouvez le consulter et l'accepter ici : {url}",
+    "invoiceMessage": "Bonjour {client}, voici la facture {number} de {business} ({total}). Vous pouvez la consulter et la régler ici : {url}",
+    "quoteSubject": "Devis {number} de {business}",
+    "invoiceSubject": "Facture {number} de {business}",
+    "quoteCta": "Voir le devis",
+    "invoiceCta": "Voir la facture",
+    "footer": "Envoyé avec Ivonea OS."
+  },
+  "Public": {
+    "metaTitle": "Document",
+    "from": "De",
+    "to": "Pour",
+    "status": {
+      "quote": {
+        "sent": "En attente de votre accord",
+        "accepted": "Accepté",
+        "declined": "Refusé",
+        "expired": "Expiré"
+      },
+      "invoice": {
+        "sent": "À payer",
+        "overdue": "En retard",
+        "paid": "Payée",
+        "cancelled": "Annulée"
+      }
+    },
+    "accept": {
+      "title": "Votre accord",
+      "intro": "En cliquant sur « J'accepte », vous acceptez ce devis de {total} proposé par {business}.",
+      "button": "J'accepte",
+      "done": "Merci ! Vous avez accepté ce devis le {date}.",
+      "justAccepted": "Merci, votre accord est enregistré.",
+      "outdated": "Ce devis vient d'être modifié. Relisez cette nouvelle version avant de l'accepter.",
+      "unavailable": "Ce devis ne peut plus être accepté. Contactez {business} pour en recevoir un nouveau.",
+      "error": "Votre accord n'a pas pu être enregistré. Réessayez dans un instant.",
+      "confirm": "Je confirme mon accord",
+      "confirmIntro": "Vous confirmez ? Votre accord sur le devis {number} sera enregistré et ne pourra pas être annulé depuis cette page.",
+      "cancel": "Pas maintenant"
+    },
+    "payment": {
+      "title": "Comment payer",
+      "amountDue": "Montant à payer :",
+      "manual": "Coordonnées de paiement",
+      "payOnline": "Payer maintenant",
+      "none": "Contactez {business} pour convenir du paiement.",
+      "paid": "Cette facture est payée. Merci !",
+      "cancelled": "Cette facture a été annulée."
+    },
+    "download": "Télécharger le PDF",
+    "legal": "Mentions légales de l'émetteur",
+    "notFound": {
+      "title": "Document introuvable",
+      "body": "Ce lien n'existe pas ou n'est plus valable. Demandez un nouveau lien à la personne qui vous l'a envoyé."
+    }
   }
 }

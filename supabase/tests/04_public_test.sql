@@ -77,7 +77,7 @@ select is(jsonb_array_length((:'pq'::jsonb) -> 'lines'), 2, 'devis : lignes');
 select is((:'pq'::jsonb) #>> '{lines,0,description}', 'Logo', 'devis : lignes dans l''ordre');
 select is(
   (select array_agg(k order by k) from jsonb_object_keys(:'pq'::jsonb) k),
-  array['accepted_at', 'client', 'currency', 'discount', 'freelancer', 'lines', 'number', 'sent_at',
+  array['accepted_at', 'client', 'currency', 'discount', 'freelancer', 'language', 'lines', 'number', 'sent_at',
         'status', 'subtotal', 'total', 'type', 'valid_until', 'version'],
   'devis : aucune donnée interne (id, workspace, jeton, contact complet)'
 );

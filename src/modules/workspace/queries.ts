@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { parseManualInstructions } from "./manual-instructions";
 
 const WORKSPACE_COLUMNS =
-  "id, name, trade, level, default_currency, nif, stat, tax_regime, address, logo_path, plan, profile_completed_at";
+  "id, name, trade, level, default_currency, nif, stat, tax_regime, address, logo_path, invoice_footer, plan, profile_completed_at";
 
 // Au MVP, un freelance = un workspace (le plus ancien dont il est membre ; RLS).
 export const getCurrentWorkspace = cache(async () => {
