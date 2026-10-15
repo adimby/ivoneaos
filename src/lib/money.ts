@@ -59,3 +59,30 @@ export function convertMinor(
   }
   return result;
 }
+
+export const MAX_AMOUNT_MINOR = 1_000_000_000_000_000;
+
+// Montant saisi (« 450 000 », « 1 250,50 », « 1250.5 ») → unités mineures.
+// Espaces ignorés ; virgule ou point décimal ; pas de décimales en ariary, 2 au plus sinon.
+export function parseAmountInput(
+  input: string,
+  currency: Currency,
+): { ok: true; minor: number } | { ok: false; error: "invalid_number" | "too_large" } {
+  const compact = input.replace(/[\s  ]/g, "");
+  const digits = MINOR_DIGITS[currency];
+  const pattern = digits === 0 ? /^\d+$/ : /^\d+(?:[.,]\d{1,2})?$/;
+  if (!pattern.test(compact)) return { ok: false, error: "invalid_number" };
+  const [whole, fraction = ""] = compact.split(/[.,]/);
+  const minor = Number(whole) * 10 ** digits + Number(fraction.padEnd(digits, "0") || 0);
+  if (!Number.isSafeInteger(minor) || minor > MAX_AMOUNT_MINOR) return { ok: false, error: "too_large" };
+  return { ok: true, minor };
+}
+
+// Valeur d'un champ montant à partir d'unités mineures (« 1250,50 », « 450000 »).
+export function amountInputValue(amountMinor: number, currency: Currency): string {
+  const digits = MINOR_DIGITS[currency];
+  if (digits === 0) return String(amountMinor);
+  const whole = Math.floor(amountMinor / 10 ** digits);
+  const fraction = String(amountMinor % 10 ** digits).padStart(digits, "0");
+  return `${whole},${fraction}`;
+}

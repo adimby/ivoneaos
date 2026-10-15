@@ -76,3 +76,42 @@ export const WalletIcon = (p: ComponentProps<"svg">) => (
     <circle cx="16" cy="14.5" r="1.2" fill="currentColor" />
   </Icon>
 );
+export const PhoneIcon = (p: ComponentProps<"svg">) => (
+  <Icon {...p}>
+    <path d="M5 4h3.5l1.5 4-2 1.5a11 11 0 0 0 6.5 6.5l1.5-2 4 1.5V19a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z" />
+  </Icon>
+);
+export const ChatIcon = (p: ComponentProps<"svg">) => (
+  <Icon {...p}>
+    <path d="M4.5 19.5 6 15.6A8 8 0 1 1 8.6 18Z" />
+    <path d="M9 10.5h6M9 13.5h4" />
+  </Icon>
+);
+export const MailIcon = (p: ComponentProps<"svg">) => (
+  <Icon {...p}>
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <path d="m4 7 8 6 8-6" />
+  </Icon>
+);
+export const PlusIcon = (p: ComponentProps<"svg">) => (
+  <Icon {...p}>
+    <path d="M12 5v14M5 12h14" />
+  </Icon>
+);
+export const SearchIcon = (p: ComponentProps<"svg">) => (
+  <Icon {...p}>
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="m16 16 4.5 4.5" />
+  </Icon>
+);
+export const BellIcon = (p: ComponentProps<"svg">) => (
+  <Icon {...p}>
+    <path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15Z" />
+    <path d="M10 20.5a2 2 0 0 0 4 0" />
+  </Icon>
+);
+export const ArrowRightIcon = (p: ComponentProps<"svg">) => (
+  <Icon {...p}>
+    <path d="M5 12h14M13 6l6 6-6 6" />
+  </Icon>
+);

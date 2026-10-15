@@ -43,6 +43,11 @@ export default async function proxy(request: NextRequest) {
   if (!hasLocale(routing.locales, locale)) return response;
   const signedIn = Boolean(data?.claims);
 
+  // Action serveur (POST avec l'en-tête next-action) : jamais redirigée ici. Une
+  // redirection casserait la réponse attendue par la page ; l'action revérifie la
+  // session et renvoie elle-même vers /connexion?next=… si elle a expiré.
+  if (request.method === "POST" && request.headers.has("next-action")) return response;
+
   if (!signedIn && PROTECTED.has(section)) {
     const target = new URL(`/${locale}/connexion`, request.url);
     target.searchParams.set("next", request.nextUrl.pathname + request.nextUrl.search);

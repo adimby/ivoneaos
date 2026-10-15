@@ -7,6 +7,7 @@ import { cn } from "@/components/ui/cn";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { hasQuote } from "@/modules/billing/queries";
+import { TodayReminders } from "@/modules/crm/components/today-reminders";
 import { hasActiveContact } from "@/modules/crm/queries";
 import { checklistTextLevel, startChecklist } from "@/modules/onboarding/checklist";
 import { isPapiConnected } from "@/modules/payments/queries";
@@ -18,7 +19,8 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/tableau-
   return { title: t("metaTitle") };
 }
 
-const BLOCKS = ["collected", "pending", "deals", "reminders"] as const;
+// Blocs à venir (factures, opportunités par étape) ; « Aujourd'hui » (rappels) est en place.
+const BLOCKS = ["collected", "pending", "deals"] as const;
 
 export default async function DashboardPage({ params }: PageProps<"/[locale]/tableau-de-bord">) {
   const locale = (await params).locale as Locale;
@@ -42,6 +44,8 @@ export default async function DashboardPage({ params }: PageProps<"/[locale]/tab
         <h1 className="text-2xl font-bold text-lagoon">{workspace.name}</h1>
         <Badge className="self-start">{t("level", { level: tLevels(`${workspace.level}.name`) })}</Badge>
       </div>
+
+      <TodayReminders workspaceId={workspace.id} locale={locale} />
 
       <Card aria-labelledby="checklist-title" className="flex flex-col gap-4">
         <div className="flex items-baseline justify-between gap-3">

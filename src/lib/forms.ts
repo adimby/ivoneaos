@@ -31,12 +31,17 @@ const KEYS = new Set([
   "required",
   "too_long",
   "invalid_number",
+  "amount_format",
   "too_large",
   "invalid_choice",
   "nif_format",
   "stat_format",
   "mvola_format",
   "rib_format",
+  "phone_format",
+  "email_format",
+  "reachable_required",
+  "date_format",
 ]);
 function knownKey(message: string): string {
   return KEYS.has(message) ? message : "required";

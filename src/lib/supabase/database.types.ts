@@ -39,9 +39,9 @@ isOneToOne: false
                   ]
                 },"contacts": {
                   Row: {
-                    "archived_at": string | null,"company_name": string | null,"country": string,"created_at": string,"email": string | null,"id": string,"kind": Database["public"]['Enums']["contact_kind"],"name": string,"phone": string | null,"tags": (string)[],"updated_at": string,"workspace_id": string
+                    "archived_at": string | null,"company_name": string | null,"country": string,"created_at": string,"email": string | null,"id": string,"kind": Database["public"]['Enums']["contact_kind"],"name": string,"phone": string | null,"tags": (string)[],"updated_at": string,"workspace_id": string,"search_text": string | null
                   }
-                  ComputedFields: never
+                  ComputedFields: "search_text"
                   Insert: {
                     "archived_at"?: string | null,"company_name"?: string | null,"country"?: string,"created_at"?: string,"email"?: string | null,"id"?: string,"kind"?: Database["public"]['Enums']["contact_kind"],"name": string,"phone"?: string | null,"tags"?: (string)[],"updated_at"?: string,"workspace_id": string
                   }
@@ -345,14 +345,14 @@ isOneToOne: false
                   ]
                 },"reminders": {
                   Row: {
-                    "contact_id": string | null,"created_at": string,"deal_id": string | null,"done_at": string | null,"due_at": string,"id": string,"notified_at": string | null,"title": string,"updated_at": string,"workspace_id": string
+                    "contact_id": string | null,"created_at": string,"deal_id": string | null,"done_at": string | null,"due_at": string,"id": string,"notified_at": string | null,"notify_attempts": number,"notify_claimed_at": string | null,"title": string,"updated_at": string,"workspace_id": string,"about_active": boolean | null
                   }
-                  ComputedFields: never
+                  ComputedFields: "about_active"
                   Insert: {
-                    "contact_id"?: string | null,"created_at"?: string,"deal_id"?: string | null,"done_at"?: string | null,"due_at": string,"id"?: string,"notified_at"?: string | null,"title": string,"updated_at"?: string,"workspace_id": string
+                    "contact_id"?: string | null,"created_at"?: string,"deal_id"?: string | null,"done_at"?: string | null,"due_at": string,"id"?: string,"notified_at"?: string | null,"notify_attempts"?: number,"notify_claimed_at"?: string | null,"title": string,"updated_at"?: string,"workspace_id": string
                   }
                   Update: {
-                    "contact_id"?: string | null,"created_at"?: string,"deal_id"?: string | null,"done_at"?: string | null,"due_at"?: string,"id"?: string,"notified_at"?: string | null,"title"?: string,"updated_at"?: string,"workspace_id"?: string
+                    "contact_id"?: string | null,"created_at"?: string,"deal_id"?: string | null,"done_at"?: string | null,"due_at"?: string,"id"?: string,"notified_at"?: string | null,"notify_attempts"?: number,"notify_claimed_at"?: string | null,"title"?: string,"updated_at"?: string,"workspace_id"?: string
                   }
                   Relationships: [
                     {
@@ -429,8 +429,16 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "accept_quote":
+            "about_active":
+{ Args: { "": Database["public"]['Tables']["reminders"]['Row'] }; Returns: { error: true } & "the function public.about_active with parameter or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache"
+                           },
+"accept_quote":
 { Args: { "token": string,"version": string }; Returns: string
+                           },
+"claim_due_reminders":
+{ Args: { "p_cutoff": string,"p_lease"?: string,"p_limit"?: number }; Returns: {
+              "claimed_at": string,"contact_name": string,"deal_title": string,"due_at": string,"id": string,"title": string,"workspace_id": string
+            }[]
                            },
 "create_workspace":
 { Args: { "default_currency"?: Database["public"]['Enums']["currency"],"name": string,"trade"?: string }; Returns: string
@@ -456,14 +464,28 @@ isOneToOne: false
 "is_public_logo":
 { Args: { "object_name": string }; Returns: boolean
                            },
+"mark_reminders_notified":
+{ Args: { "p_claimed_at": string,"p_ids": (string)[] }; Returns: number
+                           },
 "my_workspace_ids":
 { Args: Record<PropertyKey, never>; Returns: string[]
                            },
 "next_document_number":
 { Args: { "p_doc_type": Database["public"]['Enums']["doc_type"],"p_workspace_id": string }; Returns: string
                            },
+"pipeline_totals":
+{ Args: { "p_workspace_id": string }; Returns: {
+              "amount_sum": number,"currency": Database["public"]['Enums']["currency"],"deal_count": number,"stage_id": string
+            }[]
+                           },
 "quote_version":
 { Args: { "p_quote_id": string }; Returns: string
+                           },
+"release_reminders":
+{ Args: { "p_claimed_at": string,"p_failed": boolean,"p_ids": (string)[] }; Returns: string[]
+                           },
+"search_text":
+{ Args: { "": Database["public"]['Tables']["contacts"]['Row'] }; Returns: { error: true } & "the function public.search_text with parameter or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache"
                            }
           }
           Enums: {

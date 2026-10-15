@@ -38,6 +38,10 @@
   html {
     -webkit-tap-highlight-color: transparent;
     color-scheme: light;
+    /* Champ atteint au clavier ou focalisé après une erreur : jamais caché sous l'en-tête
+       collant (haut) ni sous la barre d'action et la barre d'onglets (bas). */
+    scroll-padding-top: calc(4.5rem + env(safe-area-inset-top));
+    scroll-padding-bottom: calc(10rem + env(safe-area-inset-bottom));
   }
 
   body {
