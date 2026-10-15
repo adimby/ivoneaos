@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { formErrorMessage } from "@/modules/workspace/components/profile-form";
+import { PlanLimitLink } from "@/modules/workspace/components/plan-limit-link";
 import { restoreContact, restoreDeal, type CrmFormState } from "../actions";
 
 // Après un archivage : message et « Annuler » (désarchive et rouvre la fiche).
@@ -39,6 +40,7 @@ export function UndoBanner({
         </SubmitButton>
       </div>
       {state.formError && !pending && <Alert tone="error">{formErrorMessage(tAll, state.formError)}</Alert>}
+      {!pending && <PlanLimitLink error={state.formError} />}
     </form>
   );
 }

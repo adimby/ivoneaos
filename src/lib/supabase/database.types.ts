@@ -33,6 +33,12 @@ isOneToOne: false
       foreignKeyName: "activities_workspace_id_fkey"
       columns: ["workspace_id"]
 isOneToOne: false
+      referencedRelation: "guarantee_workspaces"
+      referencedColumns: ["workspace_id"]
+    },{
+      foreignKeyName: "activities_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
       referencedRelation: "workspaces"
       referencedColumns: ["id"]
     }
@@ -50,6 +56,12 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "contacts_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "guarantee_workspaces"
+      referencedColumns: ["workspace_id"]
+    },{
       foreignKeyName: "contacts_workspace_id_fkey"
       columns: ["workspace_id"]
 isOneToOne: false
@@ -75,6 +87,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "contacts"
       referencedColumns: ["workspace_id","id"]
+    },{
+      foreignKeyName: "deals_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "guarantee_workspaces"
+      referencedColumns: ["workspace_id"]
     },{
       foreignKeyName: "deals_workspace_id_fkey"
       columns: ["workspace_id"]
@@ -105,6 +123,12 @@ isOneToOne: false
       foreignKeyName: "document_emails_workspace_id_fkey"
       columns: ["workspace_id"]
 isOneToOne: false
+      referencedRelation: "guarantee_workspaces"
+      referencedColumns: ["workspace_id"]
+    },{
+      foreignKeyName: "document_emails_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
       referencedRelation: "workspaces"
       referencedColumns: ["id"]
     }
@@ -122,6 +146,12 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "document_lines_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "guarantee_workspaces"
+      referencedColumns: ["workspace_id"]
+    },{
       foreignKeyName: "document_lines_workspace_id_fkey"
       columns: ["workspace_id"]
 isOneToOne: false
@@ -163,6 +193,12 @@ isOneToOne: false
       foreignKeyName: "invoices_workspace_id_fkey"
       columns: ["workspace_id"]
 isOneToOne: false
+      referencedRelation: "guarantee_workspaces"
+      referencedColumns: ["workspace_id"]
+    },{
+      foreignKeyName: "invoices_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
       referencedRelation: "workspaces"
       referencedColumns: ["id"]
     },{
@@ -189,6 +225,12 @@ isOneToOne: false
       foreignKeyName: "number_sequences_workspace_id_fkey"
       columns: ["workspace_id"]
 isOneToOne: false
+      referencedRelation: "guarantee_workspaces"
+      referencedColumns: ["workspace_id"]
+    },{
+      foreignKeyName: "number_sequences_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
       referencedRelation: "workspaces"
       referencedColumns: ["id"]
     }
@@ -206,6 +248,12 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "onboarding_answers_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: true
+      referencedRelation: "guarantee_workspaces"
+      referencedColumns: ["workspace_id"]
+    },{
       foreignKeyName: "onboarding_answers_workspace_id_fkey"
       columns: ["workspace_id"]
 isOneToOne: true
@@ -229,23 +277,35 @@ isOneToOne: true
       foreignKeyName: "payment_accounts_workspace_id_fkey"
       columns: ["workspace_id"]
 isOneToOne: false
+      referencedRelation: "guarantee_workspaces"
+      referencedColumns: ["workspace_id"]
+    },{
+      foreignKeyName: "payment_accounts_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
       referencedRelation: "workspaces"
       referencedColumns: ["id"]
     }
                   ]
                 },"payment_links": {
                   Row: {
-                    "amount": number | null,"created_at": string,"encrypted_api_key": string | null,"encrypted_signing_secret": string | null,"expires_at": string | null,"id": string,"invoice_id": string,"last_checked_at": string | null,"last_error": string | null,"merchant_reference": string,"notification_token": string | null,"payment_account_id": string,"provider": Database["public"]['Enums']["payment_provider"],"provider_url": string | null,"status": Database["public"]['Enums']["payment_link_status"],"updated_at": string,"workspace_id": string
+                    "amount": number | null,"created_at": string,"encrypted_api_key": string | null,"encrypted_signing_secret": string | null,"expires_at": string | null,"id": string,"invoice_id": string,"last_checked_at": string | null,"last_error": string | null,"merchant_reference": string,"notification_token": string | null,"payment_account_id": string,"provider": Database["public"]['Enums']["payment_provider"],"provider_link_id": string | null,"provider_url": string | null,"status": Database["public"]['Enums']["payment_link_status"],"updated_at": string,"workspace_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "amount"?: number | null,"created_at"?: string,"encrypted_api_key"?: string | null,"encrypted_signing_secret"?: string | null,"expires_at"?: string | null,"id"?: string,"invoice_id": string,"last_checked_at"?: string | null,"last_error"?: string | null,"merchant_reference": string,"notification_token"?: string | null,"payment_account_id": string,"provider": Database["public"]['Enums']["payment_provider"],"provider_url"?: string | null,"status"?: Database["public"]['Enums']["payment_link_status"],"updated_at"?: string,"workspace_id": string
+                    "amount"?: number | null,"created_at"?: string,"encrypted_api_key"?: string | null,"encrypted_signing_secret"?: string | null,"expires_at"?: string | null,"id"?: string,"invoice_id": string,"last_checked_at"?: string | null,"last_error"?: string | null,"merchant_reference": string,"notification_token"?: string | null,"payment_account_id": string,"provider": Database["public"]['Enums']["payment_provider"],"provider_link_id"?: string | null,"provider_url"?: string | null,"status"?: Database["public"]['Enums']["payment_link_status"],"updated_at"?: string,"workspace_id": string
                   }
                   Update: {
-                    "amount"?: number | null,"created_at"?: string,"encrypted_api_key"?: string | null,"encrypted_signing_secret"?: string | null,"expires_at"?: string | null,"id"?: string,"invoice_id"?: string,"last_checked_at"?: string | null,"last_error"?: string | null,"merchant_reference"?: string,"notification_token"?: string | null,"payment_account_id"?: string,"provider"?: Database["public"]['Enums']["payment_provider"],"provider_url"?: string | null,"status"?: Database["public"]['Enums']["payment_link_status"],"updated_at"?: string,"workspace_id"?: string
+                    "amount"?: number | null,"created_at"?: string,"encrypted_api_key"?: string | null,"encrypted_signing_secret"?: string | null,"expires_at"?: string | null,"id"?: string,"invoice_id"?: string,"last_checked_at"?: string | null,"last_error"?: string | null,"merchant_reference"?: string,"notification_token"?: string | null,"payment_account_id"?: string,"provider"?: Database["public"]['Enums']["payment_provider"],"provider_link_id"?: string | null,"provider_url"?: string | null,"status"?: Database["public"]['Enums']["payment_link_status"],"updated_at"?: string,"workspace_id"?: string
                   }
                   Relationships: [
                     {
+      foreignKeyName: "payment_links_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "guarantee_workspaces"
+      referencedColumns: ["workspace_id"]
+    },{
       foreignKeyName: "payment_links_workspace_id_fkey"
       columns: ["workspace_id"]
 isOneToOne: false
@@ -281,6 +341,12 @@ isOneToOne: false
       foreignKeyName: "payments_workspace_id_fkey"
       columns: ["workspace_id"]
 isOneToOne: false
+      referencedRelation: "guarantee_workspaces"
+      referencedColumns: ["workspace_id"]
+    },{
+      foreignKeyName: "payments_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
       referencedRelation: "workspaces"
       referencedColumns: ["id"]
     },{
@@ -310,6 +376,12 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "pipeline_stages_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "guarantee_workspaces"
+      referencedColumns: ["workspace_id"]
+    },{
       foreignKeyName: "pipeline_stages_workspace_id_fkey"
       columns: ["workspace_id"]
 isOneToOne: false
@@ -359,6 +431,12 @@ isOneToOne: false
       foreignKeyName: "quotes_workspace_id_fkey"
       columns: ["workspace_id"]
 isOneToOne: false
+      referencedRelation: "guarantee_workspaces"
+      referencedColumns: ["workspace_id"]
+    },{
+      foreignKeyName: "quotes_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
       referencedRelation: "workspaces"
       referencedColumns: ["id"]
     }
@@ -387,6 +465,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "deals"
       referencedColumns: ["workspace_id","id"]
+    },{
+      foreignKeyName: "reminders_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "guarantee_workspaces"
+      referencedColumns: ["workspace_id"]
     },{
       foreignKeyName: "reminders_workspace_id_fkey"
       columns: ["workspace_id"]
@@ -425,6 +509,12 @@ isOneToOne: false
       foreignKeyName: "workspace_members_workspace_id_fkey"
       columns: ["workspace_id"]
 isOneToOne: false
+      referencedRelation: "guarantee_workspaces"
+      referencedColumns: ["workspace_id"]
+    },{
+      foreignKeyName: "workspace_members_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
       referencedRelation: "workspaces"
       referencedColumns: ["id"]
     }
@@ -446,7 +536,23 @@ isOneToOne: false
                 }
           }
           Views: {
-            [_ in never]: never
+            "guarantee_weekly": {
+                  Row: {
+                    "invoices_sent": number | null,"prospects_contacted": number | null,"quotes_sent": number | null,"touchpoints": number | null,"week_start": string | null,"workspace_id": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                },"guarantee_workspaces": {
+                  Row: {
+                    "first_quote_sent_at": string | null,"invoices_sent": number | null,"name": string | null,"owner_id": string | null,"plan": Database["public"]['Enums']["plan"] | null,"profile_completed_at": string | null,"quotes_sent": number | null,"signed_up_at": string | null,"workspace_id": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                }
           }
           Functions: {
             "about_active":
@@ -469,11 +575,19 @@ isOneToOne: false
 "create_workspace":
 { Args: { "default_currency"?: Database["public"]['Enums']["currency"],"name": string,"trade"?: string }; Returns: string
                            },
+"dashboard_invoice_totals":
+{ Args: { "p_workspace_id": string }; Returns: {
+              "amount": number,"currency": Database["public"]['Enums']["currency"],"exchange_rate": number,"item_count": number,"kind": string,"overdue": boolean
+            }[]
+                           },
 "document_public_lines":
 { Args: { "p_invoice_id": string,"p_quote_id": string }; Returns: Json
                            },
 "document_snapshot":
 { Args: { "p_contact_id": string,"p_workspace_id": string }; Returns: Json
+                           },
+"flag_whop_link":
+{ Args: { "p_checkout_id": string,"p_error": string,"p_merchant_reference": string }; Returns: boolean
                            },
 "generate_public_token":
 { Args: Record<PropertyKey, never>; Returns: string
@@ -504,6 +618,11 @@ isOneToOne: false
               "amount_sum": number,"currency": Database["public"]['Enums']["currency"],"deal_count": number,"stage_id": string
             }[]
                            },
+"plan_usage":
+{ Args: { "p_workspace_id": string }; Returns: {
+              "active_contacts": number,"documents_this_month": number
+            }[]
+                           },
 "public_document_exists":
 { Args: { "token": string }; Returns: boolean
                            },
@@ -512,6 +631,9 @@ isOneToOne: false
                            },
 "record_papi_payment":
 { Args: { "p_amount": number,"p_fee": number,"p_merchant_reference": string,"p_method": Database["public"]['Enums']["payment_method"],"p_paid_at"?: string,"p_provider_reference": string }; Returns: string
+                           },
+"record_whop_payment":
+{ Args: { "p_account_id": string,"p_amount": number,"p_checkout_id": string,"p_currency": Database["public"]['Enums']["currency"],"p_fee": number,"p_merchant_reference": string,"p_paid_at"?: string,"p_provider_reference": string }; Returns: string
                            },
 "release_document_email":
 { Args: { "p_claimed_at": string,"p_document_id": string }; Returns: undefined

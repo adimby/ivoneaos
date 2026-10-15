@@ -8,6 +8,10 @@ import { defineConfig, devices } from "@playwright/test";
 const port = Number(process.env.E2E_PORT ?? 3100);
 // Papi simulé (e2e/papi-mock.mjs) : l'application le joint via PAPI_API_BASE_URL.
 const papiPort = Number(process.env.PAPI_MOCK_PORT ?? 3199);
+// Whop simulé (e2e/whop-mock.mjs) et seconde instance de l'application avec Whop activé
+// (même construction .next, lancée seulement) : l'instance principale reste sans Whop.
+const whopPort = Number(process.env.WHOP_MOCK_PORT ?? 3198);
+const whopAppPort = Number(process.env.E2E_WHOP_PORT ?? 3101);
 
 export default defineConfig({
   testDir: "e2e",
@@ -40,6 +44,27 @@ export default defineConfig({
       env: { PAPI_API_BASE_URL: `http://127.0.0.1:${papiPort}` },
       reuseExistingServer: false,
       timeout: 300_000,
+    },
+    {
+      command: "node e2e/whop-mock.mjs",
+      url: `http://127.0.0.1:${whopPort}/__mock/health`,
+      env: { WHOP_MOCK_PORT: String(whopPort) },
+      reuseExistingServer: false,
+    },
+    {
+      // Lancée après la construction faite par le serveur précédent (démarrage séquentiel).
+      command: `npm run start -- --port ${whopAppPort}`,
+      url: `http://127.0.0.1:${whopAppPort}/fr`,
+      env: {
+        PAPI_API_BASE_URL: `http://127.0.0.1:${papiPort}`,
+        WHOP_API_BASE_URL: `http://127.0.0.1:${whopPort}/api/v1`,
+        WHOP_API_KEY: "whop-test-platform",
+        WHOP_WEBHOOK_SECRET: "ws_e2e_whop_webhook_secret",
+        WHOP_PLATFORM_FEE_PERCENT: "5",
+        IVONEA_CONTACT_EMAIL: "bonjour@example.test",
+      },
+      reuseExistingServer: false,
+      timeout: 60_000,
     },
   ],
 });

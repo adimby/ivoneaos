@@ -32,8 +32,9 @@ export type DocumentView = {
   // Facture partiellement payée : déjà reçu et reste à payer.
   amountPaid: string | null;
   amountDue: string | null;
-  // online : paiement en ligne proposé (Papi : MVola, Orange Money, Airtel Money).
-  payment: { instructions: string[]; online: boolean } | null;
+  // online : paiement en ligne proposé, et par quel prestataire (Papi : MVola, Orange
+  // Money, Airtel Money en ariary ; Whop : carte bancaire en EUR/USD).
+  payment: { instructions: string[]; online: false | "papi" | "whop" } | null;
   publicUrl: string | null;
 };
 
@@ -45,7 +46,7 @@ export function formatDay(day: string, locale: string): string {
 
 export function documentView(
   doc: BillingDocument,
-  { locale, now, publicUrl }: { locale: string; now: Date; publicUrl: string | null },
+  { locale, now, publicUrl, whop = false }: { locale: string; now: Date; publicUrl: string | null; whop?: boolean },
 ): DocumentView {
   const today = localDate(now);
   const money = (amount: number) => formatMoney(amount, doc.currency, locale);
@@ -76,9 +77,10 @@ export function documentView(
         .split("\n")
         .map((line) => line.trim())
         .filter(Boolean);
-      // Seul papi_available compte : un lien encore actif ne suffit pas (compte à reconnecter,
-      // reste dû sous le minimum Papi), le bouton mènerait à « paiement indisponible ».
-      const online = Boolean(doc.payment.papi_available);
+      // Seuls papi_available / whop_available comptent : un lien encore actif ne suffit pas
+      // (compte à reconnecter, reste dû sous le minimum Papi), le bouton mènerait à
+      // « paiement indisponible ». Whop seulement s'il est activé (WHOP_API_KEY).
+      const online = doc.payment.papi_available ? "papi" : whop && doc.payment.whop_available ? "whop" : false;
       if (instructions.length > 0 || online) {
         payment = { instructions, online };
       }

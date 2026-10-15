@@ -52,7 +52,13 @@ export type InvoiceDocument = Common & {
   amount_paid: number;
   // Coordonnées de paiement, seulement tant que la facture est à payer. papi_available :
   // paiement Papi proposé (lien créé ou recréé à la demande, page /p/<jeton>/payer).
-  payment: { manual_instructions: string | null; payment_link_url: string | null; papi_available?: boolean } | null;
+  // whop_available : paiement par carte Whop proposé (EUR/USD, page /p/<jeton>/carte).
+  payment: {
+    manual_instructions: string | null;
+    payment_link_url: string | null;
+    papi_available?: boolean;
+    whop_available?: boolean;
+  } | null;
 };
 
 export type BillingDocument = QuoteDocument | InvoiceDocument;

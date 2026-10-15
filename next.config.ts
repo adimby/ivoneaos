@@ -1,5 +1,13 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import { ivoneaContactEmail } from "./src/lib/contact-email";
+
+// Production (Vercel) : l'adresse de contact d'Ivonea est obligatoire. Sans elle,
+// Réglages > Offre n'aurait aucun bouton pour changer d'offre, et une freelance arrivée
+// à la limite de l'offre Découverte resterait bloquée.
+if (process.env.VERCEL_ENV === "production" && !ivoneaContactEmail()) {
+  throw new Error("IVONEA_CONTACT_EMAIL manquante ou invalide : obligatoire en production (Réglages > Offre).");
+}
 
 const nextConfig: NextConfig = {
   cacheComponents: true,

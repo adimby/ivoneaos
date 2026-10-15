@@ -171,5 +171,7 @@ test("Offre Découverte : le 21e contact actif est refusé avec un message clair
   await expect(
     page.getByText("Tu as 20 contacts actifs, la limite de l'offre Découverte.", { exact: false }),
   ).toBeVisible();
+  // Lien direct vers les offres sous le refus.
+  await expect(page.getByTestId("plan-limit-link")).toHaveAttribute("href", "/fr/reglages/offre");
   await expect(page).toHaveURL(/\/fr\/contacts\/nouveau$/);
 });

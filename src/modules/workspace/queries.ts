@@ -5,6 +5,7 @@ import type { Locale } from "@/i18n/routing";
 import { requireUserId } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 import { parseManualInstructions } from "./manual-instructions";
+import { canUse, PLAN_LIMITS, type Feature, type PlanUsage } from "./plan";
 
 const WORKSPACE_COLUMNS =
   "id, name, trade, level, default_currency, nif, stat, tax_regime, address, logo_path, invoice_footer, plan, profile_completed_at";
@@ -55,4 +56,21 @@ export async function getLogoUrl(path: string | null): Promise<string | null> {
   const supabase = await createClient();
   const { data } = await supabase.storage.from("logos").createSignedUrl(path, 3600);
   return data?.signedUrl ?? null;
+}
+
+// Usage de l'offre (Réglages > Offre, contrôle avant l'action) : contacts actifs et
+// documents envoyés ce mois-ci, comptés par la base (plan_usage, RLS appliquée).
+export async function getPlanUsage(workspaceId: string): Promise<PlanUsage> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("plan_usage", { p_workspace_id: workspaceId }).single();
+  if (error) throw error;
+  return { activeContacts: data.active_contacts, documentsThisMonth: data.documents_this_month };
+}
+
+// Contrôle avant l'action (message clair sans attendre le refus de la base, qui reste
+// juge). Offre sans limite pour cette fonction : aucune lecture.
+export async function canUseNow(workspace: Pick<Workspace, "id" | "plan">, feature: Feature): Promise<boolean> {
+  const limits = PLAN_LIMITS[workspace.plan];
+  if ((feature === "create_contact" ? limits.activeContacts : limits.documentsPerMonth) === null) return true;
+  return canUse(workspace, feature, await getPlanUsage(workspace.id));
 }

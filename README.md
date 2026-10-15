@@ -90,6 +90,52 @@ ces modèles dans le tableau de bord Supabase (Auth > Email Templates, « Magic 
   en tête de `supabase/migrations/…_billing.sql`), traduit dans `errors.db.*` de `messages/*.json`
   (un test Vitest vérifie que chaque clé levée est traduite). Étapes du pipeline : `pipeline.stages.*`.
 - Toute nouvelle fonction SQL : `revoke execute … from public, anon` puis accorder ce qu'il faut.
+- Tableau de bord : `dashboard_invoice_totals` (encaissé du mois, en attente, en retard) et `plan_usage`
+  (usage de l'offre), en `security invoker` (RLS de la freelance). Totaux par devise et taux ;
+  conversion en devise par défaut dans `src/modules/dashboard/summary.ts`, jamais d'addition de
+  devises sans taux (montant listé à part).
+- Indicateurs de la garantie : vues `guarantee_workspaces` et `guarantee_weekly`, lisibles par la clé
+  secrète seulement (`select * from guarantee_weekly` dans le SQL editor de Supabase).
+- Whop (factures EUR/USD, si `WHOP_API_KEY`) : Réglages > Moyens de paiement crée le compte connecté
+  et ouvre l'inscription Whop ; à l'envoi d'une facture EUR/USD, paiement unique créé sur ce compte
+  (commission `WHOP_PLATFORM_FEE_PERCENT`), bouton « Payer par carte » sur la page publique. Webhook
+  de la plateforme à créer chez Whop : URL `<APP_URL>/api/whop/webhook`, événement `payment.succeeded`,
+  événements des comptes connectés activés (`child_resource_events`), secret dans
+  `WHOP_WEBHOOK_SECRET` (sans lui, Whop reste masqué). Paiement enregistré par `record_whop_payment`
+  (clé secrète seulement), d'après le montant présenté au client (`presentment_total`, devise de la
+  facture), même si la freelance règle ses ventes dans une autre devise. Facture réglée à la main,
+  annulée ou reste dû changé : le paiement Whop ouvert est annulé ici et supprimé chez Whop
+  (`DELETE /checkout_configurations/{id}`). Paiement Whop authentique non enregistré (montant ou devise
+  différents, autre compte, autre lien, montant illisible) : signalé sur la facture quand le lien est
+  retrouvé (`flag_whop_link`), sinon journalisé (`[whop] paiement … non enregistré` dans les journaux Vercel).
+- Réglages > Offre : `IVONEA_CONTACT_EMAIL` (adresse d'Ivonea pour changer d'offre) est obligatoire en
+  production : `next build` échoue sur Vercel (`VERCEL_ENV=production`) sans elle.
+
+## Mise en service de Whop (avant de l'ouvrir aux freelances)
+
+Le code suit la doc et le SDK officiel (`@whop/sdk` 2.5.0) et a été testé contre un Whop simulé
+(`e2e/whop-mock.mjs`), jamais contre la vraie API (pas de clé). Avant de renseigner `WHOP_API_KEY` en
+production, faire un essai de bout en bout sur le bac à sable (`WHOP_API_BASE_URL=https://sandbox-api.whop.com/api/v1`,
+clé et webhook du bac à sable, app en préproduction) :
+
+1. Réglages > Moyens de paiement > « Connecter Whop » : compte connecté créé, inscription terminée,
+   statut « Whop connecté ».
+2. Facture EUR envoyée : la configuration `ch_…` est créée sans `plan_mismatch` dans les journaux (devise,
+   prix et `adaptive_pricing_enabled` renvoyés identiques à la demande).
+   Commission (`WHOP_PLATFORM_FEE_PERCENT` > 0) : elle est envoyée dans `plan.application_fee_amount`
+   (doc Whop ; champ absent des types du SDK 2.5.0) et le lien est refusé (`plan_mismatch`) si la réponse ne
+   la renvoie pas à l'identique dans `plan.application_fee_amount`. Vérifier que la commission apparaît
+   chez Whop sur le paiement de test ; si Whop la prélève sans la renvoyer, ou l'ignore, adapter
+   `whop.createLink` (`src/modules/payments/whop/adapter.ts`) à ce que l'API fait réellement avant de
+   mettre une commission en production.
+3. Paiement par carte de test : `webhook_events` contient l'événement, `error` vide, facture payée. Comparer
+   le corps reçu (`raw_body`) aux champs lus par `parseWhopPayment` (`account_id`, `checkout_configuration_id`,
+   `metadata.ivonea_reference`, `presentment_total`) ; corriger le code si la forme diffère.
+   Taxes : `presentment_total` ne doit pas inclure de TVA ou taxe ajoutée par Whop au prix de la facture,
+   sinon le paiement est refusé en `amount_mismatch` ; si Whop en ajoute, régler la taxe du plan
+   (`override_tax_type`, SDK) ou du compte pour qu'elle soit incluse dans le prix, puis refaire l'essai.
+4. Recommencer avec un compte connecté réglé dans une autre devise (`preferred_settlement_currency`).
+5. Paiement manuel d'une facture dont le lien carte est ouvert : le lien Whop ne doit plus être payable.
 
 ## Vérifications
 

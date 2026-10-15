@@ -12,9 +12,11 @@ import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { formatDay } from "@/modules/billing/view";
 import { localDate } from "@/lib/time";
-import { connectPapiAccount, disconnectPapiAccount } from "@/modules/payments/actions";
+import { connectPapiAccount, connectWhopAccount, disconnectPapiAccount } from "@/modules/payments/actions";
 import { papiConnectEnabled } from "@/modules/payments/papi/service";
-import { getPapiAccount } from "@/modules/payments/queries";
+import { getPapiAccount, getWhopAccount } from "@/modules/payments/queries";
+import { platformFeePercent } from "@/modules/payments/whop/adapter";
+import { whopEnabled } from "@/modules/payments/whop/service";
 import { getManualPayment, requireWorkspace } from "@/modules/workspace/queries";
 import { formatMvola } from "@/modules/workspace/manual-instructions";
 
@@ -37,6 +39,8 @@ const RESULTS = [
   "error",
 ] as const;
 type Result = (typeof RESULTS)[number];
+const WHOP_RESULTS = ["connected", "pending", "expired", "unavailable", "disabled", "error"] as const;
+type WhopResult = (typeof WHOP_RESULTS)[number];
 
 const PAPI_DASHBOARD = "https://dashboard.papi.mg";
 
@@ -45,13 +49,17 @@ const PAPI_DASHBOARD = "https://dashboard.papi.mg";
 export default async function PaymentsPage({ params, searchParams }: Props) {
   const locale = (await params).locale as Locale;
   const workspace = await requireWorkspace(locale);
-  const [account, manual, query, t] = await Promise.all([
+  const whop = whopEnabled();
+  const [account, whopAccount, manual, query, t] = await Promise.all([
     getPapiAccount(workspace.id),
+    whop ? getWhopAccount(workspace.id) : null,
     getManualPayment(workspace.id),
     searchParams,
     getTranslations({ locale, namespace: "Payments" }),
   ]);
   const result = typeof query.papi === "string" && (RESULTS as readonly string[]).includes(query.papi) ? (query.papi as Result) : null;
+  const whopResult =
+    whop && typeof query.whop === "string" && (WHOP_RESULTS as readonly string[]).includes(query.whop) ? (query.whop as WhopResult) : null;
   const connected = account?.status === "connected";
   // Clé refusée par Papi depuis la connexion (révoquée, régénérée) : à reconnecter.
   const needsReconnect = account?.status === "error";
@@ -152,6 +160,42 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
     </section>
   );
 
+  // Paiement par carte (Whop) : seulement si WHOP_API_KEY est configurée.
+  const whopConnected = whopAccount?.status === "connected";
+  const whopCard = whop && (
+    <Card aria-labelledby="whop-title" className="flex flex-col gap-3" data-testid="whop-card">
+      <div className="flex items-center justify-between gap-3">
+        <h2 id="whop-title" className="text-lg font-bold text-lagoon">
+          {t("whop.title")}
+        </h2>
+        <Badge tone={whopConnected ? "success" : "neutral"} data-testid="whop-status">
+          {whopConnected ? t("whop.connected") : whopAccount ? t("whop.pending") : t("status.notConnected")}
+        </Badge>
+      </div>
+      <p className="text-base text-ink" data-testid="whop-intro">
+        {t("whop.intro", { fee: platformFeePercent() })}
+      </p>
+      {!whopConnected && (
+        <form action={connectWhopAccount}>
+          {hidden}
+          <SubmitButton variant={whopAccount ? "secondary" : "primary"} block>
+            {whopAccount ? t("whop.resume") : t("whop.connect")}
+          </SubmitButton>
+        </form>
+      )}
+      {/* Vérification d'identité validée plus tard par Whop : statut relu à la demande. */}
+      {whopAccount && !whopConnected && (
+        <a
+          href={`/${locale}/reglages/paiements/whop`}
+          className="inline-flex min-h-11 items-center self-center text-base font-semibold text-lagoon underline underline-offset-4"
+          data-testid="whop-check-status"
+        >
+          {t("whop.checkStatus")}
+        </a>
+      )}
+    </Card>
+  );
+
   return (
     <div className="flex flex-1 flex-col gap-5">
       <Link href="/reglages" className="inline-flex min-h-11 items-center self-start text-base font-semibold text-lagoon">
@@ -161,6 +205,11 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
 
       {result && (
         <Alert tone={result === "connected" || result === "disconnected" ? "success" : "error"}>{t(`results.${result}`)}</Alert>
+      )}
+      {whopResult && (
+        <Alert tone={whopResult === "connected" ? "success" : whopResult === "pending" ? "info" : "error"}>
+          {t(`whop.results.${whopResult}`)}
+        </Alert>
       )}
 
       <Card aria-labelledby="papi-title" className="flex flex-col gap-3">
@@ -198,6 +247,8 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
           </details>
         )}
       </Card>
+
+      {whopCard}
 
       {!enabled ? (
         <>

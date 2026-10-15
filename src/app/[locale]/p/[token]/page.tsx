@@ -12,6 +12,7 @@ import { PublicShell } from "@/modules/billing/components/public-shell";
 import { getPublicDocument, publicLogoUrl } from "@/modules/billing/queries";
 import { STATUS_TONE } from "@/modules/billing/status";
 import { documentView } from "@/modules/billing/view";
+import { whopEnabled } from "@/modules/payments/whop/service";
 
 type Props = PageProps<"/[locale]/p/[token]">;
 
@@ -37,7 +38,7 @@ export default function PublicDocumentPage({ params, searchParams }: Props) {
 }
 
 const RESULTS = ["accepted", "outdated", "unavailable", "error"] as const;
-// Retour de Papi (successUrl, failureUrl) ou paiement en ligne indisponible.
+// Retour de Papi ou de Whop (successUrl, failureUrl) ou paiement en ligne indisponible.
 const PAYMENT_RESULTS = ["ok", "echec", "indisponible"] as const;
 
 async function PublicDocument({ params, searchParams }: Props) {
@@ -54,14 +55,16 @@ async function PublicDocument({ params, searchParams }: Props) {
   if (!found) notFound();
 
   const { doc } = found;
-  const view = documentView(doc, { locale, now: new Date(), publicUrl: null });
+  const view = documentView(doc, { locale, now: new Date(), publicUrl: null, whop: whopEnabled() });
   const logoUrl = await publicLogoUrl(view.freelancer.logoPath);
   const result = typeof query.r === "string" && (RESULTS as readonly string[]).includes(query.r) ? query.r : null;
   const business = view.freelancer.name;
   const otherLocale = routing.locales.find((l) => l !== locale)!;
   const canAccept = doc.type === "quote" && view.status === "sent" && Boolean(doc.version);
-  // Paiement en ligne Papi : lien préparé (ou recréé s'il a expiré) au moment du clic.
+  // Paiement en ligne (Papi en ariary, carte via Whop en EUR/USD) : lien préparé (ou
+  // recréé s'il a expiré) au moment du clic.
   const canPayOnline = doc.type === "invoice" && (view.status === "sent" || view.status === "overdue") && Boolean(view.payment?.online);
+  const byCard = view.payment?.online === "whop";
   const payment = typeof query.paiement === "string" && (PAYMENT_RESULTS as readonly string[]).includes(query.paiement) ? query.paiement : null;
   const statusKey = view.status === "draft" ? null : view.status;
 
@@ -71,10 +74,15 @@ async function PublicDocument({ params, searchParams }: Props) {
       bottom={
         canPayOnline ? (
           <div className="sticky bottom-0 z-10 -mx-4 mt-auto border-t border-sand/70 bg-spray/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
-            <a href={`/${locale}/p/${token}/payer`} rel="nofollow noreferrer" className={buttonClasses("primary", true)} data-testid="pay-online">
-              {t("payment.payWithPapi", { amount: view.amountDue ?? view.total })}
+            <a
+              href={`/${locale}/p/${token}/${byCard ? "carte" : "payer"}`}
+              rel="nofollow noreferrer"
+              className={buttonClasses("primary", true)}
+              data-testid={byCard ? "pay-card" : "pay-online"}
+            >
+              {t(byCard ? "payment.payByCard" : "payment.payWithPapi", { amount: view.amountDue ?? view.total })}
             </a>
-            <p className="mt-2 text-center text-sm text-ink-muted">{t("payment.methods")}</p>
+            <p className="mt-2 text-center text-sm text-ink-muted">{t(byCard ? "payment.cardMethods" : "payment.methods")}</p>
           </div>
         ) : (
           canAccept && (
@@ -224,7 +232,7 @@ async function PublicDocument({ params, searchParams }: Props) {
                 <span className="text-ink-muted">{t("payment.amountDue")} </span>
                 <strong>{view.amountDue ?? view.total}</strong>
               </p>
-              {canPayOnline && <p className="text-base text-ink">{t("payment.online")}</p>}
+              {canPayOnline && <p className="text-base text-ink">{t(byCard ? "payment.onlineCard" : "payment.online")}</p>}
               {view.payment && view.payment.instructions.length > 0 ? (
                 <div data-testid="manual-payment">
                   <p className="text-sm font-semibold text-ink">{canPayOnline ? t("payment.manualOr") : t("payment.manual")}</p>

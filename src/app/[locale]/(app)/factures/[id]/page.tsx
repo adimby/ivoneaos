@@ -28,7 +28,7 @@ import { inDefaultCurrency } from "@/modules/billing/totals";
 import { formatDay } from "@/modules/billing/view";
 import { getContact } from "@/modules/crm/queries";
 import { PAPI_MIN_AMOUNT } from "@/modules/payments/papi/adapter";
-import { getInvoicePapiLinks, getOnlinePayments, getPapiAccount } from "@/modules/payments/queries";
+import { getInvoicePaymentLinks, getOnlinePayments, getPapiAccount } from "@/modules/payments/queries";
 import { getCurrentWorkspace, getManualPayment, requireWorkspace } from "@/modules/workspace/queries";
 
 type Props = PageProps<"/[locale]/factures/[id]">;
@@ -59,12 +59,12 @@ export default async function InvoicePage({ params, searchParams }: Props) {
   const status = invoiceDisplayStatus(invoice.status, invoice.due_on, today);
 
   const open = invoice.status === "sent" || invoice.status === "overdue";
-  const [contact, quoteNumber, onlinePayments, papiAccount, papiLinks, manual, t, tShare] = await Promise.all([
+  const [contact, quoteNumber, onlinePayments, papiAccount, paymentLinks, manual, t, tShare] = await Promise.all([
     getContact(workspace.id, invoice.contact_id),
     invoice.quote_id ? getQuoteNumber(workspace.id, invoice.quote_id) : null,
     invoice.status === "paid" || invoice.status === "cancelled" ? getOnlinePayments(workspace.id, invoice.id) : null,
     open ? getPapiAccount(workspace.id) : null,
-    invoice.status === "draft" ? null : getInvoicePapiLinks(workspace.id, invoice.id),
+    invoice.status === "draft" ? null : getInvoicePaymentLinks(workspace.id, invoice.id),
     typeof query.papi === "string" ? getManualPayment(workspace.id) : null,
     getTranslations({ locale, namespace: "Billing" }),
     getTranslations({ locale: invoice.language, namespace: "Share" }),
@@ -76,7 +76,7 @@ export default async function InvoicePage({ params, searchParams }: Props) {
   const papiEligible = invoice.currency === "MGA" && due >= PAPI_MIN_AMOUNT;
   // Lien Papi déjà envoyé : il reste payable chez Papi même si la facture est réglée
   // autrement ou annulée ici (Papi ne permet pas de le désactiver).
-  const papiLinkWarning = papiLinks?.payable ? ` ${t("detail.papiLinkStillPayable")}` : "";
+  const papiLinkWarning = paymentLinks?.papiPayable ? ` ${t("detail.papiLinkStillPayable")}` : "";
   const onlinePayment = invoice.status === "paid" ? onlinePayments?.[0] : undefined;
   // Facture annulée : seuls les paiements en ligne (lien Papi envoyé avant l'annulation) sont
   // signalés, pas un paiement direct enregistré avant d'annuler.
@@ -173,9 +173,9 @@ export default async function InvoicePage({ params, searchParams }: Props) {
           <span data-testid="paid-while-cancelled">{t("detail.paidWhileCancelled", { amount: money(paidWhileCancelled) })}</span>
         </Alert>
       )}
-      {papiLinks?.issues.map((issue) => (
+      {paymentLinks?.issues.map((issue) => (
         <Alert key={issue.reference} tone="error">
-          <span data-testid="papi-issue">{t(`detail.papiIssue.${issue.error}`, { reference: issue.reference })}</span>
+          <span data-testid={`${issue.provider}-issue`}>{t(`detail.${issue.provider}Issue.${issue.error}`, { reference: issue.reference })}</span>
         </Alert>
       ))}
 

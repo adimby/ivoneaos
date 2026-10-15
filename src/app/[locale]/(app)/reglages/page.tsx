@@ -30,18 +30,22 @@ export default async function SettingsPage({ params }: PageProps<"/[locale]/regl
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold text-lagoon">{t("title")}</h1>
 
-      <Card aria-labelledby="plan-title" className="flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-3">
-          <h2 id="plan-title" className="text-lg font-bold text-lagoon">
-            {t("plan.title")}
-          </h2>
-          <Badge>{t(`plan.${workspace.plan}`)}</Badge>
-        </div>
-        <p className="text-sm text-ink">
-          {workspace.plan === "decouverte" ? t("plan.limits.decouverte") : t("plan.limits.paid")}
-        </p>
-        <p className="text-sm text-ink-muted">{t("plan.change")}</p>
-      </Card>
+      <Link
+        href="/reglages/offre"
+        className="flex min-h-16 items-center gap-3 rounded-card border border-sand/70 bg-sand-light p-4 shadow-card hover:border-lagoon"
+        data-testid="settings-plan"
+      >
+        <span className="flex flex-1 flex-col gap-1">
+          <span className="flex items-center gap-2">
+            <span className="text-base font-bold text-lagoon">{t("plan.title")}</span>
+            <Badge>{t(`plan.${workspace.plan}`)}</Badge>
+          </span>
+          <span className="text-sm text-ink-muted">
+            {workspace.plan === "decouverte" ? t("plan.limits.decouverte") : t("plan.limits.paid")}
+          </span>
+        </span>
+        <ChevronRightIcon className="size-5 shrink-0 text-ink-muted" />
+      </Link>
 
       <Link
         href="/reglages/paiements"

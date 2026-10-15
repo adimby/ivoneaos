@@ -15,7 +15,8 @@ import { localDate } from "@/lib/time";
 import { markDealWon } from "@/modules/crm/deal-won";
 import { getContact, getDeal } from "@/modules/crm/queries";
 import { ensureInvoicePapiLink, type PayableInvoice } from "@/modules/payments/papi/service";
-import { getCurrentWorkspace, isOnboarded, type Workspace } from "@/modules/workspace/queries";
+import { ensureInvoiceWhopLink, retireInvoiceWhopLinks } from "@/modules/payments/whop/service";
+import { canUseNow, getCurrentWorkspace, isOnboarded, type Workspace } from "@/modules/workspace/queries";
 import { safeNextPath } from "@/modules/auth/next-path";
 import { documentEmail } from "./email";
 import { PAYABLE_COLUMNS, payableInvoice } from "./payment-link";
@@ -170,6 +171,10 @@ export async function sendQuote(formData: FormData) {
   const id = readId(formData);
   if (!id) return;
   const path = `/devis/${id}`;
+  // Offre Découverte : seul un brouillon qui part compte (un devis expiré renvoyé garde son numéro).
+  if (!(await canUseNow(workspace, "send_document")) && (await getQuote(workspace.id, id))?.status === "draft") {
+    backTo(locale, path, { erreur: "free_limit_reached" });
+  }
   // Brouillon, ou devis expiré renvoyé (avec une nouvelle validité).
   const { data, error } = await supabase
     .from("quotes")
@@ -188,6 +193,11 @@ export async function sendInvoice(formData: FormData) {
   const id = readId(formData);
   if (!id) return;
   const path = `/factures/${id}`;
+  // Offre Découverte : seul un brouillon qui part compte (facture déjà envoyée resoumise :
+  // refus de transition habituel, pas de message de limite).
+  if (!(await canUseNow(workspace, "send_document")) && (await getInvoice(workspace.id, id))?.status === "draft") {
+    backTo(locale, path, { erreur: "free_limit_reached" });
+  }
   const { data, error } = await supabase
     .from("invoices")
     .update({ status: "sent" })
@@ -200,11 +210,14 @@ export async function sendInvoice(formData: FormData) {
   // Facture en ariary et Papi connecté : lien de paiement créé maintenant (spec P5.5).
   // En cas d'échec, la facture reste envoyée avec les coordonnées manuelles ; la page
   // publique retentera à l'ouverture par le client.
-  const papi = await createPapiLink(payableInvoice(data[0], await appOrigin()));
+  // Facture en euros ou dollars et Whop connecté : paiement par carte préparé de même.
+  const invoice = payableInvoice(data[0], await appOrigin());
+  const papi = await createPapiLink(invoice);
+  const whop = await createWhopLink(invoice);
   // Archivage du PDF après la réponse : la freelance n'attend pas le rendu et le
   // téléversement (connexion lente) ; la facture est déjà envoyée.
   after(() => archiveInvoicePdf(workspace, id));
-  backTo(locale, path, { ok: "sent", ...(papi && { papi }) });
+  backTo(locale, path, { ok: "sent", ...(papi && { papi }), ...(whop && { whop }) });
 }
 
 // null : lien prêt ou Papi non concerné ; sinon la raison de l'échec (?papi=…).
@@ -215,6 +228,17 @@ async function createPapiLink(invoice: PayableInvoice): Promise<string | null> {
   } catch (error) {
     console.error("[billing] lien Papi non créé", error instanceof Error ? error.message : "");
     return "unavailable";
+  }
+}
+
+// null : paiement par carte prêt ou Whop non concerné ; sinon « failed » (?whop=failed).
+async function createWhopLink(invoice: PayableInvoice): Promise<string | null> {
+  try {
+    const outcome = await ensureInvoiceWhopLink(invoice, { origin: new URL(invoice.publicUrl).origin });
+    return outcome.status === "failed" ? "failed" : null;
+  } catch (error) {
+    console.error("[billing] paiement Whop non créé", error instanceof Error ? error.message : "");
+    return "failed";
   }
 }
 
@@ -315,7 +339,19 @@ export async function markInvoicePaid(formData: FormData) {
     currency: invoice.currency,
   });
   if (error) backTo(locale, path, { erreur: dbErrorKey(error) });
+  await retireWhopLinks(id);
   backTo(locale, path, { ok: "paid" });
+}
+
+// Facture réglée à la main ou annulée : le paiement par carte Whop encore ouvert (onglet
+// resté ouvert chez le client) est retiré, pour ne pas encaisser un montant déjà réglé.
+// Sans effet bloquant : la facture est déjà à jour.
+async function retireWhopLinks(invoiceId: string) {
+  try {
+    await retireInvoiceWhopLinks(invoiceId);
+  } catch (error) {
+    console.error("[billing] paiement Whop non retiré", error instanceof Error ? error.message : "");
+  }
 }
 
 export async function cancelInvoice(formData: FormData) {
@@ -332,6 +368,7 @@ export async function cancelInvoice(formData: FormData) {
     .select("id");
   if (error) backTo(locale, path, { erreur: dbErrorKey(error) });
   if (!data?.length) backTo(locale, path, { erreur: "invalid_status_transition" });
+  await retireWhopLinks(id);
   backTo(locale, path, { ok: "cancelled" });
 }
 
