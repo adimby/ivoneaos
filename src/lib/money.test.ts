@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { convertMinor, formatMoney, lineTotal } from "./money";
+import { amountInputValue, convertMinor, formatMoney, lineTotal, parseAmountInput } from "./money";
 
 // Intl utilise des espaces insécables comme séparateurs de milliers.
 const plain = (s: string) => s.replace(/[  ]/g, " ");
@@ -52,5 +52,28 @@ describe("convertMinor", () => {
   it("refuse un taux nul ou négatif", () => {
     expect(() => convertMinor(100, "EUR", "MGA", 0)).toThrow(RangeError);
     expect(() => convertMinor(100, "EUR", "MGA", -1)).toThrow(RangeError);
+  });
+});
+
+describe("parseAmountInput", () => {
+  it("lit l'ariary avec espaces, sans décimales", () => {
+    expect(parseAmountInput("450 000", "MGA")).toEqual({ ok: true, minor: 450000 });
+    expect(parseAmountInput("450 000", "MGA")).toEqual({ ok: true, minor: 450000 });
+    expect(parseAmountInput("450,5", "MGA")).toEqual({ ok: false, error: "invalid_number" });
+  });
+  it("lit les euros et dollars en centimes", () => {
+    expect(parseAmountInput("1 250,50", "EUR")).toEqual({ ok: true, minor: 125050 });
+    expect(parseAmountInput("1250.5", "USD")).toEqual({ ok: true, minor: 125050 });
+    expect(parseAmountInput("12", "EUR")).toEqual({ ok: true, minor: 1200 });
+    expect(parseAmountInput("1,234", "EUR")).toEqual({ ok: false, error: "invalid_number" });
+  });
+  it("refuse le négatif, le texte, l'excès", () => {
+    expect(parseAmountInput("-5", "MGA").ok).toBe(false);
+    expect(parseAmountInput("abc", "MGA").ok).toBe(false);
+    expect(parseAmountInput("99999999999999999999", "MGA")).toEqual({ ok: false, error: "too_large" });
+  });
+  it("valeur de champ", () => {
+    expect(amountInputValue(125050, "EUR")).toBe("1250,50");
+    expect(amountInputValue(450000, "MGA")).toBe("450000");
   });
 });

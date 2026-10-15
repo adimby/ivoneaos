@@ -22,7 +22,7 @@ export function Field({
 }) {
   const describedBy = [error && `${id}-error`, hint && `${id}-hint`].filter(Boolean).join(" ");
   return (
-    <div className="flex flex-col gap-1.5">
+    <div data-field className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-sm font-semibold text-ink">
         {label}
       </label>

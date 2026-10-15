@@ -1,28 +1,11 @@
-import { expect, test, type Page } from "@playwright/test";
-import { readOtp } from "./mailpit";
+import { expect, test } from "@playwright/test";
+import { openMore, signIn } from "./helpers";
 
 // Petit PNG valide (1 × 1) pour le logo.
 const PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
   "base64",
 );
-
-async function signIn(page: Page, email: string) {
-  await page.getByLabel("Adresse e-mail").fill(email);
-  const since = new Date(Date.now() - 2_000);
-  await page.getByRole("button", { name: "Recevoir mon code" }).click();
-  await expect(page.getByRole("heading", { name: "Saisis ton code" })).toBeVisible();
-  const code = await readOtp(email, since);
-  await page.getByLabel("Code à 6 chiffres").fill(code);
-  await page.getByRole("button", { name: "Me connecter" }).click();
-}
-
-// Ouvre le menu « Plus » : bouton (menu sur place) une fois le JavaScript chargé, lien
-// vers la page /plus sinon ; les deux montrent les mêmes entrées.
-async function openMore(page: Page, name: string) {
-  const nav = page.getByRole("navigation", { name: /Navigation principale|Main navigation/ });
-  await nav.getByRole("button", { name }).or(nav.getByRole("link", { name })).click();
-}
 
 test("P1 : s'inscrire, diagnostic, profil pro, tableau de bord", async ({ page, browser }) => {
   const email = `p1-${Date.now()}@example.test`;

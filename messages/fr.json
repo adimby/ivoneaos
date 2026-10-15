@@ -158,6 +158,7 @@
     "required": "Ce champ est obligatoire.",
     "too_long": "Ce texte est trop long.",
     "invalid_number": "Indique un nombre entier, sans virgule.",
+    "amount_format": "Montant invalide. Par exemple 450 000, ou 1 250,50 pour les euros et les dollars.",
     "too_large": "Ce nombre est trop grand.",
     "invalid_choice": "Choisis une option.",
     "nif_format": "Le NIF compte 10 chiffres.",
@@ -167,7 +168,11 @@
     "logo_too_large": "Ce logo dépasse 1 Mo. Réduis-le puis réessaie.",
     "logo_type": "Le logo doit être une image PNG, JPEG ou WebP.",
     "logo_upload": "Le logo n'a pas pu être envoyé. Réessaie.",
-    "fix_errors": "Corrige les champs signalés."
+    "fix_errors": "Corrige les champs signalés.",
+    "phone_format": "Numéro invalide. Exemple : 034 12 345 67, ou +33 6 12 34 56 78 pour l'étranger.",
+    "email_format": "Adresse e-mail invalide (exemple : nom@gmail.com).",
+    "reachable_required": "Indique un téléphone ou un e-mail pour pouvoir joindre ce contact.",
+    "date_format": "Date invalide."
   },
   "Nav": {
     "label": "Navigation principale",
@@ -226,14 +231,11 @@
       "title": "Ton activité",
       "collected": "Encaissé ce mois-ci",
       "pending": "Factures en attente",
-      "deals": "Opportunités ouvertes",
-      "reminders": "Rappels du jour"
+      "deals": "Opportunités ouvertes"
     }
   },
   "Placeholder": {
-    "pipeline": "Pipeline",
     "invoices": "Factures",
-    "contacts": "Contacts",
     "body": "Cette page arrive bientôt. Tu pourras y suivre ton activité depuis ton téléphone."
   },
   "Settings": {
@@ -316,5 +318,237 @@
     "title": "Page introuvable",
     "body": "Cette adresse ne mène à aucune page. Elle a peut-être été mal saisie.",
     "home": "Retour à l'accueil"
+  },
+  "Contacts": {
+    "metaTitle": "Contacts",
+    "title": "Contacts",
+    "searchLabel": "Rechercher un contact",
+    "searchPlaceholder": "Nom, entreprise, téléphone…",
+    "search": "Rechercher",
+    "clearSearch": "Tout afficher",
+    "count": "{count, plural, =1 {# contact actif} other {# contacts actifs}}",
+    "empty": {
+      "title": "Aucun contact pour l'instant",
+      "body": "Ajoute un prospect ou un client : un nom et un téléphone suffisent."
+    },
+    "noResults": "Aucun contact ne correspond à « {query} ».",
+    "new": "Nouveau contact",
+    "newTitle": "Nouveau contact",
+    "editTitle": "Modifier le contact",
+    "backToList": "Contacts",
+    "backToContact": "Retour au contact",
+    "name": {
+      "label": "Nom",
+      "hint": "La personne ou l'entreprise à contacter."
+    },
+    "phone": {
+      "label": "Téléphone",
+      "hint": "Par exemple 034 12 345 67. Téléphone ou e-mail obligatoire."
+    },
+    "email": {
+      "label": "E-mail"
+    },
+    "company": {
+      "label": "Entreprise (facultatif)"
+    },
+    "moreDetails": "Plus de détails (facultatif)",
+    "kind": {
+      "label": "Type",
+      "person": "Personne",
+      "company": "Entreprise"
+    },
+    "country": {
+      "label": "Pays"
+    },
+    "tags": {
+      "label": "Étiquettes",
+      "hint": "Séparées par des virgules, par exemple : client, graphisme."
+    },
+    "create": "Ajouter le contact",
+    "save": "Enregistrer",
+    "saved": "Contact enregistré.",
+    "call": "Appeler",
+    "whatsapp": "WhatsApp",
+    "sendEmail": "E-mail",
+    "edit": "Modifier",
+    "archive": "Archiver ce contact",
+    "archiveHint": "Il disparaît de ta liste et ne compte plus dans tes contacts actifs. Son historique est conservé.",
+    "archived": "{name} est archivé.",
+    "undo": "Annuler",
+    "archivedBadge": "Archivé",
+    "restore": "Désarchiver",
+    "import": {
+      "button": "Importer depuis mon téléphone",
+      "done": "{count, plural, =0 {Aucun contact importé.} =1 {# contact importé.} other {# contacts importés.}}",
+      "skipped": "{count, plural, =1 {# contact ignoré : ni téléphone ni e-mail valide.} other {# contacts ignorés : ni téléphone ni e-mail valide.}}",
+      "failed": "L'import n'a pas abouti. Réessaie.",
+      "duplicates": "{count, plural, =1 {# contact déjà dans ta liste.} other {# contacts déjà dans ta liste.}}"
+    },
+    "deals": {
+      "title": "Opportunités",
+      "empty": "Aucune opportunité avec ce contact.",
+      "new": "Nouvelle opportunité"
+    },
+    "history": {
+      "title": "Historique",
+      "empty": "Aucun échange noté pour l'instant."
+    },
+    "truncated": "{shown} contacts affichés sur {total} : affine ta recherche pour trouver les autres."
+  },
+  "Deals": {
+    "metaTitle": "Pipeline",
+    "title": "Pipeline",
+    "new": "Nouvelle opportunité",
+    "newTitle": "Nouvelle opportunité",
+    "editTitle": "Modifier l'opportunité",
+    "metaDetail": "Opportunité",
+    "empty": {
+      "title": "Ton pipeline est vide",
+      "body": "Crée une opportunité pour suivre un prospect jusqu'à la signature."
+    },
+    "stagesNav": "Étapes du pipeline",
+    "stageCount": "{count, plural, =0 {Aucune opportunité} =1 {# opportunité} other {# opportunités}}",
+    "stageEmpty": "Aucune opportunité à cette étape.",
+    "truncated": "Les {shown} opportunités les plus récentes sont affichées sur {total}. Les nombres et totaux par étape les comptent toutes.",
+    "noAmount": "Montant à définir",
+    "title_field": {
+      "label": "Titre",
+      "hint": "Par exemple : Logo pour la boutique."
+    },
+    "contact": {
+      "label": "Contact",
+      "truncated": "Seuls les {shown} premiers contacts (sur {total}) sont proposés. Pour un autre, ouvre sa fiche et crée l'opportunité depuis là.",
+      "fixed": "Le contact d'une opportunité ne change pas. Pour un autre contact, crée une nouvelle opportunité."
+    },
+    "amount": {
+      "label": "Montant estimé (facultatif)",
+      "hint": "Par exemple 450 000."
+    },
+    "currency": {
+      "label": "Devise"
+    },
+    "stage": {
+      "label": "Étape"
+    },
+    "closeOn": {
+      "label": "Date de clôture prévue (facultatif)"
+    },
+    "noContacts": {
+      "title": "Ajoute d'abord un contact",
+      "body": "Une opportunité est toujours liée à un contact.",
+      "action": "Nouveau contact"
+    },
+    "create": "Créer l'opportunité",
+    "save": "Enregistrer",
+    "backToPipeline": "Pipeline",
+    "backToDeal": "Retour à l'opportunité",
+    "expectedClose": "Clôture prévue le {date}",
+    "currentStage": "Étape : {stage}",
+    "nextStage": "Étape suivante : {stage}",
+    "chooseStage": "Changer d'étape",
+    "moveTo": "Passer à l'étape {stage}",
+    "confirm": {
+      "won": {
+        "title": "Marquer comme gagnée ?",
+        "body": "Bravo ! L'opportunité sort du pipeline en cours. Tu pourras toujours changer d'étape."
+      },
+      "lost": {
+        "title": "Marquer comme perdue ?",
+        "body": "L'opportunité sort du pipeline en cours. Tu pourras la rouvrir en changeant d'étape."
+      },
+      "ok": "Confirmer",
+      "cancel": "Annuler"
+    },
+    "edit": "Modifier",
+    "archive": "Archiver cette opportunité",
+    "archived": "« {title} » est archivée.",
+    "undo": "Annuler",
+    "history": {
+      "title": "Historique",
+      "empty": "Aucun échange noté pour cette opportunité."
+    },
+    "contactArchived": "{name} est archivé : cette opportunité est en pause. Désarchive le contact pour la reprendre.",
+    "openContact": "Voir le contact"
+  },
+  "Activities": {
+    "title": "Noter un échange",
+    "kind": {
+      "label": "Type d'échange"
+    },
+    "kinds": {
+      "note": "Note",
+      "call": "Appel",
+      "whatsapp": "WhatsApp",
+      "email": "E-mail",
+      "meeting": "Rendez-vous"
+    },
+    "body": {
+      "label": "Ce qui s'est dit",
+      "hint": "Par exemple : intéressé, rappeler après le 15 avec un devis."
+    },
+    "occurredAt": {
+      "label": "Date et heure"
+    },
+    "add": "Ajouter à l'historique",
+    "added": "Ajouté à l'historique.",
+    "deal": "Opportunité : {title}",
+    "truncated": "Les {shown} échanges les plus récents sont affichés sur {total}."
+  },
+  "Reminders": {
+    "title": "Rappels",
+    "remindMe": "Me rappeler",
+    "quickLabel": "Quand ?",
+    "quick": {
+      "tomorrow": "Demain",
+      "in3days": "Dans 3 jours",
+      "in1week": "Dans 1 semaine"
+    },
+    "custom": "Autre date",
+    "dueAt": {
+      "label": "Date et heure du rappel"
+    },
+    "subject": {
+      "label": "Objet (facultatif)",
+      "hint": "Par défaut : « {title} »."
+    },
+    "defaultTitle": "Relancer {name}",
+    "schedule": "Programmer",
+    "created": "Rappel programmé.",
+    "empty": "Aucun rappel prévu.",
+    "markDone": "Fait",
+    "markDoneLabel": "Marquer « {title} » comme fait",
+    "snoozeLabel": "Repousser « {title} »",
+    "snooze": {
+      "1": "+1 jour",
+      "3": "+3 jours",
+      "7": "+1 semaine"
+    },
+    "overdue": "En retard",
+    "when": {
+      "today": "Aujourd'hui à {time}",
+      "tomorrow": "Demain à {time}",
+      "past": "{date} à {time}",
+      "future": "{date} à {time}"
+    },
+    "snoozeShort": {
+      "1": "+1 j",
+      "3": "+3 j",
+      "7": "+1 sem."
+    }
+  },
+  "Today": {
+    "title": "Aujourd'hui",
+    "count": "{count, plural, =0 {Rien de prévu} =1 {# rappel} other {# rappels}}",
+    "empty": "Rien à faire aujourd'hui. Programme un rappel depuis un contact ou une opportunité.",
+    "contactsLink": "Voir mes contacts",
+    "truncated": "Les {shown} plus anciens sont affichés sur {total}. Fais-les ou repousse-les pour voir les suivants."
+  },
+  "ReminderEmail": {
+    "subject": "{count, plural, =1 {Ton rappel du jour} other {Tes rappels du jour (#)}}",
+    "intro": "Voici ce que tu as prévu de faire aujourd'hui :",
+    "today": "aujourd'hui à {time}",
+    "overdue": "en retard depuis le {date}",
+    "cta": "Ouvrir Ivonea OS",
+    "footer": "Tu reçois cet e-mail parce que tu as programmé ces rappels dans Ivonea OS."
   }
 }

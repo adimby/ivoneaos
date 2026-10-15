@@ -1,7 +1,7 @@
 import type { ComponentProps } from "react";
 import { cn } from "./cn";
 
-type Variant = "primary" | "secondary" | "ghost";
+type Variant = "primary" | "secondary" | "ghost" | "danger";
 
 const base =
   "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 text-base font-semibold " +
@@ -13,6 +13,8 @@ const variants: Record<Variant, string> = {
   secondary:
     "border-2 border-lagoon bg-white text-lagoon hover:bg-sand-light active:bg-sand-light",
   ghost: "text-lagoon underline-offset-4 hover:underline",
+  // Action destructive discrète (archiver) : texte danger (6,2:1 sur spray).
+  danger: "text-danger underline-offset-4 hover:underline",
 };
 
 export function buttonClasses(variant: Variant = "primary", block = false, className?: string) {

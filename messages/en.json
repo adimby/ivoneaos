@@ -158,6 +158,7 @@
     "required": "This field is required.",
     "too_long": "This text is too long.",
     "invalid_number": "Enter a whole number, without decimals.",
+    "amount_format": "Invalid amount. For example 450 000, or 1 250,50 for euros and dollars.",
     "too_large": "This number is too large.",
     "invalid_choice": "Choose an option.",
     "nif_format": "The NIF has 10 digits.",
@@ -167,7 +168,11 @@
     "logo_too_large": "This logo is larger than 1 MB. Make it smaller and try again.",
     "logo_type": "The logo must be a PNG, JPEG or WebP image.",
     "logo_upload": "The logo could not be uploaded. Try again.",
-    "fix_errors": "Fix the highlighted fields."
+    "fix_errors": "Fix the highlighted fields.",
+    "phone_format": "Invalid number. Example: 034 12 345 67, or +33 6 12 34 56 78 abroad.",
+    "email_format": "Invalid email address (example: name@gmail.com).",
+    "reachable_required": "Enter a phone number or an email so you can reach this contact.",
+    "date_format": "Invalid date."
   },
   "Nav": {
     "label": "Main navigation",
@@ -226,14 +231,11 @@
       "title": "Your business",
       "collected": "Collected this month",
       "pending": "Pending invoices",
-      "deals": "Open opportunities",
-      "reminders": "Today's reminders"
+      "deals": "Open opportunities"
     }
   },
   "Placeholder": {
-    "pipeline": "Pipeline",
     "invoices": "Invoices",
-    "contacts": "Contacts",
     "body": "This page is coming soon. You will follow your business here from your phone."
   },
   "Settings": {
@@ -316,5 +318,237 @@
     "title": "Page not found",
     "body": "This address doesn't lead to any page. It may have been mistyped.",
     "home": "Back to home"
+  },
+  "Contacts": {
+    "metaTitle": "Contacts",
+    "title": "Contacts",
+    "searchLabel": "Search contacts",
+    "searchPlaceholder": "Name, company, phone…",
+    "search": "Search",
+    "clearSearch": "Show all",
+    "count": "{count, plural, =1 {# active contact} other {# active contacts}}",
+    "empty": {
+      "title": "No contacts yet",
+      "body": "Add a lead or a client: a name and a phone number are enough."
+    },
+    "noResults": "No contact matches “{query}”.",
+    "new": "New contact",
+    "newTitle": "New contact",
+    "editTitle": "Edit contact",
+    "backToList": "Contacts",
+    "backToContact": "Back to contact",
+    "name": {
+      "label": "Name",
+      "hint": "The person or company to contact."
+    },
+    "phone": {
+      "label": "Phone",
+      "hint": "For example 034 12 345 67. Phone or email required."
+    },
+    "email": {
+      "label": "Email"
+    },
+    "company": {
+      "label": "Company (optional)"
+    },
+    "moreDetails": "More details (optional)",
+    "kind": {
+      "label": "Type",
+      "person": "Person",
+      "company": "Company"
+    },
+    "country": {
+      "label": "Country"
+    },
+    "tags": {
+      "label": "Tags",
+      "hint": "Comma-separated, for example: client, design."
+    },
+    "create": "Add contact",
+    "save": "Save",
+    "saved": "Contact saved.",
+    "call": "Call",
+    "whatsapp": "WhatsApp",
+    "sendEmail": "Email",
+    "edit": "Edit",
+    "archive": "Archive this contact",
+    "archiveHint": "It leaves your list and no longer counts as an active contact. Its history is kept.",
+    "archived": "{name} is archived.",
+    "undo": "Undo",
+    "archivedBadge": "Archived",
+    "restore": "Unarchive",
+    "import": {
+      "button": "Import from my phone",
+      "done": "{count, plural, =0 {No contact imported.} =1 {# contact imported.} other {# contacts imported.}}",
+      "skipped": "{count, plural, =1 {# contact skipped: no valid phone or email.} other {# contacts skipped: no valid phone or email.}}",
+      "failed": "The import did not go through. Try again.",
+      "duplicates": "{count, plural, =1 {# contact already in your list.} other {# contacts already in your list.}}"
+    },
+    "deals": {
+      "title": "Deals",
+      "empty": "No deal with this contact.",
+      "new": "New deal"
+    },
+    "history": {
+      "title": "History",
+      "empty": "No exchange logged yet."
+    },
+    "truncated": "Showing {shown} of {total} contacts: refine your search to find the others."
+  },
+  "Deals": {
+    "metaTitle": "Pipeline",
+    "title": "Pipeline",
+    "new": "New deal",
+    "newTitle": "New deal",
+    "editTitle": "Edit deal",
+    "metaDetail": "Deal",
+    "empty": {
+      "title": "Your pipeline is empty",
+      "body": "Create a deal to follow a lead all the way to signature."
+    },
+    "stagesNav": "Pipeline stages",
+    "stageCount": "{count, plural, =0 {No deals} =1 {# deal} other {# deals}}",
+    "stageEmpty": "No deal at this stage.",
+    "truncated": "Showing the {shown} most recent deals out of {total}. Stage counts and totals include all of them.",
+    "noAmount": "Amount to be defined",
+    "title_field": {
+      "label": "Title",
+      "hint": "For example: Logo for the shop."
+    },
+    "contact": {
+      "label": "Contact",
+      "truncated": "Only the first {shown} contacts (out of {total}) are listed. For another one, open their page and create the deal from there.",
+      "fixed": "A deal's contact can't be changed. For another contact, create a new deal."
+    },
+    "amount": {
+      "label": "Estimated amount (optional)",
+      "hint": "For example 450 000."
+    },
+    "currency": {
+      "label": "Currency"
+    },
+    "stage": {
+      "label": "Stage"
+    },
+    "closeOn": {
+      "label": "Expected close date (optional)"
+    },
+    "noContacts": {
+      "title": "Add a contact first",
+      "body": "A deal is always linked to a contact.",
+      "action": "New contact"
+    },
+    "create": "Create deal",
+    "save": "Save",
+    "backToPipeline": "Pipeline",
+    "backToDeal": "Back to deal",
+    "expectedClose": "Expected to close on {date}",
+    "currentStage": "Stage: {stage}",
+    "nextStage": "Next stage: {stage}",
+    "chooseStage": "Change stage",
+    "moveTo": "Move to stage {stage}",
+    "confirm": {
+      "won": {
+        "title": "Mark as won?",
+        "body": "Well done! The deal leaves the active pipeline. You can still change its stage later."
+      },
+      "lost": {
+        "title": "Mark as lost?",
+        "body": "The deal leaves the active pipeline. You can reopen it by changing its stage."
+      },
+      "ok": "Confirm",
+      "cancel": "Cancel"
+    },
+    "edit": "Edit",
+    "archive": "Archive this deal",
+    "archived": "“{title}” is archived.",
+    "undo": "Undo",
+    "history": {
+      "title": "History",
+      "empty": "No exchange logged for this deal."
+    },
+    "contactArchived": "{name} is archived: this deal is on hold. Unarchive the contact to resume it.",
+    "openContact": "See the contact"
+  },
+  "Activities": {
+    "title": "Log an exchange",
+    "kind": {
+      "label": "Type of exchange"
+    },
+    "kinds": {
+      "note": "Note",
+      "call": "Call",
+      "whatsapp": "WhatsApp",
+      "email": "Email",
+      "meeting": "Meeting"
+    },
+    "body": {
+      "label": "What was said",
+      "hint": "For example: interested, call back after the 15th with a quote."
+    },
+    "occurredAt": {
+      "label": "Date and time"
+    },
+    "add": "Add to history",
+    "added": "Added to history.",
+    "deal": "Deal: {title}",
+    "truncated": "Showing the {shown} most recent exchanges of {total}."
+  },
+  "Reminders": {
+    "title": "Reminders",
+    "remindMe": "Remind me",
+    "quickLabel": "When?",
+    "quick": {
+      "tomorrow": "Tomorrow",
+      "in3days": "In 3 days",
+      "in1week": "In 1 week"
+    },
+    "custom": "Another date",
+    "dueAt": {
+      "label": "Reminder date and time"
+    },
+    "subject": {
+      "label": "Subject (optional)",
+      "hint": "Default: “{title}”."
+    },
+    "defaultTitle": "Follow up with {name}",
+    "schedule": "Schedule",
+    "created": "Reminder scheduled.",
+    "empty": "No reminder scheduled.",
+    "markDone": "Done",
+    "markDoneLabel": "Mark “{title}” as done",
+    "snoozeLabel": "Postpone “{title}”",
+    "snooze": {
+      "1": "+1 day",
+      "3": "+3 days",
+      "7": "+1 week"
+    },
+    "overdue": "Overdue",
+    "when": {
+      "today": "Today at {time}",
+      "tomorrow": "Tomorrow at {time}",
+      "past": "{date} at {time}",
+      "future": "{date} at {time}"
+    },
+    "snoozeShort": {
+      "1": "+1 d",
+      "3": "+3 d",
+      "7": "+1 wk"
+    }
+  },
+  "Today": {
+    "title": "Today",
+    "count": "{count, plural, =0 {Nothing planned} =1 {# reminder} other {# reminders}}",
+    "empty": "Nothing to do today. Schedule a reminder from a contact or a deal.",
+    "contactsLink": "See my contacts",
+    "truncated": "Showing the {shown} oldest of {total}. Mark them done or snooze them to see the next ones."
+  },
+  "ReminderEmail": {
+    "subject": "{count, plural, =1 {Your reminder for today} other {Your reminders for today (#)}}",
+    "intro": "Here is what you planned to do today:",
+    "today": "today at {time}",
+    "overdue": "overdue since {date}",
+    "cta": "Open Ivonea OS",
+    "footer": "You are receiving this email because you scheduled these reminders in Ivonea OS."
   }
 }

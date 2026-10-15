@@ -21,7 +21,8 @@ export default async function AppLayout({ children, params }: LayoutProps<"/[loc
   );
 }
 
-const mainClass = "px-safe mx-auto w-full max-w-md flex-1 pt-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))]";
+// flex : une barre d'action (BottomBar) descend en bas de l'écran même si la page est courte.
+const mainClass = "px-safe mx-auto flex w-full flex-col max-w-md flex-1 pt-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))]";
 
 function ShellFallback() {
   return (

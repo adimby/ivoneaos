@@ -9,6 +9,8 @@ import { requireUserId } from "@/lib/session";
 import { AccountControls } from "@/modules/auth/components/account-controls";
 import { safeNextPath } from "@/modules/auth/next-path";
 import { OnboardingForm } from "@/modules/onboarding/components/onboarding-form";
+import { EMPTY_DIAGNOSTIC } from "@/modules/onboarding/diagnostic-fields";
+import { getDiagnosticDefaults } from "@/modules/onboarding/queries";
 import { EMPTY_PROFILE } from "@/modules/workspace/components/profile-fields";
 import { getCurrentWorkspace, getManualPayment, isOnboarded } from "@/modules/workspace/queries";
 
@@ -61,8 +63,10 @@ async function Onboarding({ locale, searchParams }: { locale: Locale; searchPara
   const workspace = await getCurrentWorkspace();
   if (isOnboarded(workspace)) return redirect({ href: next ?? "/tableau-de-bord", locale });
 
-  // Workspace commencé (essai interrompu) : on reprend ses valeurs.
-  const manual = workspace ? await getManualPayment(workspace.id) : { mvola: "", rib: "" };
+  // Workspace commencé (essai interrompu) : on reprend ses valeurs, diagnostic compris.
+  const [manual, diagnostic] = workspace
+    ? await Promise.all([getManualPayment(workspace.id), getDiagnosticDefaults(workspace.id)])
+    : [{ mvola: "", rib: "" }, EMPTY_DIAGNOSTIC];
   const defaults = workspace
     ? {
         name: workspace.name,
@@ -75,5 +79,5 @@ async function Onboarding({ locale, searchParams }: { locale: Locale; searchPara
         ...manual,
       }
     : EMPTY_PROFILE;
-  return <OnboardingForm locale={locale} defaults={defaults} next={next} />;
+  return <OnboardingForm locale={locale} defaults={defaults} diagnostic={diagnostic} next={next} />;
 }

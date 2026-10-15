@@ -1,9 +1,10 @@
 "use client";
 
-import { startTransition, useActionState } from "react";
+import { startTransition, useActionState, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { useFocusFirstInvalid } from "@/lib/use-focus-invalid";
 import { useHydrated } from "@/lib/use-hydrated";
 import { updateProfile, type ProfileFormState } from "../actions";
 import { ProfileFields, type ProfileDefaults } from "./profile-fields";
@@ -21,6 +22,8 @@ export function ProfileForm({
   const tErrors = useTranslations();
   const [state, formAction, pending] = useActionState<ProfileFormState, FormData>(updateProfile, {});
   const hydrated = useHydrated();
+  const formRef = useRef<HTMLFormElement>(null);
+  useFocusFirstInvalid(formRef, state);
 
   return (
     // action : formulaire POST, jamais un GET qui mettrait NIF, STAT, RIB dans l'URL.
@@ -28,6 +31,7 @@ export function ProfileForm({
     // réponse d'un envoi sans JavaScript n'affiche ni le résultat ni les erreurs. Ensuite,
     // onSubmit envoie sans réinitialiser le formulaire : les saisies restent en cas d'erreur.
     <form
+      ref={formRef}
       action={formAction}
       noValidate
       className="flex flex-col gap-5"

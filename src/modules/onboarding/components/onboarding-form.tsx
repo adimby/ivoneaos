@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useRef, useState, type Ref } from "react";
+import { startTransition, useActionState, useRef, useState, type Ref } from "react";
 import { useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -10,12 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import type { FieldErrors } from "@/lib/forms";
+import { useFocusFirstInvalid } from "@/lib/use-focus-invalid";
 import { useHydrated } from "@/lib/use-hydrated";
 import type { ProfileFormState } from "@/modules/workspace/actions";
 import { formErrorMessage } from "@/modules/workspace/components/profile-form";
 import { ProfileFields, type ProfileDefaults } from "@/modules/workspace/components/profile-fields";
 import { completeOnboarding } from "../actions";
-import { DIAGNOSTIC_FIELDS, EXPERIENCES } from "../diagnostic-fields";
+import { DIAGNOSTIC_FIELDS, EXPERIENCES, type DiagnosticDefaults } from "../diagnostic-fields";
 import { levelFromClients } from "../level";
 
 // Deux étapes dans un seul formulaire : l'étape masquée reste dans la page, ses réponses
@@ -25,10 +26,13 @@ import { levelFromClients } from "../level";
 export function OnboardingForm({
   locale,
   defaults,
+  diagnostic,
   next,
 }: {
   locale: string;
   defaults: ProfileDefaults;
+  // Réponses d'un essai interrompu (onboarding_answers), reprises à l'étape 1.
+  diagnostic: DiagnosticDefaults;
   next: string | null;
 }) {
   const t = useTranslations("Onboarding");
@@ -38,8 +42,9 @@ export function OnboardingForm({
   const [step, setStep] = useState<1 | 2>(1);
   const [shownState, setShownState] = useState(state);
   const [trade, setTrade] = useState(defaults.trade);
-  const [clients, setClients] = useState("");
+  const [clients, setClients] = useState(diagnostic.current_clients);
   const [stepErrors, setStepErrors] = useState<FieldErrors>({});
+  const formRef = useRef<HTMLFormElement>(null);
   const step1Ref = useRef<HTMLFieldSetElement>(null);
   const title1Ref = useRef<HTMLHeadingElement>(null);
   const title2Ref = useRef<HTMLHeadingElement>(null);
@@ -68,14 +73,14 @@ export function OnboardingForm({
     setShownState(state);
     if (backToStep1) setStep(1);
   }
-  useEffect(() => {
-    if (backToStep1) title1Ref.current?.focus();
-  }, [state, backToStep1]);
+  // Premier champ en erreur (à l'étape où il se trouve) : focus, visible au-dessus de la barre.
+  useFocusFirstInvalid(formRef, state);
 
   const level = levelFromClients(Number(clients.replace(/\s/g, "")) || 0);
 
   return (
     <form
+      ref={formRef}
       action={formAction}
       noValidate
       className="flex flex-1 flex-col"
@@ -103,7 +108,7 @@ export function OnboardingForm({
         </Field>
         <Field id="experience" label={t("experience.label")} error={error("experience")}>
           {(c) => (
-            <Select {...c} name="experience" required defaultValue="">
+            <Select {...c} name="experience" required defaultValue={diagnostic.experience}>
               <option value="" disabled>
                 {tAll("Profile.choose")}
               </option>
@@ -132,7 +137,16 @@ export function OnboardingForm({
         <Field id="monthly_income_goal" label={t("incomeGoal.label")} hint={t("incomeGoal.hint")} error={error("monthly_income_goal")}>
           {(c) => (
             <div className="relative">
-              <Input {...c} name="monthly_income_goal" inputMode="numeric" pattern="[0-9 ]*" required maxLength={17} className="pr-12" />
+              <Input
+                {...c}
+                name="monthly_income_goal"
+                inputMode="numeric"
+                pattern="[0-9 ]*"
+                required
+                maxLength={17}
+                defaultValue={diagnostic.monthly_income_goal}
+                className="pr-12"
+              />
               <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 font-semibold text-ink-muted" aria-hidden="true">
                 Ar
               </span>
