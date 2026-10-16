@@ -1,4 +1,4 @@
-export type AuthErrorKey = "invalid_email" | "invalid_code_format" | "code_invalid" | "rate_limited" | "unknown";
+export type AuthErrorKey = "invalid_email" | "invalid_code_format" | "code_invalid" | "rate_limited" | "too_many_attempts" | "unknown";
 
 // Erreur Supabase Auth → message compréhensible (Auth.errors.*). Un code faux et un code
 // expiré renvoient la même erreur (otp_expired) : un seul message pour les deux.

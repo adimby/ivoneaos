@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { publicAppUrl } from "@/lib/app-url";
+import { appOrigin } from "@/lib/app-url";
 import { getPublicDocument } from "@/modules/billing/queries";
 import { pdfResponse, publicDocumentPdf } from "@/modules/billing/render";
 import { publicPath } from "@/modules/billing/share";
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest, { params }: RouteContext<"/[loca
   if (!found) {
     return new Response("Not found", { status: 404, headers: { "X-Robots-Tag": "noindex, nofollow" } });
   }
-  const url = `${publicAppUrl() ?? request.nextUrl.origin}${publicPath(found.doc.language, token)}`;
+  const url = `${await appOrigin()}${publicPath(found.doc.language, token)}`;
   const pdf = await publicDocumentPdf(found.doc, url);
   return pdfResponse(pdf, found.doc, request.nextUrl.searchParams.has("telecharger"));
 }

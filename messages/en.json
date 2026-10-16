@@ -46,6 +46,7 @@
       "invalid_code_format": "The code has 6 digits.",
       "code_invalid": "This code is wrong or has expired. Check it, or ask for a new code.",
       "rate_limited": "Too many requests at once. Wait a minute before trying again.",
+      "too_many_attempts": "Too many attempts. To protect your account, wait 15 minutes before trying again.",
       "unknown": "Sign-in did not go through. Check your internet connection and try again."
     }
   },
@@ -649,11 +650,6 @@
       "tomorrow": "Tomorrow at {time}",
       "past": "{date} at {time}",
       "future": "{date} at {time}"
-    },
-    "snoozeShort": {
-      "1": "+1 d",
-      "3": "+3 d",
-      "7": "+1 wk"
     }
   },
   "Today": {

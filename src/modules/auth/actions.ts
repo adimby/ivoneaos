@@ -7,6 +7,7 @@ import { rememberLocale } from "@/lib/locale-cookie";
 import { createClient } from "@/lib/supabase/server";
 import { authErrorKey, type AuthErrorKey } from "./errors";
 import { safeNextPath } from "./next-path";
+import { allowAuthAttempt } from "./rate-limit";
 
 export type LoginState = {
   step: "email" | "code";
@@ -33,6 +34,9 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   const supabase = await createClient();
 
   if (intent !== "verify") {
+    if (!(await allowAuthAttempt("send", email.data))) {
+      return { step: intent === "resend" ? "code" : "email", email: email.data, error: "too_many_attempts" };
+    }
     const { error } = await supabase.auth.signInWithOtp({
       email: email.data,
       // data : langue du profil créé à l'inscription (handle_new_user).
@@ -46,6 +50,9 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
 
   const token = String(formData.get("code") ?? "").replace(/\s/g, "");
   if (!/^\d{6}$/.test(token)) return { step: "code", email: email.data, error: "invalid_code_format" };
+  if (!(await allowAuthAttempt("verify", email.data))) {
+    return { step: "code", email: email.data, error: "too_many_attempts" };
+  }
 
   const { data, error } = await supabase.auth.verifyOtp({ email: email.data, token, type: "email" });
   if (error || !data.user) return { step: "code", email: email.data, error: authErrorKey(error) };

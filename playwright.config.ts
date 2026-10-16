@@ -12,6 +12,15 @@ const papiPort = Number(process.env.PAPI_MOCK_PORT ?? 3199);
 // (même construction .next, lancée seulement) : l'instance principale reste sans Whop.
 const whopPort = Number(process.env.WHOP_MOCK_PORT ?? 3198);
 const whopAppPort = Number(process.env.E2E_WHOP_PORT ?? 3101);
+// Resend simulé (e2e/resend-mock.mjs) : les e-mails de l'instance principale arrivent dans
+// Mailpit, comme les codes de connexion.
+const resendPort = Number(process.env.RESEND_MOCK_PORT ?? 3197);
+
+// IP client propre à chaque lancement de la suite (x-forwarded-for, lue par les limites de
+// connexion hors Vercel) : plusieurs suites à la suite, ou en parallèle sur la même base,
+// ne partagent pas le compteur par IP de 127.0.0.1. Fixée une fois par le processus
+// principal, héritée par les processus de test.
+const clientIp = (process.env.E2E_CLIENT_IP ??= `10.${[0, 0, 0].map(() => Math.floor(Math.random() * 254) + 1).join(".")}`);
 
 export default defineConfig({
   testDir: "e2e",
@@ -19,7 +28,8 @@ export default defineConfig({
   workers: 1,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? "github" : "list",
+  // CI : annotations GitHub et rapport HTML (artefact en cas d'échec).
+  reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL: `http://127.0.0.1:${port}`,
     // Téléphone d'entrée de gamme : 360 × 780, tactile.
@@ -29,6 +39,7 @@ export default defineConfig({
     hasTouch: true,
     locale: "fr-FR",
     trace: "retain-on-failure",
+    extraHTTPHeaders: { "x-forwarded-for": clientIp },
   },
   projects: [{ name: "chromium-mobile" }],
   webServer: [
@@ -39,9 +50,19 @@ export default defineConfig({
       reuseExistingServer: false,
     },
     {
+      command: "node e2e/resend-mock.mjs",
+      url: `http://127.0.0.1:${resendPort}/__mock/health`,
+      env: { RESEND_MOCK_PORT: String(resendPort) },
+      reuseExistingServer: false,
+    },
+    {
       command: `npm run build && npm run start -- --port ${port}`,
       url: `http://127.0.0.1:${port}/fr`,
-      env: { PAPI_API_BASE_URL: `http://127.0.0.1:${papiPort}` },
+      env: {
+        PAPI_API_BASE_URL: `http://127.0.0.1:${papiPort}`,
+        RESEND_API_BASE_URL: `http://127.0.0.1:${resendPort}`,
+        RESEND_API_KEY: "re_e2e_test",
+      },
       reuseExistingServer: false,
       timeout: 300_000,
     },

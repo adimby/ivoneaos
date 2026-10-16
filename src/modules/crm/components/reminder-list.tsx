@@ -70,7 +70,7 @@ export async function ReminderList({
                   {t("markDone")}
                 </SubmitButton>
               </form>
-              <form action={snoozeReminder} role="group" aria-label={t("snoozeLabel", { title: reminder.title })} className="flex min-w-[12rem] flex-1 gap-2">
+              <form action={snoozeReminder} role="group" aria-label={t("snoozeLabel", { title: reminder.title })} className="flex basis-full gap-2">
                 <input type="hidden" name="locale" value={locale} />
                 <input type="hidden" name="back" value={back} />
                 <input type="hidden" name="id" value={reminder.id} />
@@ -81,10 +81,9 @@ export async function ReminderList({
                     name="days"
                     value={days}
                     variant="secondary"
-                    aria-label={t(`snooze.${days}`)}
                     className="min-h-11 flex-1 gap-1 px-1 text-sm whitespace-nowrap"
                   >
-                    {t(`snoozeShort.${days}`)}
+                    {t(`snooze.${days}`)}
                   </SubmitButton>
                 ))}
               </form>

@@ -43,6 +43,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"auth_attempts": {
+                  Row: {
+                    "at": string,"key": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "at"?: string,"key": string
+                  }
+                  Update: {
+                    "at"?: string,"key"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"contacts": {
                   Row: {
                     "archived_at": string | null,"company_name": string | null,"country": string,"created_at": string,"email": string | null,"id": string,"kind": Database["public"]['Enums']["contact_kind"],"name": string,"phone": string | null,"tags": (string)[],"updated_at": string,"workspace_id": string,"search_text": string | null
@@ -560,6 +574,9 @@ isOneToOne: false
                            },
 "accept_quote":
 { Args: { "token": string,"version": string }; Returns: string
+                           },
+"auth_rate_limit":
+{ Args: { "p_key": string,"p_max": number,"p_window_seconds": number }; Returns: boolean
                            },
 "claim_document_email":
 { Args: { "p_document_id": string }; Returns: string

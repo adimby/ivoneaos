@@ -1,7 +1,8 @@
 import "server-only";
 // Envoi d'e-mails par l'API HTTP de Resend (https://resend.com/docs/api-reference/emails/send-email).
 // Sans RESEND_API_KEY : rien n'est envoyé, un message l'indique dans les journaux.
-const RESEND_URL = "https://api.resend.com/emails";
+// RESEND_API_BASE_URL : tests de bout en bout seulement (e2e/resend-mock.mjs).
+const RESEND_BASE_URL = "https://api.resend.com";
 const DEFAULT_FROM = "Ivonea OS <notifications@ivonea.com>";
 
 // skipped : envoi désactivé (pas de clé).
@@ -27,7 +28,8 @@ export async function sendEmail(email: Email): Promise<SendResult> {
     return "skipped";
   }
   try {
-    const response = await fetch(RESEND_URL, {
+    const base = (process.env.RESEND_API_BASE_URL || RESEND_BASE_URL).replace(/\/$/, "");
+    const response = await fetch(`${base}/emails`, {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({

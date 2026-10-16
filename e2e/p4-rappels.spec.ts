@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { cronSecret, openMore, pageBeforeJavaScript, signUpAndOnboard } from "./helpers";
+import { adminRest, cronSecret, openMore, pageBeforeJavaScript, signUpAndOnboard } from "./helpers";
+import { readEmail, type Message } from "./mailpit";
 
 // Date du jour à Antananarivo (AAAA-MM-JJ), quel que soit le fuseau de la machine de test.
 function todayInAntananarivo(): string {
@@ -78,6 +79,51 @@ test("P4 : rappel → Aujourd'hui sur l'accueil → fait", async ({ page }) => {
   // Repousser recule à partir de la date prévue : demain + 7 jours, toujours à 9 h.
   await expect(tomorrow).toContainText(`${dayInAntananarivo(8)} à 09:00`);
   await expect(page.getByTestId("reminder").filter({ visible: true })).toHaveCount(1);
+});
+
+test("P4.3 : rappel du jour envoyé par e-mail par le cron, une seule fois", async ({ page, request }) => {
+  const { email, business } = await signUpAndOnboard(page, "p4mail");
+  await page.goto("/fr/contacts/nouveau");
+  await page.getByLabel("Nom", { exact: true }).fill("Hery");
+  await page.getByLabel("E-mail").fill("hery@example.mg");
+  await page.getByRole("button", { name: "Ajouter le contact" }).click();
+  await expect(page.getByRole("heading", { name: "Hery", exact: true })).toBeVisible();
+  await page.getByLabel("Objet (facultatif)").fill("Appeler Hery pour le devis");
+  await page.getByText("Autre date").click();
+  await page.getByLabel("Date et heure du rappel").fill(`${todayInAntananarivo()}T00:01`);
+  await page.getByRole("button", { name: "Programmer" }).click();
+  await expect(page.getByTestId("reminder").filter({ visible: true }).filter({ hasText: "Appeler Hery pour le devis" })).toBeVisible();
+
+  // Le cron du matin (Vercel, Bearer CRON_SECRET) envoie le récapitulatif ; relancé jusqu'à
+  // réception, au cas où un autre passage aurait réservé le rappel au même moment.
+  const since = new Date(Date.now() - 2_000);
+  const auth = { headers: { Authorization: `Bearer ${cronSecret()}` } };
+  let message: Message | undefined;
+  await expect(async () => {
+    const run = await request.get("/api/cron/reminders", auth);
+    expect(run.status()).toBe(200);
+    message = await readEmail(email, since, (m) => m.Text.includes("Appeler Hery pour le devis"), 3_000);
+  }).toPass({ timeout: 30_000 });
+  expect(message!.Subject).toBe("Ton rappel du jour");
+  expect(message!.Text).toContain("Appeler Hery pour le devis (Hery) : aujourd'hui à 00:01");
+  expect(message!.Text).toMatch(/Ouvrir Ivonea OS : http:\/\/127\.0\.0\.1:\d+\/fr\/tableau-de-bord/);
+
+  // Noté envoyé : un second passage ne le reprend pas (notified_at inchangé) ; le rappel
+  // reste à faire.
+  const ws = await adminRest(`workspaces?select=id&name=eq.${encodeURIComponent(business)}`);
+  const [{ id }] = (await ws.json()) as { id: string }[];
+  const state = async () =>
+    ((await (await adminRest(`reminders?select=notified_at,done_at&workspace_id=eq.${id}`)).json()) as {
+      notified_at: string | null;
+      done_at: string | null;
+    }[])[0];
+  const first = await state();
+  expect(first.notified_at).not.toBeNull();
+  expect(first.done_at).toBeNull();
+  expect((await request.get("/api/cron/reminders", auth)).status()).toBe(200);
+  expect(await state()).toEqual(first);
+  await page.goto("/fr/tableau-de-bord");
+  await expect(page.getByTestId("today").filter({ visible: true })).toContainText("Appeler Hery pour le devis");
 });
 
 test("Notification des rappels : route du cron protégée", async ({ request }) => {

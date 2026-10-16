@@ -149,13 +149,70 @@ npm run test:e2e  # Supabase local démarré, .env.local renseigné
 ```
 
 Tests de bout en bout (`e2e/`, Playwright, Chromium) : chaque parcours de la spec devient un test,
-sur un écran de 360 × 780. `npm run test:e2e` construit l'application (`npm run build`, dans `.next`)
-puis la lance sur le port 3100 (`E2E_PORT` pour un autre). Aucun serveur déjà lancé n'est réutilisé :
-si le port est pris, la suite s'arrête avec une erreur. Ne pas lancer deux constructions en même
-temps dans le même dossier (`npm run build`, `npm run test:e2e`) : elles partagent `.next`. Les codes
-de connexion sont lus dans l'API de Mailpit (`MAILPIT_URL`, par défaut http://127.0.0.1:54324).
-Navigateur : `npx playwright install chromium` la première fois (ou `PLAYWRIGHT_BROWSERS_PATH` vers
-un Chromium déjà installé). Pas encore en CI.
+sur un écran de 360 × 780 (P1 à P5, enchaînement complet du devis au tableau de bord, limites de
+l'offre Découverte, anglais, accessibilité WCAG AA avec axe-core). `npm run test:e2e` construit
+l'application (`npm run build`, dans `.next`) puis la lance sur le port 3100 (`E2E_PORT` pour un
+autre), et une seconde fois sur le port 3101 avec Whop activé. Services simulés lancés par
+`playwright.config.ts` : Papi (`e2e/papi-mock.mjs`), Whop (`e2e/whop-mock.mjs`) et Resend
+(`e2e/resend-mock.mjs`, qui remet les e-mails de l'application à Mailpit). Aucun serveur déjà lancé
+n'est réutilisé : si un port est pris, la suite s'arrête avec une erreur. Ne pas lancer deux
+constructions en même temps dans le même dossier (`npm run build`, `npm run test:e2e`) : elles
+partagent `.next`. Les codes de connexion et les e-mails sont lus dans l'API de Mailpit
+(`MAILPIT_URL`, par défaut http://127.0.0.1:54324). `.env.local` doit contenir les clés de la pile
+locale, `PAYMENT_SECRETS_KEY` et `CRON_SECRET`, sans `APP_URL` (les liens attendus pointent vers
+127.0.0.1). Navigateur : `npx playwright install chromium` la première fois (ou
+`PLAYWRIGHT_BROWSERS_PATH` vers un Chromium déjà installé).
+
+CI (`.github/workflows/ci.yml`) : `checks` (lint, types, Vitest, construction), `database` (pgTAP,
+numérotation concurrente, types à jour) et `e2e` (pile Supabase locale, `.env.local` généré depuis
+`supabase status -o env`, Playwright ; rapport et traces en artefact en cas d'échec).
+
+## Mise en production
+
+À vérifier sur la vraie infrastructure (impossible à prouver en local ou en CI) :
+
+- [ ] **Variables Vercel** (Production) : `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`,
+  `SUPABASE_SECRET_KEY` (aussi utilisée par les limites de la connexion), `PAYMENT_SECRETS_KEY`
+  (`openssl rand -base64 32`, gardée hors du dépôt et sauvegardée : la perdre rend illisibles toutes
+  les clés Papi), `CRON_SECRET`, `APP_URL` (domaine public en `https://` : liens envoyés aux clients,
+  retours Papi et Whop), `IVONEA_CONTACT_EMAIL`, `RESEND_API_KEY`, `EMAIL_FROM`. Jamais
+  `PAPI_API_BASE_URL`, `WHOP_API_BASE_URL` ni `RESEND_API_BASE_URL` (tests seulement). La construction
+  de production (`VERCEL_ENV=production`) échoue si `APP_URL` ou `IVONEA_CONTACT_EMAIL` manque ou si
+  une URL de test est renseignée (`src/lib/production-env.ts`). Hors de Vercel, l'hôte de la requête
+  n'est jamais pris dans `X-Forwarded-Host` et l'IP client vient de `X-Forwarded-For` : le proxy
+  devant l'application doit réécrire cet en-tête, et `APP_URL` doit être renseignée.
+- [ ] **Supabase hébergé** : migrations appliquées (`supabase db push`), `npm run test:db` vert sur une
+  branche de préproduction, réglages Auth ci-dessous (SMTP, modèles, limites, URL du site).
+- [ ] **Resend** : domaine d'envoi vérifié (SPF, DKIM, DMARC) pour l'adresse de `EMAIL_FROM` ; envoyer un
+  devis par e-mail à une adresse Gmail et une adresse Yahoo : reçu hors spam, nom
+  « <Studio> via Ivonea OS », réponse adressée à la freelance.
+- [ ] **Cron Vercel** (`vercel.json`) : les deux tâches apparaissent dans Settings > Cron Jobs ; un
+  rappel du jour programmé la veille arrive à 08:00 (heure d'Antananarivo) ; `/api/cron/papi` répond 200.
+- [ ] **Papi réel** (pas de bac à sable) : avec une vraie boutique, connecter la clé (« Papi connecté »),
+  envoyer une facture de 300 Ar à soi-même, payer par MVola, vérifier la notification
+  (`webhook_events.signature_valid = true`, facture payée, montant et frais), puis un lien expiré
+  recréé, et le rattrapage du cron sur un paiement dont la notification est perdue. Revérifier les noms
+  de champs avec la doc Papi du moment.
+- [ ] **Whop** : suivre « Mise en service de Whop » ci-dessus sur le bac à sable avant de renseigner
+  `WHOP_API_KEY` et `WHOP_WEBHOOK_SECRET` en production.
+- [ ] **En-têtes** : sur le domaine de production, la page publique d'un document renvoie
+  `Content-Security-Policy` (avec `frame-ancestors 'none'`), `Strict-Transport-Security`,
+  `X-Content-Type-Options` et `Referrer-Policy` ; le logo s'affiche (Storage autorisé par `img-src`) ;
+  le PDF s'ouvre dans le lecteur du téléphone (Android Chrome, iOS Safari).
+- [ ] **Limites de débit** : pare-feu Vercel (Firewall > Rate limiting) sur `POST /*/connexion`
+  (connexion, en plus des limites de l'application), `/*/p/*` (pages publiques, une requête base par
+  visite), `/api/papi/notification` et `/api/whop/webhook` ; limites Auth Supabase ci-dessous. Les
+  jetons publics (32 caractères aléatoires) ne se devinent pas, ces limites protègent la base, pas
+  les documents. Vérifier qu'au-delà de 10 codes faux pour une même adresse, la page de connexion
+  affiche « Trop de tentatives » (compteurs `public.auth_attempts`, IP réelle lue dans `x-real-ip`).
+- [ ] **Téléphone réel** : parcours P1 à P5 sur un Android d'entrée de gamme en 3G (DevTools ne remplace
+  pas un vrai réseau malgache), dont l'ouverture du lien WhatsApp et le paiement Papi.
+- [ ] **Sauvegardes** : Point-in-time recovery ou sauvegardes quotidiennes activées sur Supabase (factures
+  émises jamais supprimées).
+
+Après le MVP (sécurité) : politique de contenu avec nonce (`script-src 'nonce-…'` posé par
+`src/proxy.ts`) à la place de `'unsafe-inline'`, ce qui rend les pages dynamiques ; à peser contre le
+cache des pages publiques. `form-action 'self'` et `frame-ancestors 'none'` sont déjà en place.
 
 ## Mise en production de la connexion (Supabase Auth)
 
@@ -169,11 +226,15 @@ l'inscription (tableau de bord Supabase, Authentication) :
   et le sujet de `supabase/config.toml` (ils affichent le code `{{ .Token }}`, pas de lien).
   Longueur du code (Email OTP Length) : 6.
 - **Limites** (Rate Limits). `signInWithOtp` et `verifyOtp` sont appelés par le serveur Next
-  (actions serveur) : Supabase compte alors les demandes par adresse IP du serveur, et toutes les
-  utilisatrices partagent les IP de sortie de Vercel. Relever « Sign-ups and sign-ins » et « Token
-  verifications » (30 par 5 min par défaut) selon le trafic attendu, et la limite d'envoi d'e-mails
-  (par heure) une fois le SMTP en place. Si les abus deviennent un problème, ajouter un captcha
-  (Turnstile) à l'étape e-mail plutôt que de baisser ces limites.
+  (actions serveur) : Supabase compte les demandes par adresse IP du serveur, et toutes les
+  utilisatrices partagent les IP de sortie de Vercel. Les limites qui protègent vraiment sont donc
+  celles de l'application (`src/modules/auth/rate-limit.ts`, par quart d'heure) : par adresse e-mail,
+  5 envois de code et 10 vérifications (un code à 6 chiffres ne se force pas) ; par IP client, 50 de
+  chaque. Les limites Supabase ne servent plus que de plafond global : les régler juste au-dessus du
+  trafic total attendu (« Sign-ups and sign-ins », « Token verifications », 30 par 5 min par défaut),
+  pour qu'une seule personne ne puisse pas bloquer la connexion de toutes les autres, et la limite
+  d'envoi d'e-mails (par heure) une fois le SMTP en place. Si les abus deviennent un problème, ajouter
+  un captcha (Turnstile) à l'étape e-mail.
 - **URL du site** (Site URL) : l'adresse de production, pour les e-mails.
 
 ## Organisation

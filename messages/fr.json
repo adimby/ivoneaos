@@ -46,6 +46,7 @@
       "invalid_code_format": "Le code compte 6 chiffres.",
       "code_invalid": "Ce code est incorrect ou a expiré. Vérifie-le, ou demande un nouveau code.",
       "rate_limited": "Trop de demandes d'un coup. Patiente une minute avant de réessayer.",
+      "too_many_attempts": "Trop de tentatives. Pour protéger ton compte, attends un quart d'heure avant de réessayer.",
       "unknown": "La connexion n'a pas abouti. Vérifie ta connexion internet et réessaie."
     }
   },
@@ -649,11 +650,6 @@
       "tomorrow": "Demain à {time}",
       "past": "{date} à {time}",
       "future": "{date} à {time}"
-    },
-    "snoozeShort": {
-      "1": "+1 j",
-      "3": "+3 j",
-      "7": "+1 sem."
     }
   },
   "Today": {

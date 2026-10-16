@@ -7,8 +7,15 @@ import { readOtp } from "./mailpit";
 export async function signIn(page: Page, email: string) {
   await page.getByLabel("Adresse e-mail").fill(email);
   const since = new Date(Date.now() - 2_000);
-  await page.getByRole("button", { name: "Recevoir mon code" }).click();
-  await expect(page.getByRole("heading", { name: "Saisis ton code" })).toBeVisible();
+  const send = page.getByRole("button", { name: "Recevoir mon code" });
+  const codeTitle = page.getByRole("heading", { name: "Saisis ton code" });
+  // Supabase refuse deux envois au même e-mail à moins d'une seconde (max_frequency) :
+  // nouvel essai tant que l'écran du code n'est pas affiché. Le bouton est désactivé
+  // pendant l'envoi, un clic n'en relance donc jamais un second en parallèle.
+  await expect(async () => {
+    if (!(await codeTitle.isVisible())) await send.click({ timeout: 2_000 });
+    await expect(codeTitle).toBeVisible({ timeout: 2_000 });
+  }).toPass({ intervals: [1_000], timeout: 30_000 });
   const code = await readOtp(email, since);
   await page.getByLabel("Code à 6 chiffres").fill(code);
   await page.getByRole("button", { name: "Me connecter" }).click();
