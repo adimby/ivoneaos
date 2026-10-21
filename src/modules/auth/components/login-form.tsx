@@ -41,9 +41,9 @@ export function LoginForm({ locale, nextField }: { locale: string; nextField?: R
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 pattern="[0-9]*"
-                maxLength={6}
+                maxLength={10}
                 autoFocus
-                className="text-center text-2xl font-semibold tracking-[0.5em]"
+                className="text-center text-2xl font-semibold tracking-[0.3em]"
               />
             )}
           </Field>

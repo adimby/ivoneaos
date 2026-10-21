@@ -7,7 +7,7 @@ import { attemptKey, type AttemptScope } from "./attempt-key";
 // Supabase voit toutes les demandes venir des IP du serveur, ses propres limites sont donc
 // communes à toutes les utilisatrices (README, « Mise en production de la connexion »).
 // - ip : une IP ne peut pas, seule, atteindre les plafonds globaux de Supabase.
-// - email_ip puis email : protègent le code à 6 chiffres et la boîte de la personne visée.
+// - email_ip puis email : protègent le code de connexion et la boîte de la personne visée.
 //   Comptées dans cet ordre, une IP ne pèse au plus que email_ip sur le compteur par e-mail :
 //   bloquer l'adresse de quelqu'un demande plusieurs IP (compromis documenté dans le README).
 const WINDOW_SECONDS = 15 * 60;

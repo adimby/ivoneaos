@@ -34,8 +34,8 @@ export async function readEmail(
   throw new Error(`Aucun e-mail attendu reçu pour ${email}`);
 }
 
-// Dernier code à 6 chiffres reçu par `email` après `since` (e-mail de connexion seulement).
+// Dernier code (6 à 10 chiffres) reçu par `email` après `since` (e-mail de connexion seulement).
 export async function readOtp(email: string, since: Date, timeoutMs = 15_000): Promise<string> {
-  const message = await readEmail(email, since, (m) => /Ivonea OS code/.test(m.Subject) && /\b\d{6}\b/.test(m.Text), timeoutMs);
-  return message.Text.match(/\b(\d{6})\b/)![1];
+  const message = await readEmail(email, since, (m) => /Ivonea OS code/.test(m.Subject) && /\b\d{6,10}\b/.test(m.Text), timeoutMs);
+  return message.Text.match(/\b(\d{6,10})\b/)![1];
 }

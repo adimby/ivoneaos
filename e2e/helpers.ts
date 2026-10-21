@@ -21,7 +21,7 @@ export async function signIn(page: Page, email: string) {
     await expect(codeTitle).toBeVisible({ timeout: 2_000 });
   }).toPass({ intervals: [1_000], timeout: 30_000 });
   const code = await readOtp(email, since);
-  await page.getByLabel("Code à 6 chiffres").fill(code);
+  await page.getByLabel("Code reçu par e-mail").fill(code);
   await page.getByRole("button", { name: "Me connecter" }).click();
 }
 

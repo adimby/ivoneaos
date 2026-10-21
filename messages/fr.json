@@ -30,12 +30,12 @@
   "Auth": {
     "metaTitle": "Connexion",
     "title": "Connexion",
-    "intro": "Entre ton adresse e-mail : on t'envoie un code à 6 chiffres. Pas de mot de passe à retenir.",
+    "intro": "Entre ton adresse e-mail : on t'envoie un code de connexion. Pas de mot de passe à retenir.",
     "emailLabel": "Adresse e-mail",
     "sendCode": "Recevoir mon code",
     "codeTitle": "Saisis ton code",
     "codeIntro": "Code envoyé à {email}. Pense à regarder dans tes spams.",
-    "codeLabel": "Code à 6 chiffres",
+    "codeLabel": "Code reçu par e-mail",
     "verify": "Me connecter",
     "resend": "Renvoyer un code",
     "resent": "Nouveau code envoyé.",
@@ -43,7 +43,7 @@
     "signOut": "Se déconnecter",
     "errors": {
       "invalid_email": "Cette adresse e-mail n'est pas valide. Vérifie-la (exemple : nom@gmail.com).",
-      "invalid_code_format": "Le code compte 6 chiffres.",
+      "invalid_code_format": "Saisis le code reçu par e-mail : uniquement des chiffres.",
       "code_invalid": "Ce code est incorrect ou a expiré. Vérifie-le, ou demande un nouveau code.",
       "rate_limited": "Trop de demandes d'un coup. Patiente une minute avant de réessayer.",
       "too_many_attempts": "Trop de tentatives. Pour protéger ton compte, attends un quart d'heure avant de réessayer.",

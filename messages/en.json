@@ -30,12 +30,12 @@
   "Auth": {
     "metaTitle": "Sign in",
     "title": "Sign in",
-    "intro": "Enter your email address: we will send you a 6-digit code. No password to remember.",
+    "intro": "Enter your email address: we will send you a sign-in code. No password to remember.",
     "emailLabel": "Email address",
     "sendCode": "Send me a code",
     "codeTitle": "Enter your code",
     "codeIntro": "Code sent to {email}. Remember to check your spam folder.",
-    "codeLabel": "6-digit code",
+    "codeLabel": "Code from the email",
     "verify": "Sign in",
     "resend": "Send a new code",
     "resent": "New code sent.",
@@ -43,7 +43,7 @@
     "signOut": "Sign out",
     "errors": {
       "invalid_email": "This email address is not valid. Check it (example: name@gmail.com).",
-      "invalid_code_format": "The code has 6 digits.",
+      "invalid_code_format": "Enter the code from the email: digits only.",
       "code_invalid": "This code is wrong or has expired. Check it, or ask for a new code.",
       "rate_limited": "Too many requests at once. Wait a minute before trying again.",
       "too_many_attempts": "Too many attempts. To protect your account, wait 15 minutes before trying again.",
