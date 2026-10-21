@@ -19,7 +19,8 @@ export type LoginState = {
 const localeSchema = z.enum(routing.locales).catch(routing.defaultLocale);
 const emailSchema = z.email().max(320);
 
-// Connexion par code à 6 chiffres (OTP Supabase, sans lien magique).
+// Connexion par code reçu par e-mail (OTP Supabase, sans lien magique). Sa longueur se
+// règle dans Supabase (6 à 10 chiffres) : l'app les accepte toutes.
 // intent : send (envoyer le code), resend, verify, change (revenir à l'e-mail).
 export async function login(_prev: LoginState, formData: FormData): Promise<LoginState> {
   const intent = formData.get("intent");
@@ -53,7 +54,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   }
 
   const token = String(formData.get("code") ?? "").replace(/\s/g, "");
-  if (!/^\d{6}$/.test(token)) return { step: "code", email: email.data, error: "invalid_code_format" };
+  if (!/^\d{6,10}$/.test(token)) return { step: "code", email: email.data, error: "invalid_code_format" };
   if (!(await takeAuthAttempt("verify", email.data)).allowed) {
     return { step: "code", email: email.data, error: "too_many_attempts" };
   }

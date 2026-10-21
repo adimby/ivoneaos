@@ -22,7 +22,7 @@ test("P1 : s'inscrire, diagnostic, profil pro, tableau de bord", async ({ page, 
   // Un code faux est refusé avec un message clair.
   await page.getByLabel("Adresse e-mail").fill(email);
   await page.getByRole("button", { name: "Recevoir mon code" }).click();
-  await page.getByLabel("Code à 6 chiffres").fill("000000");
+  await page.getByLabel("Code reçu par e-mail").fill("000000");
   await page.getByRole("button", { name: "Me connecter" }).click();
   await expect(page.getByText("Ce code est incorrect ou a expiré.", { exact: false })).toBeVisible();
 
