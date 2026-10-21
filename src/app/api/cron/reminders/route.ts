@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { publicAppUrl } from "@/lib/app-url";
+import { appOrigin } from "@/lib/app-url";
 import { sameSecret } from "@/lib/same-secret";
 import { sendEmail } from "@/lib/email";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
   const now = new Date();
   // Domaine public de l'app (APP_URL), pas l'hôte qui a appelé le cron (*.vercel.app).
-  const appUrl = publicAppUrl() ?? request.nextUrl.origin;
+  const appUrl = await appOrigin();
   const result = await notifyDueReminders({
     store: reminderStore(admin),
     send: (digest) => sendEmail(renderDigest(digest, appUrl, now)),

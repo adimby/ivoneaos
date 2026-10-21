@@ -46,6 +46,7 @@
       "invalid_code_format": "The code has 6 digits.",
       "code_invalid": "This code is wrong or has expired. Check it, or ask for a new code.",
       "rate_limited": "Too many requests at once. Wait a minute before trying again.",
+      "too_many_attempts": "Too many attempts. To protect your account, wait 15 minutes before trying again.",
       "unknown": "Sign-in did not go through. Check your internet connection and try again."
     }
   },
@@ -411,6 +412,7 @@
       "payment_exceeds_balance": "This payment is more than the amount still due on the invoice. Check the amount.",
       "payment_date_in_future": "The payment date is in the future. Enter the day you received the money.",
       "quantity_too_precise": "The quantity can have at most 2 decimals (for example 1.25).",
+      "invalid_rate_limit": "Something went wrong. Try again in a moment.",
       "not_authenticated": "Your session has expired. Sign in again to continue.",
       "payment_date_before_invoice": "The payment date is before the invoice was sent. Enter the day you received the money.",
       "too_many_lines": "A document can have at most 50 lines. Group some items together.",
@@ -649,11 +651,6 @@
       "tomorrow": "Tomorrow at {time}",
       "past": "{date} at {time}",
       "future": "{date} at {time}"
-    },
-    "snoozeShort": {
-      "1": "+1 d",
-      "3": "+3 d",
-      "7": "+1 wk"
     }
   },
   "Today": {

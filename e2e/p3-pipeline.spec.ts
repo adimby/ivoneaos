@@ -35,7 +35,6 @@ test("P3 : contact → opportunité → étape suivante → note", async ({ page
   await page.context().clearCookies();
   await page.getByRole("button", { name: "Ajouter le contact" }).click();
   await expect(page).toHaveURL(/\/fr\/connexion\?next=(%2F|\/)contacts(%2F|\/)nouveau$/);
-  await page.waitForTimeout(1_100);
   await signIn(page, email);
   await expect(page).toHaveURL(/\/fr\/contacts\/nouveau$/);
 
@@ -80,6 +79,19 @@ test("P3 : contact → opportunité → étape suivante → note", async ({ page
   await context.close();
   await page.reload();
   await expect(page.getByTestId("deal-stage").filter({ visible: true })).toHaveText("Étape : Contacté");
+
+  // Pipeline après le déplacement : carte et total passés de « Prospect » à « Contacté ».
+  const dealPage = page.url();
+  await nav.getByRole("link", { name: "Pipeline" }).click();
+  await expect(page).toHaveURL(/\/fr\/pipeline$/);
+  const contacted = page.getByTestId("stage-contacted").filter({ visible: true });
+  await expect(contacted.getByTestId("deal-card")).toContainText("Logo boutique");
+  await expect(contacted.getByTestId("stage-total")).toHaveText(money("450 000 Ar"));
+  const prospectAfter = page.getByTestId("stage-prospect").filter({ visible: true });
+  await expect(prospectAfter.getByTestId("deal-card")).toHaveCount(0);
+  await expect(prospectAfter.getByTestId("stage-total")).toHaveCount(0);
+  await expect(prospectAfter.getByText("Aucune opportunité à cette étape.")).toBeVisible();
+  await page.goto(dealPage);
 
   // Modifier : pas de champ étape (gagné et perdu passent par la confirmation).
   await page.getByRole("link", { name: "Modifier" }).click();

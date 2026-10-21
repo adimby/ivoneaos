@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { openMore, signIn } from "./helpers";
+import { adminRest, authAttemptKey, openMore, signIn } from "./helpers";
 
 // Petit PNG valide (1 × 1) pour le logo.
 const PNG = Buffer.from(
@@ -26,10 +26,8 @@ test("P1 : s'inscrire, diagnostic, profil pro, tableau de bord", async ({ page, 
   await page.getByRole("button", { name: "Me connecter" }).click();
   await expect(page.getByText("Ce code est incorrect ou a expiré.", { exact: false })).toBeVisible();
 
-  // Retour à l'e-mail, puis connexion avec le vrai code (lu dans Mailpit). Supabase
-  // refuse deux envois au même e-mail à moins d'une seconde (max_frequency, local).
+  // Retour à l'e-mail, puis connexion avec le vrai code (lu dans Mailpit).
   await page.getByRole("button", { name: "Changer d'adresse" }).click();
-  await page.waitForTimeout(1_100);
   await signIn(page, email);
 
   // Accueil guidé forcé, la page demandée est gardée pour la suite.
@@ -112,6 +110,17 @@ test("P1 : s'inscrire, diagnostic, profil pro, tableau de bord", async ({ page, 
   await expect(items.first()).toContainText("Ajoute ton premier prospect");
   for (const item of await items.all()) await expect(item).toHaveAttribute("data-done", "false");
 
+  // Premier contact depuis la liste de démarrage : l'étape est cochée au retour.
+  await page.getByTestId("checklist-contact").filter({ visible: true }).click();
+  await expect(page).toHaveURL(/\/fr\/contacts$/);
+  await page.getByRole("link", { name: "Nouveau contact" }).click();
+  await page.getByLabel("Nom", { exact: true }).fill("Rasoa Fara");
+  await page.getByLabel("Téléphone").fill("032 11 222 33");
+  await page.getByRole("button", { name: "Ajouter le contact" }).click();
+  await expect(page.getByRole("heading", { name: "Rasoa Fara" })).toBeVisible();
+  await nav.getByRole("link", { name: "Accueil" }).click();
+  await expect(page.getByTestId("checklist-contact").filter({ visible: true })).toHaveAttribute("data-done", "true");
+
   // Barre d'onglets et menu « Plus » → Réglages : profil enregistré, offre Découverte.
   await expect(nav.getByRole("link", { name: "Accueil" })).toHaveAttribute("aria-current", "page");
   await openMore(page, "Plus");
@@ -119,7 +128,10 @@ test("P1 : s'inscrire, diagnostic, profil pro, tableau de bord", async ({ page, 
   await expect(page).toHaveURL(/\/fr\/reglages$/);
   await expect(page.getByLabel("NIF")).toHaveValue("3000123456");
   await expect(page.getByText("Découverte")).toBeVisible();
-  await expect(page.getByRole("img", { name: "Logo de Studio Hery" })).toBeVisible();
+  const logo = page.getByRole("img", { name: "Logo de Studio Hery" });
+  await expect(logo).toBeVisible();
+  // Image réellement chargée (URL signée du Storage, permise par la politique de contenu).
+  await expect.poll(() => logo.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth)).toBeGreaterThan(0);
 
   // Réglages : nouveau logo et adresse enregistrés ; le champ logo est ensuite vidé
   // (un nouvel enregistrement ne renvoie pas le même fichier).
@@ -168,4 +180,25 @@ test("P1 : s'inscrire, diagnostic, profil pro, tableau de bord", async ({ page, 
   await expect(page).toHaveURL(/\/fr\/connexion\?next=%2Ffr%2Freglages$/);
   await signIn(page, email);
   await expect(page).toHaveURL(/\/en\/reglages$/);
+});
+
+test("Connexion : au-delà des essais permis, message clair (limites par e-mail)", async ({ page }) => {
+  const email = `limite-auth-${Date.now()}@example.test`;
+  // Limites atteintes (src/modules/auth/rate-limit.ts : 10 vérifications, 15 envois par
+  // quart d'heure et par e-mail, toutes IP confondues) : tentatives récentes enregistrées
+  // directement.
+  const seed = (key: string, count: number) =>
+    adminRest("auth_attempts", { method: "POST", body: JSON.stringify(Array.from({ length: count }, () => ({ key }))) });
+  expect((await seed(authAttemptKey("verify", "email", email), 10)).ok).toBe(true);
+
+  await page.goto("/fr/connexion");
+  await signIn(page, email);
+  await expect(page.getByText("Trop de tentatives. Pour protéger ton compte, attends un quart d'heure")).toBeVisible();
+  await expect(page).toHaveURL(/\/fr\/connexion$/);
+
+  // Envois épuisés : « Renvoyer un code » est refusé avec le même message.
+  expect((await seed(authAttemptKey("send", "email", email), 15)).ok).toBe(true);
+  await page.getByRole("button", { name: "Renvoyer un code" }).click();
+  await expect(page.getByText("Trop de tentatives. Pour protéger ton compte, attends un quart d'heure")).toBeVisible();
+  await expect(page.getByText("Nouveau code envoyé.")).toHaveCount(0);
 });

@@ -241,7 +241,10 @@ test("Clé remplacée par celle d'une autre boutique : nouveau lien, l'ancien re
   await page.getByLabel("Clé API Papi").fill(second.apiKey);
   await page.getByLabel("Secret de signature").fill(second.secret);
   await page.getByRole("button", { name: "Vérifier et remplacer la clé" }).click();
-  await expect(page.getByTestId("papi-status")).toHaveText("Papi connecté");
+  // « Papi connecté » était déjà affiché avant : seul le retour de l'action (?papi=connected)
+  // prouve que la nouvelle clé est enregistrée.
+  await expect(page).toHaveURL(/\/fr\/reglages\/paiements\?papi=connected$/);
+  await expect(page.getByText("Papi connecté. Tes prochaines factures")).toBeVisible();
 
   // Le client clique « Payer avec Papi » : lien créé dans la nouvelle boutique, tentative -2.
   const go = await page.request.get(`${publicLink}/payer`, { maxRedirects: 0 });

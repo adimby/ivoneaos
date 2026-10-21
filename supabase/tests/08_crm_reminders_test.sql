@@ -3,6 +3,10 @@ begin;
 \ir helpers.psql
 select plan(33);
 
+-- Base partagée avec les tests de bout en bout : leurs rappels dus fausseraient les
+-- comptes. Notés envoyés le temps de ce test (annulé au rollback).
+update public.reminders set notified_at = now() where notified_at is null;
+
 select tests.create_user('alice@example.test') as alice \gset
 select tests.authenticate_as(:'alice');
 select public.create_workspace('Studio Alice') as wa \gset
@@ -61,7 +65,7 @@ select is((select count(*) from (select title from batch1 union all select title
   'exclus : fait, à venir, contact ou opportunité archivés');
 select is((select contact_name from batch1 limit 1), 'Rasoa (Soa), O''Brien', 'nom du contact joint');
 select is((select title from batch1 order by due_at limit 1), 'Relance 320', 'du plus ancien au plus récent');
-select is((select count(*) from public.reminders where notified_at is not null), 0::bigint,
+select is((select count(*) from public.reminders where workspace_id = :'wa' and notified_at is not null), 0::bigint,
   'réserver ne marque pas notifié');
 
 -- ---------------------------------------------------------------------------
@@ -81,11 +85,11 @@ select public.release_reminders((select array_agg(id) from (select id from batch
   (select max(claimed_at) from batch2), false);
 reset role;
 
-select is((select count(*) from public.reminders where notified_at is not null and notify_claimed_at is null), 200::bigint,
+select is((select count(*) from public.reminders where workspace_id = :'wa' and notified_at is not null and notify_claimed_at is null), 200::bigint,
   'notifiés : bail levé');
 select is((select count(*) from public.reminders where id in (select id from batch2) and notify_claimed_at is null), 120::bigint,
   'non envoyés : bail levé');
-select is((select count(*) from public.reminders where notify_attempts = 1), 60::bigint, 'échec : un essai compté');
+select is((select count(*) from public.reminders where workspace_id = :'wa' and notify_attempts = 1), 60::bigint, 'échec : un essai compté');
 
 select tests.as_service_role();
 select is((select count(*) from public.claim_due_reminders(now() + interval '1 day', 500)), 120::bigint,
