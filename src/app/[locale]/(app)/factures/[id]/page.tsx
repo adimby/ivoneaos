@@ -29,6 +29,8 @@ import { formatDay } from "@/modules/billing/view";
 import { getContact } from "@/modules/crm/queries";
 import { PAPI_MIN_AMOUNT } from "@/modules/payments/papi/adapter";
 import { getInvoicePaymentLinks, getOnlinePayments, getPapiAccount } from "@/modules/payments/queries";
+import { FiscalInfoBlock } from "@/modules/workspace/components/fiscal-info-block";
+import { fiscalDefaults, hasFiscalInfo } from "@/modules/workspace/profile-schema";
 import { getCurrentWorkspace, getManualPayment, requireWorkspace } from "@/modules/workspace/queries";
 
 type Props = PageProps<"/[locale]/factures/[id]">;
@@ -103,8 +105,11 @@ export default async function InvoicePage({ params, searchParams }: Props) {
     }
   }
 
+  // Brouillon sans NIF, STAT ou régime fiscal : la base refuserait l'envoi. Le bloc « Avant
+  // ta première facture » prend la place du bouton d'envoi, qui revient une fois enregistré.
+  const fiscalMissing = invoice.status === "draft" && !hasFiscalInfo(workspace);
   let main = null;
-  if (invoice.status === "draft") {
+  if (invoice.status === "draft" && !fiscalMissing) {
     main = (
       <form action={sendInvoice} className="flex flex-col gap-2">
         {hidden}
@@ -148,7 +153,10 @@ export default async function InvoicePage({ params, searchParams }: Props) {
       <Link href="/factures" className="inline-flex min-h-11 items-center self-start text-base font-semibold text-lagoon">
         ← {t("backToList")}
       </Link>
-      <Notices query={query} manualPayment={manual ? Boolean(manual.mvola || manual.rib || manual.other) : undefined} />
+      {/* Refus « infos fiscales manquantes » périmé une fois le bloc enregistré (l'URL le garde). */}
+      <Notices
+        query={!fiscalMissing && query.erreur === "workspace_tax_info_missing" ? { ...query, erreur: undefined } : query}
+        manualPayment={manual ? Boolean(manual.mvola || manual.rib || manual.other) : undefined} />
       {invoice.status === "paid" && invoice.number && (
         <Alert tone="success">
           <span className="block text-base font-bold" data-testid="paid-notice">
@@ -218,6 +226,10 @@ export default async function InvoicePage({ params, searchParams }: Props) {
           {invoice.paid_at && <li>{t("detail.paidAt", { date: formatDay(localDate(new Date(invoice.paid_at)), locale) })}</li>}
         </ul>
       </div>
+
+      {invoice.status === "draft" && (
+        <FiscalInfoBlock locale={locale} back={`/factures/${invoice.id}`} missing={fiscalMissing} defaults={fiscalDefaults(workspace)} primary />
+      )}
 
       {/* Pas juste après un échec de création du lien : la notice d'échec dit déjà quoi faire. */}
       {papiAccount?.status === "connected" && papiEligible && typeof query.papi !== "string" && (

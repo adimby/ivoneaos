@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { CURRENCIES, parseAmountInput } from "@/lib/money";
 import { parseLocalInput } from "@/lib/time";
-import { ACTIVITY_KINDS, CONTACT_KINDS, COUNTRIES } from "./constants";
+import { ACTIVITY_KINDS, CONTACT_KINDS } from "./constants";
+import { isCountryCode } from "./countries";
 import { normalizePhone } from "./phone";
 
 // Validation des formulaires CRM. Les messages sont des clés FormErrors.*.
@@ -44,7 +45,8 @@ export const contactSchema = z
       .max(320, "too_long")
       .pipe(z.union([z.literal(""), z.email("email_format")]))
       .transform((v) => v || null),
-    country: z.enum(COUNTRIES, { error: "invalid_choice" }).catch("MG"),
+    // Code ISO 3166-1 alpha-2 de la liste complète ; un code inconnu est refusé, jamais remplacé.
+    country: z.string().trim().toUpperCase().refine(isCountryCode, "invalid_choice"),
     tags,
   })
   // Un contact se joint : téléphone ou e-mail (aussi vérifié par la base).

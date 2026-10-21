@@ -42,12 +42,18 @@ export function ProfileFields({
   logoUrl = null,
   logoKey,
   trade,
+  fiscal = false,
+  fiscalRequired = false,
 }: {
   defaults: ProfileDefaults;
   errors?: FieldErrors;
   logoUrl?: string | null;
   logoKey?: number;
   trade?: { value: string; onChange: (value: string) => void };
+  // Données fiscales (Réglages) ; l'accueil guidé ne les demande pas.
+  fiscal?: boolean;
+  // Données fiscales déjà complètes : corrigeables, plus effaçables.
+  fiscalRequired?: boolean;
 }) {
   const t = useTranslations("Profile");
   const tErrors = useTranslations("FormErrors");
@@ -82,23 +88,13 @@ export function ProfileFields({
           </Select>
         )}
       </Field>
-      <Field id="nif" label={t("nif.label")} hint={t("nif.hint")} error={error("nif")}>
-        {(c) => <Input {...c} name="nif" inputMode="numeric" autoComplete="off" defaultValue={defaults.nif} maxLength={20} />}
-      </Field>
-      <Field id="stat" label={t("stat.label")} hint={t("stat.hint")} error={error("stat")}>
-        {(c) => <Input {...c} name="stat" inputMode="numeric" autoComplete="off" defaultValue={defaults.stat} maxLength={30} />}
-      </Field>
-      <Field id="tax_regime" label={t("taxRegime.label")} hint={t("taxRegime.hint")} error={error("tax_regime")}>
-        {(c) => (
-          <Select {...c} name="tax_regime" defaultValue={defaults.tax_regime}>
-            <option value="" disabled>
-              {t("choose")}
-            </option>
-            <option value="impot_synthetique">{t("taxRegime.impot_synthetique")}</option>
-            <option value="tva">{t("taxRegime.tva")}</option>
-          </Select>
-        )}
-      </Field>
+      {fiscal && (
+        <fieldset id="infos-fiscales" className="flex scroll-mt-20 flex-col gap-5">
+          <legend className="mb-1 text-base font-bold text-lagoon">{t("fiscal.title")}</legend>
+          <p className="-mt-2 text-sm text-ink-muted">{t(fiscalRequired ? "fiscal.requiredHint" : "fiscal.optionalHint")}</p>
+          <FiscalFields defaults={defaults} error={error} />
+        </fieldset>
+      )}
 
       <fieldset className="flex flex-col gap-5 rounded-card border border-sand bg-sand-light p-4">
         <legend className="px-1 text-base font-bold text-lagoon">{t("manual.title")}</legend>
@@ -114,5 +110,35 @@ export function ProfileFields({
         </Field>
       </fieldset>
     </div>
+  );
+}
+
+// NIF, STAT et régime fiscal (Réglages et bloc « Avant ta première facture »).
+export function FiscalFields({
+  defaults,
+  error,
+}: {
+  defaults: Pick<ProfileDefaults, "nif" | "stat" | "tax_regime">;
+  error: (field: string) => string | undefined;
+}) {
+  const t = useTranslations("Profile");
+  return (
+    <>
+      <Field id="nif" label={t("nif.label")} hint={t("nif.hint")} error={error("nif")}>
+        {(c) => <Input {...c} name="nif" inputMode="numeric" autoComplete="off" defaultValue={defaults.nif} maxLength={20} />}
+      </Field>
+      <Field id="stat" label={t("stat.label")} hint={t("stat.hint")} error={error("stat")}>
+        {(c) => <Input {...c} name="stat" inputMode="numeric" autoComplete="off" defaultValue={defaults.stat} maxLength={30} />}
+      </Field>
+      <Field id="tax_regime" label={t("taxRegime.label")} hint={t("taxRegime.hint")} error={error("tax_regime")}>
+        {(c) => (
+          <Select {...c} name="tax_regime" defaultValue={defaults.tax_regime}>
+            <option value="">{t("choose")}</option>
+            <option value="impot_synthetique">{t("taxRegime.impot_synthetique")}</option>
+            <option value="tva">{t("taxRegime.tva")}</option>
+          </Select>
+        )}
+      </Field>
+    </>
   );
 }

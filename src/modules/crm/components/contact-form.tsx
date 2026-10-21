@@ -6,7 +6,6 @@ import { Alert } from "@/components/ui/alert";
 import { BottomBar } from "@/components/ui/bottom-bar";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { useFocusFirstInvalid } from "@/lib/use-focus-invalid";
 import { useHydrated } from "@/lib/use-hydrated";
@@ -15,6 +14,8 @@ import { PlanLimitLink } from "@/modules/workspace/components/plan-limit-link";
 import { saveContact, type CrmFormState } from "../actions";
 import { formatPhone } from "../phone";
 import { CONTACT_KINDS } from "../constants";
+import type { Country } from "../countries";
+import { CountryPicker } from "./country-picker";
 
 export type ContactDefaults = {
   id?: string;
@@ -38,15 +39,18 @@ export const EMPTY_CONTACT: ContactDefaults = {
 };
 
 // Création en 3 champs (nom, téléphone ou e-mail, entreprise) ; le reste est replié.
-// countries : noms des pays dans la langue de l'interface (calculés par le serveur).
+// countries : tous les pays nommés et triés dans la langue de l'interface ; favouriteCountries :
+// codes proposés en tête (Madagascar, puis les pays des contacts). Calculés par le serveur.
 export function ContactForm({
   defaults,
   back,
   countries,
+  favouriteCountries,
 }: {
   defaults: ContactDefaults;
   back: string;
-  countries: { code: string; name: string }[];
+  countries: Country[];
+  favouriteCountries: string[];
 }) {
   const t = useTranslations("Contacts");
   const tAll = useTranslations();
@@ -59,7 +63,7 @@ export function ContactForm({
   const error = (field: string) => (errors[field] ? tAll(`FormErrors.${errors[field]}`) : undefined);
   // Détails ouverts s'ils sont déjà remplis ou en erreur.
   const detailsOpen =
-    defaults.kind !== "person" || defaults.country !== "MG" || defaults.tags.length > 0 || Boolean(errors.tags);
+    defaults.kind !== "person" || defaults.country !== "MG" || defaults.tags.length > 0 || Boolean(errors.tags || errors.country);
 
   return (
     <form
@@ -120,15 +124,21 @@ export function ContactForm({
               ))}
             </div>
           </fieldset>
-          <Field id="country" label={t("country.label")} error={error("country")}>
+          <Field
+            id="country"
+            label={t("country.label")}
+            // Aide adaptée à la liste native avant le JavaScript : place et description stables.
+            hint={hydrated ? t("country.hint") : t("country.hintNative")}
+            error={error("country")}
+          >
             {(c) => (
-              <Select {...c} name="country" defaultValue={defaults.country}>
-                {countries.map(({ code, name }) => (
-                  <option key={code} value={code}>
-                    {name}
-                  </option>
-                ))}
-              </Select>
+              <CountryPicker
+                control={c}
+                name="country"
+                defaultValue={defaults.country}
+                countries={countries}
+                favourites={favouriteCountries}
+              />
             )}
           </Field>
           <Field id="tags" label={t("tags.label")} hint={t("tags.hint")} error={error("tags")}>

@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { favouriteCountries } from "./countries";
 import { phoneSearchDigits } from "./phone";
 import { containsPattern, searchTerm } from "./search";
 import { todayCutoff } from "./reminder-dates";
@@ -17,6 +18,15 @@ export async function hasActiveContact(workspaceId: string): Promise<boolean> {
     .is("archived_at", null);
   if (error) throw error;
   return (count ?? 0) > 0;
+}
+
+// Pays proposés en tête du choix du pays : Madagascar, puis les 5 pays les plus utilisés
+// par les contacts actifs du workspace (fonction SQL contact_top_countries, RLS appliquée).
+export async function getFavouriteCountries(workspaceId: string): Promise<string[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("contact_top_countries", { p_workspace_id: workspaceId });
+  if (error) throw error;
+  return favouriteCountries(data.map((row) => row.country));
 }
 
 export const CONTACT_LIST_LIMIT = 200;

@@ -59,7 +59,8 @@
     },
     "step2": {
       "title": "Ton profil pro",
-      "intro": "Ces informations figurent sur tes devis et factures. NIF, STAT et régime fiscal sont obligatoires pour facturer."
+      "intro": "Ces informations figurent sur tes devis et factures.",
+      "fiscalLater": "NIF, STAT et régime fiscal ? Pas maintenant : on te les demandera avant ta première facture."
     },
     "trade": {
       "label": "Ton métier",
@@ -157,6 +158,11 @@
     "otherPayment": {
       "label": "Autres coordonnées (facultatif)",
       "hint": "Pour tes clients à l'étranger : IBAN et BIC, PayPal, Wise… Affiché tel quel sur tes factures."
+    },
+    "fiscal": {
+      "title": "Infos fiscales",
+      "optionalHint": "Facultatives pour l'instant, obligatoires pour émettre une facture : elles figurent sur chacune.",
+      "requiredHint": "Elles figurent sur chacune de tes factures : tu peux les corriger, pas les effacer."
     }
   },
   "FormErrors": {
@@ -235,6 +241,16 @@
         "remplir": {
           "title": "Crée un devis pour ton prochain projet",
           "description": "Accepté, il devient une facture en un geste."
+        }
+      },
+      "fiscal": {
+        "lancer": {
+          "title": "Complète tes infos fiscales",
+          "description": "NIF, STAT et régime fiscal : obligatoires sur tes factures."
+        },
+        "remplir": {
+          "title": "Complète tes infos fiscales",
+          "description": "NIF, STAT et régime fiscal : prêt à facturer tes clients."
         }
       }
     },
@@ -397,7 +413,7 @@
       "document_empty": "Ajoute au moins une ligne avec un montant avant d'envoyer ce document. Un document envoyé ne peut pas revenir à 0.",
       "invalid_status_transition": "Ce changement de statut n'est pas possible pour ce document. Recharge la page pour voir son statut actuel.",
       "immutable_field": "Cette information ne peut pas être modifiée.",
-      "workspace_tax_info_missing": "Ajoute ton NIF, ton STAT et ton régime fiscal dans Réglages avant d'émettre une facture.",
+      "workspace_tax_info_missing": "Ajoute ton NIF, ton STAT et ton régime fiscal pour émettre une facture.",
       "quote_not_accepted": "Une facture ne peut être créée qu'à partir d'un devis accepté.",
       "exchange_rate_required": "Indique le taux de change de cette devise (par exemple 1 EUR = 5 000 Ar) avant d'émettre la facture.",
       "invoice_due_before_issue": "La date d'échéance est déjà passée. Choisis une date à partir d'aujourd'hui.",
@@ -480,7 +496,15 @@
       "company": "Entreprise"
     },
     "country": {
-      "label": "Pays"
+      "label": "Pays",
+      "hint": "Tape un nom ou un code, par exemple Japon ou JP.",
+      "favourites": "Pays fréquents",
+      "all": "Tous les pays",
+      "results": "{count, plural, =0 {Aucun pays trouvé} one {# pays trouvé} other {# pays trouvés}}",
+      "noResult": "Aucun pays ne correspond. Essaie un autre nom ou le code à 2 lettres.",
+      "toggle": "Afficher la liste des pays",
+      "pickFromList": "Choisis un pays dans la liste pour valider ta saisie.",
+      "hintNative": "Pays fréquents en tête, puis tous les pays."
     },
     "tags": {
       "label": "Étiquettes",
@@ -1063,5 +1087,11 @@
       "subject": "Ivonea OS : offre {plan} pour {business}"
     },
     "seeOffers": "Voir les offres"
+  },
+  "Fiscal": {
+    "title": "Avant ta première facture",
+    "intro": "Chaque facture doit indiquer ton NIF, ton STAT et ton régime fiscal. Tu ne les saisis qu'une fois, et ton brouillon reste tel quel.",
+    "save": "Enregistrer mes infos fiscales",
+    "saved": "Infos fiscales enregistrées. Tu peux émettre ta facture."
   }
 }

@@ -18,6 +18,7 @@ import { ensureInvoicePapiLink, type PayableInvoice } from "@/modules/payments/p
 import { ensureInvoiceWhopLink, retireInvoiceWhopLinks } from "@/modules/payments/whop/service";
 import { canUseNow, getCurrentWorkspace, isOnboarded, type Workspace } from "@/modules/workspace/queries";
 import { safeNextPath } from "@/modules/auth/next-path";
+import { hasFiscalInfo } from "@/modules/workspace/profile-schema";
 import { documentEmail } from "./email";
 import { PAYABLE_COLUMNS, payableInvoice } from "./payment-link";
 import { appDocument, documentPdf } from "./render";
@@ -193,6 +194,8 @@ export async function sendInvoice(formData: FormData) {
   const id = readId(formData);
   if (!id) return;
   const path = `/factures/${id}`;
+  // NIF, STAT et régime fiscal manquants : la page les demande (la base refuserait aussi).
+  if (!hasFiscalInfo(workspace)) backTo(locale, path, { erreur: "workspace_tax_info_missing" });
   // Offre Découverte : seul un brouillon qui part compte (facture déjà envoyée resoumise :
   // refus de transition habituel, pas de message de limite).
   if (!(await canUseNow(workspace, "send_document")) && (await getInvoice(workspace.id, id))?.status === "draft") {

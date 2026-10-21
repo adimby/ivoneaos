@@ -7,8 +7,9 @@ import { routing } from "@/i18n/routing";
 import { formValues, parseWith, type FieldErrors } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
 import { readLogoUpload } from "./logo";
-import { PROFILE_FIELDS, profileSchema } from "./profile-schema";
-import { removeLogo, saveProfile, uploadLogo } from "./save-profile";
+import { FISCAL_FIELDS, fiscalSchema, PROFILE_FIELDS, settingsProfileSchema } from "./profile-schema";
+import { removeLogo, saveFiscalInfo, saveProfile, uploadLogo } from "./save-profile";
+import { safeNextPath } from "@/modules/auth/next-path";
 
 export type ProfileFormState = {
   status?: "saved";
@@ -28,8 +29,18 @@ export async function updateProfile(_prev: ProfileFormState, formData: FormData)
   const { data: claims } = await supabase.auth.getClaims();
   if (!claims) return redirect({ href: "/connexion?next=/reglages", locale });
 
+  const { data: workspace, error } = await supabase
+    .from("workspaces")
+    .select("id, logo_path, nif, stat, tax_regime")
+    .order("created_at")
+    .limit(1)
+    .maybeSingle();
+  if (error) return { formError: "unknown" };
+  if (!workspace) return redirect({ href: "/demarrage", locale });
+
   // Tout est vérifié (logo compris, d'après son contenu) avant la moindre écriture.
-  const parsed = parseWith(profileSchema, formValues(formData, PROFILE_FIELDS));
+  // Données fiscales déjà complètes : obligatoires (corrigeables, pas effaçables).
+  const parsed = parseWith(settingsProfileSchema(workspace), formValues(formData, PROFILE_FIELDS));
   const logo = await readLogoUpload(formData.get("logo"));
   if (!parsed.ok || "error" in logo) {
     return {
@@ -37,15 +48,6 @@ export async function updateProfile(_prev: ProfileFormState, formData: FormData)
       formError: "fix_errors",
     };
   }
-
-  const { data: workspace, error } = await supabase
-    .from("workspaces")
-    .select("id, logo_path")
-    .order("created_at")
-    .limit(1)
-    .maybeSingle();
-  if (error) return { formError: "unknown" };
-  if (!workspace) return redirect({ href: "/demarrage", locale });
 
   const logoPath = logo.logo ? await uploadLogo(supabase, workspace.id, logo.logo) : undefined;
   if (logoPath === null) return { fieldErrors: { logo: "logo_upload" }, formError: "fix_errors" };
@@ -57,6 +59,36 @@ export async function updateProfile(_prev: ProfileFormState, formData: FormData)
   }
   if (logoPath) await removeLogo(supabase, workspace.logo_path);
 
+  refresh();
+  return { status: "saved", savedAt: Date.now() };
+}
+
+// « Avant ta première facture » : NIF, STAT et régime fiscal enregistrés depuis la page
+// de la facture ou du devis. La page se met à jour (refresh) : le brouillon reste tel quel
+// et l'envoi devient possible.
+export async function saveFiscal(_prev: ProfileFormState, formData: FormData): Promise<ProfileFormState> {
+  const locale = localeSchema.parse(formData.get("locale"));
+  const back = safeNextPath(String(formData.get("back") ?? ""));
+  const supabase = await createClient();
+  const { data: claims } = await supabase.auth.getClaims();
+  if (!claims) {
+    return redirect({ href: back ? `/connexion?next=${encodeURIComponent(back)}` : "/connexion", locale });
+  }
+
+  const parsed = parseWith(fiscalSchema, formValues(formData, FISCAL_FIELDS));
+  if (!parsed.ok) return { fieldErrors: parsed.fieldErrors, formError: "fix_errors" };
+
+  const { data: workspace, error } = await supabase
+    .from("workspaces")
+    .select("id")
+    .order("created_at")
+    .limit(1)
+    .maybeSingle();
+  if (error) return { formError: "unknown" };
+  if (!workspace) return redirect({ href: "/demarrage", locale });
+
+  const dbError = await saveFiscalInfo(supabase, workspace.id, parsed.data);
+  if (dbError) return { formError: dbError };
   refresh();
   return { status: "saved", savedAt: Date.now() };
 }

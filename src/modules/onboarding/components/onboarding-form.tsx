@@ -165,6 +165,10 @@ export function OnboardingForm({
           </span>
         </div>
         <ProfileFields defaults={defaults} errors={errors} trade={{ value: trade, onChange: setTrade }} />
+        {/* Données fiscales : demandées avant la première facture, pas pour démarrer. */}
+        <p role="note" className="rounded-xl bg-turquoise-soft px-4 py-3 text-sm font-medium text-ink" data-testid="fiscal-later">
+          {t("step2.fiscalLater")}
+        </p>
       </div>
 
       <div className="sticky bottom-0 -mx-4 mt-6 flex flex-col gap-3 border-t border-sand/70 bg-spray/95 px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur">

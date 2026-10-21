@@ -13,10 +13,12 @@ export function ProfileForm({
   locale,
   defaults,
   logoUrl,
+  fiscalRequired,
 }: {
   locale: string;
   defaults: ProfileDefaults;
   logoUrl: string | null;
+  fiscalRequired: boolean;
 }) {
   const t = useTranslations("Profile");
   const tErrors = useTranslations();
@@ -43,7 +45,7 @@ export function ProfileForm({
     >
       <input type="hidden" name="locale" value={locale} />
       {/* logoKey : après un enregistrement, le champ logo est vidé (le même fichier n'est pas renvoyé). */}
-      <ProfileFields defaults={defaults} errors={state.fieldErrors} logoUrl={logoUrl} logoKey={state.savedAt} />
+      <ProfileFields defaults={defaults} errors={state.fieldErrors} logoUrl={logoUrl} logoKey={state.savedAt} fiscal fiscalRequired={fiscalRequired} />
       <div aria-live="polite">
         {state.formError && <Alert tone="error">{formErrorMessage(tErrors, state.formError)}</Alert>}
         {state.status === "saved" && !pending && <Alert tone="success">{t("saved")}</Alert>}

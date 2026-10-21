@@ -4,8 +4,8 @@ import { getTranslations } from "next-intl/server";
 import { Link, redirect } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { ContactForm } from "@/modules/crm/components/contact-form";
-import { countryOptions } from "@/modules/crm/constants";
-import { getContact } from "@/modules/crm/queries";
+import { countryList } from "@/modules/crm/countries";
+import { getContact, getFavouriteCountries } from "@/modules/crm/queries";
 import { requireWorkspace } from "@/modules/workspace/queries";
 
 type Props = PageProps<"/[locale]/contacts/[id]/modifier">;
@@ -20,7 +20,11 @@ export default async function EditContactPage({ params }: Props) {
   const { locale: rawLocale, id } = await params;
   const locale = rawLocale as Locale;
   const workspace = await requireWorkspace(locale);
-  const [contact, t] = await Promise.all([getContact(workspace.id, id), getTranslations({ locale, namespace: "Contacts" })]);
+  const [contact, t, favourites] = await Promise.all([
+    getContact(workspace.id, id),
+    getTranslations({ locale, namespace: "Contacts" }),
+    getFavouriteCountries(workspace.id),
+  ]);
   if (!contact) notFound();
   // Archivé : non modifiable, la fiche propose de le désarchiver.
   if (contact.archived_at) redirect({ href: `/contacts/${contact.id}`, locale });
@@ -33,7 +37,8 @@ export default async function EditContactPage({ params }: Props) {
       <h1 className="text-2xl font-bold text-lagoon">{t("editTitle")}</h1>
       <ContactForm
         back={`/contacts/${contact.id}/modifier`}
-        countries={countryOptions(locale)}
+        countries={countryList(locale)}
+        favouriteCountries={favourites}
         defaults={{
           id: contact.id,
           name: contact.name,

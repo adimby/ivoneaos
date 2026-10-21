@@ -15,6 +15,7 @@ import { hasActiveContact } from "@/modules/crm/queries";
 import { checklistTextLevel, startChecklist } from "@/modules/onboarding/checklist";
 import { getWhopAccount, isPapiConnected } from "@/modules/payments/queries";
 import { whopEnabled } from "@/modules/payments/whop/service";
+import { hasFiscalInfo } from "@/modules/workspace/profile-schema";
 import { requireWorkspace } from "@/modules/workspace/queries";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/tableau-de-bord">): Promise<Metadata> {
@@ -38,7 +39,12 @@ export default async function DashboardPage({ params }: PageProps<"/[locale]/tab
     getTranslations({ locale, namespace: "Dashboard" }),
     getTranslations({ locale, namespace: "Levels" }),
   ]);
-  const items = startChecklist(workspace.level, { hasContact, papiConnected, hasQuote: quote });
+  const items = startChecklist(workspace.level, {
+    hasContact,
+    papiConnected,
+    hasQuote: quote,
+    hasFiscalInfo: hasFiscalInfo(workspace),
+  });
   const textLevel = checklistTextLevel(workspace.level);
   const doneCount = items.filter((item) => item.done).length;
   const allDone = doneCount === items.length;

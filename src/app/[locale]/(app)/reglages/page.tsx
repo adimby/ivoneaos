@@ -8,6 +8,7 @@ import { Link } from "@/i18n/navigation";
 import { routing, type Locale } from "@/i18n/routing";
 import { setLanguage } from "@/modules/auth/actions";
 import { ProfileForm } from "@/modules/workspace/components/profile-form";
+import { hasFiscalInfo } from "@/modules/workspace/profile-schema";
 import { getLogoUrl, getManualPayment, requireWorkspace } from "@/modules/workspace/queries";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/reglages">): Promise<Metadata> {
@@ -94,6 +95,7 @@ export default async function SettingsPage({ params }: PageProps<"/[locale]/regl
         <ProfileForm
           locale={locale}
           logoUrl={logoUrl}
+          fiscalRequired={hasFiscalInfo(workspace)}
           defaults={{
             name: workspace.name,
             trade: workspace.trade ?? "",

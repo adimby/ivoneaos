@@ -4,18 +4,20 @@ import { dbErrorKey, type DbErrorKey } from "@/lib/db-errors";
 import type { Database } from "@/lib/supabase/database.types";
 import { logoPath, type CheckedLogo } from "./logo";
 import { composeManualInstructions } from "./manual-instructions";
-import type { ProfileInput } from "./profile-schema";
+import type { FiscalInput, OnboardingProfileInput, ProfileInput } from "./profile-schema";
 
 type Client = SupabaseClient<Database>;
 type Level = Database["public"]["Enums"]["workspace_level"];
 
 // Profil pro + coordonnées de paiement direct. Client de l'utilisatrice : RLS appliquée.
-// La mise à jour du workspace vient en dernier : c'est elle qui complète le profil
-// (profile_completed_at, posé par la base) ; un échec avant elle laisse l'accueil guidé ouvert.
+// La mise à jour du workspace vient en dernier : c'est elle qui termine l'accueil guidé
+// (onboarded_at, posé par la base) ; un échec avant elle laisse l'accueil guidé ouvert.
+// Données fiscales : écrites seulement si le profil les contient (Réglages), jamais
+// effacées par l'accueil guidé qui ne les demande pas.
 export async function saveProfile(
   supabase: Client,
   workspaceId: string,
-  profile: ProfileInput,
+  profile: OnboardingProfileInput | ProfileInput,
   extra: { level?: Level; logoPath?: string } = {},
 ): Promise<DbErrorKey | null> {
   const manualError = await saveManualInstructions(supabase, workspaceId, composeManualInstructions(profile));
@@ -28,13 +30,17 @@ export async function saveProfile(
       trade: profile.trade,
       address: profile.address,
       default_currency: profile.default_currency,
-      nif: profile.nif,
-      stat: profile.stat,
-      tax_regime: profile.tax_regime,
+      ...("nif" in profile && { nif: profile.nif, stat: profile.stat, tax_regime: profile.tax_regime }),
       ...(extra.level && { level: extra.level }),
       ...(extra.logoPath && { logo_path: extra.logoPath }),
     })
     .eq("id", workspaceId);
+  return error ? dbErrorKey(error) : null;
+}
+
+// NIF, STAT et régime fiscal (bloc « Avant ta première facture »).
+export async function saveFiscalInfo(supabase: Client, workspaceId: string, fiscal: FiscalInput): Promise<DbErrorKey | null> {
+  const { error } = await supabase.from("workspaces").update(fiscal).eq("id", workspaceId);
   return error ? dbErrorKey(error) : null;
 }
 

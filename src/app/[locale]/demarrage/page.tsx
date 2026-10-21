@@ -20,7 +20,8 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/demarrag
   return { title: t("metaTitle") };
 }
 
-// Accueil guidé (P1) : obligatoire tant que le profil pro n'est pas complet.
+// Accueil guidé (P1) : obligatoire tant que le profil pro (nom, métier, adresse) n'est pas
+// enregistré. Les données fiscales viennent avant la première facture.
 type Props = PageProps<"/[locale]/demarrage">;
 
 export default async function OnboardingPage({ params, searchParams }: Props) {
@@ -72,9 +73,9 @@ async function Onboarding({ locale, searchParams }: { locale: Locale; searchPara
         trade: workspace.trade ?? "",
         address: workspace.address ?? "",
         default_currency: workspace.default_currency,
-        nif: workspace.nif ?? "",
-        stat: workspace.stat ?? "",
-        tax_regime: workspace.tax_regime ?? "",
+        nif: "",
+        stat: "",
+        tax_regime: "",
         ...manual,
       }
     : EMPTY_PROFILE;

@@ -57,9 +57,9 @@ test("Anglais : inscription, accueil guidé et écrans principaux", async ({ pag
   await expectEnglish(page, en.Onboarding.step2.title);
   await page.getByLabel(en.Profile.businessName.label).fill(business);
   await page.getByLabel(en.Profile.address.label, { exact: true }).fill("Lot II A 12, Antananarivo");
-  await page.getByLabel(en.Profile.nif.label).fill("3000123456");
-  await page.getByLabel(en.Profile.stat.label).fill("74111 11 2020 0 01234");
-  await page.getByLabel(en.Profile.taxRegime.label).selectOption("tva");
+  // NIF, STAT et régime fiscal : demandés avant la première facture, pas ici.
+  await expect(page.getByTestId("fiscal-later")).toHaveText(en.Onboarding.step2.fiscalLater);
+  await expect(page.getByLabel(en.Profile.nif.label)).toHaveCount(0);
   await page.getByRole("button", { name: en.Onboarding.submit }).click();
 
   await expect(page).toHaveURL(/\/en\/tableau-de-bord$/);
@@ -92,6 +92,12 @@ test("Anglais : inscription, accueil guidé et écrans principaux", async ({ pag
   const [{ id: ws }] = (await (await adminRest(`workspaces?select=id&name=eq.${encodeURIComponent(business)}`)).json()) as {
     id: string;
   }[];
+  // Données fiscales (obligatoires pour émettre la facture), enregistrées directement.
+  const fiscal = await adminRest(`workspaces?id=eq.${ws}`, {
+    method: "PATCH",
+    body: JSON.stringify({ nif: "3000123456", stat: "74111112020001234", tax_regime: "tva" }),
+  });
+  expect(fiscal.ok, await fiscal.clone().text()).toBe(true);
   const contact = await insert<{ id: string }>("contacts", { workspace_id: ws, name: "Jane Smith", email: "jane@example.test" });
   const sendDocument = async (table: "quotes" | "invoices", fk: "quote_id" | "invoice_id") => {
     const { id } = await insert<{ id: string }>(table, { workspace_id: ws, contact_id: contact.id, currency: "MGA", language: "en" });

@@ -76,12 +76,12 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
 
   const { data: workspace } = await supabase
     .from("workspaces")
-    .select("profile_completed_at")
+    .select("onboarded_at")
     .order("created_at")
     .limit(1)
     .maybeSingle();
   const next = safeNextPath(String(formData.get("next") ?? ""));
-  if (workspace?.profile_completed_at) return redirect({ href: next ?? "/tableau-de-bord", locale: appLocale });
+  if (workspace?.onboarded_at) return redirect({ href: next ?? "/tableau-de-bord", locale: appLocale });
   // Accueil guidé d'abord, puis retour à la page demandée.
   return redirect({
     href: next ? `/demarrage?next=${encodeURIComponent(next)}` : "/demarrage",

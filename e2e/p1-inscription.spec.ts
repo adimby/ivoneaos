@@ -69,18 +69,16 @@ test("P1 : s'inscrire, diagnostic, profil pro, tableau de bord", async ({ page, 
   await page.getByLabel("Nom commercial").fill("Studio Hery");
   await page.getByLabel("Logo (facultatif)").setInputFiles({ name: "logo.png", mimeType: "image/png", buffer: PNG });
   await page.getByLabel("Adresse", { exact: true }).fill("Lot II A 12, Antananarivo");
-  await page.getByLabel("NIF").fill("300012345");
-  await page.getByLabel("STAT").fill("74111 11 2020 0 01234");
-  await page.getByLabel("Régime fiscal").selectOption("impot_synthetique");
-  await page.getByRole("button", { name: "Terminer" }).click();
-
-  // NIF trop court : refusé par le serveur, les autres saisies sont conservées.
-  await expect(page.getByText("Le NIF compte 10 chiffres.")).toBeVisible();
-  await expect(page.getByLabel("Nom commercial")).toHaveValue("Studio Hery");
-  await page.getByLabel("NIF").fill("3000123456");
+  // NIF, STAT et régime fiscal : pas demandés pour démarrer, une ligne dit quand ils le seront.
+  await expect(page.getByLabel("NIF", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("STAT", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("Régime fiscal")).toHaveCount(0);
+  await expect(page.getByTestId("fiscal-later").filter({ visible: true })).toHaveText(
+    "NIF, STAT et régime fiscal ? Pas maintenant : on te les demandera avant ta première facture.",
+  );
 
   // Faux PNG (texte annoncé image/png) : refusé par le serveur avant toute écriture,
-  // l'accueil guidé n'est pas terminé pour autant.
+  // l'accueil guidé n'est pas terminé pour autant, les autres saisies sont conservées.
   await page.getByLabel("Logo (facultatif)").setInputFiles({
     name: "faux.png",
     mimeType: "image/png",
@@ -88,6 +86,7 @@ test("P1 : s'inscrire, diagnostic, profil pro, tableau de bord", async ({ page, 
   });
   await page.getByRole("button", { name: "Terminer" }).click();
   await expect(page.getByText("Le logo doit être une image PNG, JPEG ou WebP.")).toBeVisible();
+  await expect(page.getByLabel("Nom commercial")).toHaveValue("Studio Hery");
   const probe = await page.context().newPage();
   await probe.goto("/fr/tableau-de-bord");
   await expect(probe).toHaveURL(/\/fr\/demarrage$/);
@@ -106,7 +105,7 @@ test("P1 : s'inscrire, diagnostic, profil pro, tableau de bord", async ({ page, 
   await expect(page.getByRole("heading", { name: "Studio Hery" })).toBeVisible();
   await expect(page.getByText("Niveau : Lancer")).toBeVisible();
   const items = page.locator("[data-testid^=checklist-]");
-  await expect(items).toHaveCount(3);
+  await expect(items).toHaveCount(4);
   await expect(items.first()).toContainText("Ajoute ton premier prospect");
   for (const item of await items.all()) await expect(item).toHaveAttribute("data-done", "false");
 
@@ -126,7 +125,9 @@ test("P1 : s'inscrire, diagnostic, profil pro, tableau de bord", async ({ page, 
   await openMore(page, "Plus");
   await page.getByRole("link", { name: "Réglages" }).click();
   await expect(page).toHaveURL(/\/fr\/reglages$/);
-  await expect(page.getByLabel("NIF")).toHaveValue("3000123456");
+  // Données fiscales facultatives ici (nécessaires pour facturer) : encore vides.
+  await expect(page.getByLabel("NIF", { exact: true })).toHaveValue("");
+  await expect(page.getByText("Facultatives pour l'instant, obligatoires pour émettre une facture", { exact: false })).toBeVisible();
   await expect(page.getByText("Découverte")).toBeVisible();
   const logo = page.getByRole("img", { name: "Logo de Studio Hery" });
   await expect(logo).toBeVisible();
