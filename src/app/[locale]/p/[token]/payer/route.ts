@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { publicAppUrl } from "@/lib/app-url";
+import { appOrigin } from "@/lib/app-url";
 import { getPayableInvoiceByToken, payableInvoice } from "@/modules/billing/payment-link";
 import { ensureInvoicePapiLink } from "@/modules/payments/papi/service";
 
@@ -9,7 +9,7 @@ import { ensureInvoicePapiLink } from "@/modules/payments/papi/service";
 export async function GET(request: NextRequest, { params }: RouteContext<"/[locale]/p/[token]/payer">) {
   const { locale, token } = await params;
   const page = `/${locale === "en" ? "en" : "fr"}/p/${token}`;
-  const back = (query?: string) => redirect(new URL(query ? `${page}?${query}` : page, request.nextUrl.origin).toString());
+  const back = async (query?: string) => redirect(new URL(query ? `${page}?${query}` : page, await appOrigin()).toString());
 
   let row;
   try {
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, { params }: RouteContext<"/[loca
   }
   if (!row) return new Response("Not found", { status: 404, headers: { "X-Robots-Tag": "noindex, nofollow" } });
 
-  const origin = publicAppUrl() ?? request.nextUrl.origin;
+  const origin = await appOrigin();
   try {
     const outcome = await ensureInvoicePapiLink(payableInvoice(row, origin), { origin });
     if (outcome.status === "ready") return redirect(outcome.url);

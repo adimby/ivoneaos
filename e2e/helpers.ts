@@ -1,14 +1,25 @@
 import { expect, type BrowserContext, type Page } from "@playwright/test";
+import { attemptKey, type AttemptScope } from "../src/modules/auth/attempt-key";
 import { readOtp } from "./mailpit";
 
 // Note : Next garde les pages déjà visitées dans le DOM, masquées (retour instantané) ;
 // les sélecteurs par data-testid filtrent donc sur ce qui est visible.
 
 export async function signIn(page: Page, email: string) {
+  // IP client neuve à chaque connexion (x-forwarded-for, lue hors Vercel) : la suite se
+  // connecte plus souvent que la limite par IP (src/modules/auth/rate-limit.ts).
+  await page.setExtraHTTPHeaders({ "x-forwarded-for": `10.${[0, 0, 0].map(() => Math.floor(Math.random() * 254) + 1).join(".")}` });
   await page.getByLabel("Adresse e-mail").fill(email);
   const since = new Date(Date.now() - 2_000);
-  await page.getByRole("button", { name: "Recevoir mon code" }).click();
-  await expect(page.getByRole("heading", { name: "Saisis ton code" })).toBeVisible();
+  const send = page.getByRole("button", { name: "Recevoir mon code" });
+  const codeTitle = page.getByRole("heading", { name: "Saisis ton code" });
+  // Supabase refuse deux envois au même e-mail à moins d'une seconde (max_frequency) :
+  // nouvel essai tant que l'écran du code n'est pas affiché. Le bouton est désactivé
+  // pendant l'envoi, un clic n'en relance donc jamais un second en parallèle.
+  await expect(async () => {
+    if (!(await codeTitle.isVisible())) await send.click({ timeout: 2_000 });
+    await expect(codeTitle).toBeVisible({ timeout: 2_000 });
+  }).toPass({ intervals: [1_000], timeout: 30_000 });
   const code = await readOtp(email, since);
   await page.getByLabel("Code à 6 chiffres").fill(code);
   await page.getByRole("button", { name: "Me connecter" }).click();
@@ -57,6 +68,11 @@ function env(name: string): string {
   const value = process.env[name];
   if (!value) throw new Error(`${name} manquante (.env.local)`);
   return value;
+}
+
+// Clé d'un compteur de public.auth_attempts, calculée comme l'application.
+export function authAttemptKey(action: "send" | "verify", scope: AttemptScope, value: string): string {
+  return attemptKey(env("SUPABASE_SECRET_KEY"), action, scope, value);
 }
 
 export function cronSecret(): string {

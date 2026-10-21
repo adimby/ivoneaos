@@ -112,8 +112,14 @@ test("P5 : opportunité → devis → envoi → J'accepte (client sans compte) �
   const response = await pub.goto(publicUrl);
   expect(response!.status()).toBe(200);
   // Jamais dans un cadre d'un autre site (anti-clickjacking sur « J'accepte »).
-  expect(response!.headers()["content-security-policy"]).toBe("frame-ancestors 'none'");
+  const csp = response!.headers()["content-security-policy"];
+  expect(csp).toContain("frame-ancestors 'none'");
   expect(response!.headers()["x-frame-options"]).toBe("DENY");
+  // Ni script ni plugin d'un autre site ; le jeton du lien ne part pas vers un autre site.
+  expect(csp).toContain("script-src 'self' 'unsafe-inline'");
+  expect(csp).toContain("object-src 'none'");
+  expect(response!.headers()["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+  expect(response!.headers()["x-content-type-options"]).toBe("nosniff");
   await expect(pub.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
   await expect(pub.getByRole("heading", { name: `Devis D-${year}-0001` })).toBeVisible();
   await expect(pub.getByTestId("public-total")).toHaveText(money("450 000 Ar"));

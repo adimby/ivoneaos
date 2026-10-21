@@ -46,6 +46,7 @@
       "invalid_code_format": "Le code compte 6 chiffres.",
       "code_invalid": "Ce code est incorrect ou a expiré. Vérifie-le, ou demande un nouveau code.",
       "rate_limited": "Trop de demandes d'un coup. Patiente une minute avant de réessayer.",
+      "too_many_attempts": "Trop de tentatives. Pour protéger ton compte, attends un quart d'heure avant de réessayer.",
       "unknown": "La connexion n'a pas abouti. Vérifie ta connexion internet et réessaie."
     }
   },
@@ -411,6 +412,7 @@
       "payment_exceeds_balance": "Ce paiement dépasse le reste à payer de la facture. Vérifie le montant.",
       "payment_date_in_future": "La date du paiement est dans le futur. Indique le jour où tu as reçu l'argent.",
       "quantity_too_precise": "La quantité accepte au plus 2 décimales (par exemple 1,25).",
+      "invalid_rate_limit": "Une erreur est survenue. Réessaie dans un instant.",
       "not_authenticated": "Ta session a expiré. Reconnecte-toi pour continuer.",
       "payment_date_before_invoice": "La date du paiement est antérieure à l'envoi de la facture. Indique le jour où tu as reçu l'argent.",
       "too_many_lines": "Un document compte 50 lignes au plus. Regroupe certaines prestations.",
@@ -649,11 +651,6 @@
       "tomorrow": "Demain à {time}",
       "past": "{date} à {time}",
       "future": "{date} à {time}"
-    },
-    "snoozeShort": {
-      "1": "+1 j",
-      "3": "+3 j",
-      "7": "+1 sem."
     }
   },
   "Today": {

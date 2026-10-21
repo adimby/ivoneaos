@@ -1,3 +1,4 @@
+import { appOrigin } from "@/lib/app-url";
 import type { NextRequest } from "next/server";
 import { appPdfResponse } from "@/modules/billing/render";
 
@@ -5,7 +6,7 @@ import { appPdfResponse } from "@/modules/billing/render";
 export async function GET(request: NextRequest, { params }: RouteContext<"/[locale]/factures/[id]/apercu">) {
   const { id } = await params;
   return appPdfResponse("invoice", id, {
-    origin: request.nextUrl.origin,
+    origin: await appOrigin(),
     download: request.nextUrl.searchParams.has("telecharger"),
   });
 }

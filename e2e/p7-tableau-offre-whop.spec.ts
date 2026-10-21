@@ -1,6 +1,6 @@
 import { createHmac, randomBytes } from "node:crypto";
 import { expect, test } from "@playwright/test";
-import { adminRest, signUpAndOnboard } from "./helpers";
+import { adminRest, pageBeforeJavaScript, signUpAndOnboard } from "./helpers";
 
 // Étape 7 : tableau de bord chiffré, Réglages > Offre, paiement par carte Whop.
 // L'instance principale (port 3100) tourne sans WHOP_API_KEY ; la seconde (3101) avec Whop
@@ -116,7 +116,22 @@ test("Whop masqué sans WHOP_API_KEY ; avec Whop : inscription, « Payer par car
   // Commission de la plateforme annoncée (WHOP_PLATFORM_FEE_PERCENT=5).
   await expect(page.getByTestId("whop-intro")).toContainText(money("Ivonea OS prélève en plus 5 % de chaque paiement par carte"));
   // Inscription hébergée par Whop : interceptée, puis terminée dans le Whop simulé.
-  await page.route("https://whop.com/**", (route) => route.fulfill({ status: 200, contentType: "text/html", body: "<h1>Whop</h1>" }));
+  const whopPage = { status: 200, contentType: "text/html", body: "<h1>Whop</h1>" };
+  // Avant le chargement du JavaScript (connexion lente), « Connecter Whop » est un envoi de
+  // formulaire natif redirigé (303) vers Whop : la politique de contenu (form-action) doit
+  // laisser partir la requête vers whop.com (bloquée, Chrome reste sur la page). Playwright
+  // n'intercepte pas la cible d'une redirection : on attend la requête, sans la servir.
+  const { plain, context } = await pageBeforeJavaScript(page);
+  try {
+    await plain.goto("/fr/reglages/paiements");
+    await Promise.all([
+      plain.waitForRequest(/^https:\/\/whop\.com\/onboarding\/biz_/),
+      plain.getByRole("button", { name: "Connecter Whop" }).click(),
+    ]);
+  } finally {
+    await context.close();
+  }
+  await page.route("https://whop.com/**", (route) => route.fulfill(whopPage));
   await page.getByRole("button", { name: "Connecter Whop" }).click();
   await page.waitForURL(/^https:\/\/whop\.com\/onboarding\/biz_/);
   const onboarding = new URL(page.url());
