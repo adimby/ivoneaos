@@ -22,6 +22,12 @@ describe("contactSchema", () => {
       fieldErrors: { name: "required", phone: "phone_format", email: "email_format" },
     });
   });
+  it("pays : toute la liste ISO, code inconnu refusé (jamais remplacé par MG)", () => {
+    const reachable = { ...contact, phone: "034 12 345 67" };
+    expect(parseWith(contactSchema, { ...reachable, country: "jp" })).toMatchObject({ ok: true, data: { country: "JP" } });
+    expect(parseWith(contactSchema, { ...reachable, country: "XX" })).toEqual({ ok: false, fieldErrors: { country: "invalid_choice" } });
+    expect(parseWith(contactSchema, { ...reachable, country: "" })).toEqual({ ok: false, fieldErrors: { country: "invalid_choice" } });
+  });
   it("étiquettes sans doublon", () => {
     const result = parseWith(contactSchema, { ...contact, email: "A@B.mg", tags: "client, vip , client," });
     expect(result.ok && result.data).toMatchObject({ email: "a@b.mg", tags: ["client", "vip"] });

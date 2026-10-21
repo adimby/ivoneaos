@@ -8,7 +8,7 @@ import { formValues, parseWith } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
 import { safeNextPath } from "@/modules/auth/next-path";
 import { readLogoUpload } from "@/modules/workspace/logo";
-import { PROFILE_FIELDS, profileSchema } from "@/modules/workspace/profile-schema";
+import { ONBOARDING_PROFILE_FIELDS, onboardingProfileSchema } from "@/modules/workspace/profile-schema";
 import { removeLogo, saveProfile, uploadLogo } from "@/modules/workspace/save-profile";
 import type { ProfileFormState } from "@/modules/workspace/actions";
 import { DIAGNOSTIC_FIELDS } from "./diagnostic-fields";
@@ -22,7 +22,8 @@ const localeSchema = z.enum(routing.locales).catch(routing.defaultLocale);
 // 1. tout est vérifié (logo compris, d'après son contenu) avant la moindre écriture ;
 // 2. workspace (create_workspace, idempotent : un nouvel essai reprend le même),
 //    diagnostic, logo ;
-// 3. en dernier, le profil (saveProfile), dont la mise à jour pose profile_completed_at.
+// 3. en dernier, le profil (saveProfile), dont la mise à jour pose onboarded_at.
+// NIF, STAT et régime fiscal ne sont pas demandés ici : seulement avant la première facture.
 // Un échec avant l'étape 3 laisse l'accueil guidé ouvert : rien n'est perdu au nouvel essai.
 export async function completeOnboarding(_prev: ProfileFormState, formData: FormData): Promise<ProfileFormState> {
   const locale = localeSchema.parse(formData.get("locale"));
@@ -32,7 +33,7 @@ export async function completeOnboarding(_prev: ProfileFormState, formData: Form
   if (!claims) return redirect({ href: "/connexion?next=/demarrage", locale });
 
   const diagnostic = parseWith(diagnosticSchema, formValues(formData, DIAGNOSTIC_FIELDS));
-  const profile = parseWith(profileSchema, formValues(formData, PROFILE_FIELDS));
+  const profile = parseWith(onboardingProfileSchema, formValues(formData, ONBOARDING_PROFILE_FIELDS));
   const logo = await readLogoUpload(formData.get("logo"));
   if (!diagnostic.ok || !profile.ok || "error" in logo) {
     return {

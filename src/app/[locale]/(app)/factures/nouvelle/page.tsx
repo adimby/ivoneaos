@@ -8,6 +8,8 @@ import type { Locale } from "@/i18n/routing";
 import { DocumentForm } from "@/modules/billing/components/document-form";
 import { dayIn, newDocumentDefaults } from "@/modules/billing/form-defaults";
 import { listContactOptions } from "@/modules/crm/queries";
+import { FiscalInfoBlock } from "@/modules/workspace/components/fiscal-info-block";
+import { fiscalDefaults, hasFiscalInfo } from "@/modules/workspace/profile-schema";
 import { requireWorkspace } from "@/modules/workspace/queries";
 
 type Props = PageProps<"/[locale]/factures/nouvelle">;
@@ -36,6 +38,15 @@ export default async function NewInvoicePage({ params, searchParams }: Props) {
         ← {t("back")}
       </Link>
       <h1 className="text-2xl font-bold text-lagoon">{t("newInvoiceTitle")}</h1>
+      {/* Formulaire à part, replié : le brouillon s'enregistre sans données fiscales (demandées
+          à l'envoi) ; l'enregistrement ne vide pas la facture en cours de saisie. */}
+      <FiscalInfoBlock
+        locale={locale}
+        back="/factures/nouvelle"
+        missing={!hasFiscalInfo(workspace)}
+        defaults={fiscalDefaults(workspace)}
+        compact
+      />
       {contacts.length === 0 ? (
         <Card className="flex flex-col items-center gap-3 py-8 text-center">
           <ContactsIcon className="size-10 text-turquoise" />

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { adminRest, signUpAndOnboard } from "./helpers";
+import { adminRest, pageBeforeJavaScript, signUpAndOnboard } from "./helpers";
 
 // Montants : Intl sépare les milliers par une espace insécable fine.
 const money = (text: string) => new RegExp(text.replace(/ /g, "\\s"));
@@ -45,7 +45,8 @@ async function expectPdf(page: Page, url: string) {
 }
 
 test("P5 : opportunité → devis → envoi → J'accepte (client sans compte) → facture", async ({ page, browser }) => {
-  const { business } = await signUpAndOnboard(page, "p5");
+  // Sans NIF, STAT ni régime fiscal : le devis passe, la facture les demande avant l'envoi.
+  const { business } = await signUpAndOnboard(page, "p5", { fiscal: false });
   const workspaceId = await workspaceOf(business);
   const deal = await seedDeal(workspaceId);
 
@@ -154,9 +155,11 @@ test("P5 : opportunité → devis → envoi → J'accepte (client sans compte) �
   await expect(pub.locator('meta[name="robots"]').first()).toHaveAttribute("content", /noindex/);
   await client.close();
 
-  // 4. Côté freelance : devis accepté, opportunité gagnée, « Transformer en facture ».
+  // 4. Côté freelance : devis accepté, opportunité gagnée, « Transformer en facture ». Le
+  // bloc « Avant ta première facture » est déjà proposé, sans bloquer la transformation.
   await page.reload();
   await expect(page.getByTestId("document-status").filter({ visible: true })).toHaveText("Accepté");
+  await expect(page.getByTestId("fiscal-block").filter({ visible: true })).toBeVisible();
   await page.getByRole("button", { name: "Transformer en facture" }).click();
   await expect(page).toHaveURL(/\/fr\/factures\/[0-9a-f-]{36}\?ok=converted$/);
   await expect(page.getByText("Facture créée depuis le devis.", { exact: false })).toBeVisible();
@@ -164,6 +167,68 @@ test("P5 : opportunité → devis → envoi → J'accepte (client sans compte) �
   await expect(page.getByTestId("document-total").filter({ visible: true })).toHaveText(money("450 000 Ar"));
   await expect(page.getByText("Création du logo").filter({ visible: true }).first()).toBeVisible();
   const invoiceId = new URL(page.url()).pathname.split("/").pop()!;
+
+  // Nouvelle facture : le bloc fiscal est replié (le brouillon s'enregistre sans lui) et
+  // n'éloigne pas l'action principale, toujours sous le pouce.
+  await page.goto("/fr/factures/nouvelle");
+  const compact = page.getByTestId("fiscal-block").filter({ visible: true });
+  await expect(compact.getByRole("heading", { name: "Avant ta première facture" })).toBeVisible();
+  await expect(compact.getByLabel("NIF", { exact: true })).toBeHidden();
+  await expect(page.getByRole("button", { name: "Enregistrer le brouillon" })).toBeInViewport();
+  await compact.getByRole("heading", { name: "Avant ta première facture" }).click();
+  await expect(compact.getByLabel("NIF", { exact: true })).toBeVisible();
+  await page.goto(`/fr/factures/${invoiceId}`);
+
+  // 5. Avant la première facture : NIF, STAT et régime fiscal à la place du bouton d'envoi.
+  const fiscal = page.getByTestId("fiscal-block").filter({ visible: true });
+  await expect(fiscal.getByRole("heading", { name: "Avant ta première facture" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Envoyer la facture" })).toHaveCount(0);
+  // Connexion lente, JavaScript pas encore chargé : bloc et champs déjà là, saisissables ;
+  // l'enregistrement attend le JavaScript (un envoi natif d'action serveur afficherait une
+  // page blanche), comme les autres formulaires de l'application.
+  const { plain, context } = await pageBeforeJavaScript(page);
+  await plain.goto(`/fr/factures/${invoiceId}`);
+  await expect(plain.getByRole("heading", { name: "Avant ta première facture" })).toBeVisible();
+  await plain.getByLabel("NIF", { exact: true }).fill("3000123456");
+  await expect(plain.getByLabel("NIF", { exact: true })).toHaveValue("3000123456");
+  await expect(plain.getByRole("button", { name: "Enregistrer mes infos fiscales" })).toBeDisabled();
+  await context.close();
+  // Avec JavaScript : erreur sur place, saisies gardées, puis correction.
+  await fiscal.getByLabel("NIF", { exact: true }).fill("300012345");
+  await fiscal.getByLabel("STAT", { exact: true }).fill("74111 11 2020 0 01234");
+  await fiscal.getByLabel("Régime fiscal").selectOption("impot_synthetique");
+  await fiscal.getByRole("button", { name: "Enregistrer mes infos fiscales" }).click();
+  await expect(fiscal.getByText("Le NIF compte 10 chiffres.")).toBeVisible();
+  await expect(fiscal.getByLabel("NIF", { exact: true })).toBeFocused();
+  await expect(fiscal.getByLabel("STAT", { exact: true })).toHaveValue("74111 11 2020 0 01234");
+  await expect(page.getByRole("button", { name: "Envoyer la facture" })).toHaveCount(0);
+  await fiscal.getByLabel("NIF", { exact: true }).fill("300 012 3456");
+  await fiscal.getByRole("button", { name: "Enregistrer mes infos fiscales" }).click();
+  await expect(page.getByTestId("fiscal-saved").filter({ visible: true })).toHaveText(
+    "Infos fiscales enregistrées. Tu peux émettre ta facture.",
+  );
+  await expect(page.getByTestId("fiscal-block").filter({ visible: true })).toHaveCount(0);
+  // Brouillon intact, envoi de retour.
+  await expect(page.getByRole("heading", { name: "Facture (brouillon)" })).toBeVisible();
+  await expect(page.getByTestId("document-total").filter({ visible: true })).toHaveText(money("450 000 Ar"));
+  await expect(page.getByText("Cartes de visite").filter({ visible: true }).first()).toBeVisible();
+  const [saved] = (await (await adminRest(`workspaces?select=nif,stat,tax_regime,profile_completed_at&name=eq.${encodeURIComponent(business)}`)).json()) as {
+    nif: string;
+    stat: string;
+    tax_regime: string;
+    profile_completed_at: string | null;
+  }[];
+  expect(saved).toMatchObject({ nif: "3000123456", stat: "74111112020001234", tax_regime: "impot_synthetique" });
+  expect(saved.profile_completed_at).not.toBeNull();
+
+  // Réglages : données fiscales complètes, corrigeables mais plus effaçables.
+  await page.goto("/fr/reglages");
+  await expect(page.getByText("tu peux les corriger, pas les effacer", { exact: false })).toBeVisible();
+  await page.getByLabel("NIF", { exact: true }).fill("");
+  await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
+  await expect(page.getByText("Ce champ est obligatoire.")).toBeVisible();
+  await expect(page.getByLabel("NIF", { exact: true })).toBeFocused();
+  await page.goto(`/fr/factures/${invoiceId}`);
 
   await page.getByRole("button", { name: "Envoyer la facture" }).click();
   await expect(page.getByRole("heading", { name: `Facture F-${year}-0001` })).toBeVisible();

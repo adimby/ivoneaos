@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseWith } from "@/lib/forms";
-import { normalizeMvola, profileSchema } from "./profile-schema";
+import { fiscalSchema, hasFiscalInfo, normalizeMvola, onboardingProfileSchema, profileSchema, settingsProfileSchema } from "./profile-schema";
 
 const valid = {
   name: " Studio Hery ",
@@ -24,7 +24,7 @@ describe("profileSchema", () => {
     });
   });
 
-  it("exige chaque champ obligatoire", () => {
+  it("exige chaque champ obligatoire, données fiscales facultatives", () => {
     const result = parseWith(profileSchema, {
       ...valid,
       name: "  ",
@@ -41,12 +41,14 @@ describe("profileSchema", () => {
         name: "required",
         trade: "required",
         address: "required",
-        nif: "required",
-        stat: "required",
-        tax_regime: "invalid_choice",
         default_currency: "invalid_choice",
       });
     }
+  });
+
+  it("enregistre des données fiscales vides comme absentes (null)", () => {
+    const result = parseWith(profileSchema, { ...valid, nif: " ", stat: "", tax_regime: "" });
+    expect(result.ok && [result.data.nif, result.data.stat, result.data.tax_regime]).toEqual([null, null, null]);
   });
 
   it("contrôle le format du NIF (10 chiffres) et du STAT (17 chiffres)", () => {
@@ -85,9 +87,57 @@ describe("profileSchema", () => {
   });
 });
 
+describe("onboardingProfileSchema", () => {
+  it("ne demande ni NIF, ni STAT, ni régime fiscal", () => {
+    const { name, trade, address, default_currency, mvola, rib, other } = valid;
+    const result = parseWith(onboardingProfileSchema, { name, trade, address, default_currency, mvola, rib, other });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(Object.keys(result.data)).not.toContain("nif");
+  });
+});
+
+describe("fiscalSchema (avant la première facture)", () => {
+  it("exige NIF, STAT et régime fiscal", () => {
+    const result = parseWith(fiscalSchema, { nif: "", stat: "", tax_regime: "" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.fieldErrors).toEqual({ nif: "required", stat: "required", tax_regime: "invalid_choice" });
+  });
+
+  it("contrôle le format et normalise", () => {
+    const bad = parseWith(fiscalSchema, { nif: "123", stat: "74111 11", tax_regime: "autre" });
+    if (!bad.ok) expect(bad.fieldErrors).toEqual({ nif: "nif_format", stat: "stat_format", tax_regime: "invalid_choice" });
+    expect(bad.ok).toBe(false);
+    const ok = parseWith(fiscalSchema, { nif: "300 012 3456", stat: "74111 11 2020 0 01234", tax_regime: "tva" });
+    expect(ok).toEqual({ ok: true, data: { nif: "3000123456", stat: "74111112020001234", tax_regime: "tva" } });
+  });
+});
+
+describe("hasFiscalInfo", () => {
+  it("vrai seulement quand les trois sont remplis", () => {
+    expect(hasFiscalInfo({ nif: "3000123456", stat: "74111112020001234", tax_regime: "tva" })).toBe(true);
+    expect(hasFiscalInfo({ nif: "3000123456", stat: " ", tax_regime: "tva" })).toBe(false);
+    expect(hasFiscalInfo({ nif: null, stat: null, tax_regime: null })).toBe(false);
+  });
+});
+
 describe("normalizeMvola", () => {
   it("ramène l'indicatif international au format national", () => {
     expect(normalizeMvola("261381234567")).toBe("0381234567");
     expect(normalizeMvola("038 12 345 67")).toBe("0381234567");
+  });
+});
+
+describe("settingsProfileSchema (Réglages)", () => {
+  const empty = { ...valid, nif: "", stat: "", tax_regime: "" };
+  it("données fiscales absentes : facultatives", () => {
+    expect(parseWith(settingsProfileSchema({ nif: null, stat: null, tax_regime: null }), empty).ok).toBe(true);
+  });
+  it("données fiscales complètes : corrigeables, plus effaçables", () => {
+    const schema = settingsProfileSchema({ nif: "3000123456", stat: "74111112020001234", tax_regime: "tva" });
+    expect(parseWith(schema, empty)).toEqual({
+      ok: false,
+      fieldErrors: { nif: "required", stat: "required", tax_regime: "invalid_choice" },
+    });
+    expect(parseWith(schema, { ...valid, nif: "300 012 3457" })).toMatchObject({ ok: true, data: { nif: "3000123457" } });
   });
 });

@@ -23,6 +23,8 @@ import { mailtoUrl, publicPath, whatsappShareUrl } from "@/modules/billing/share
 import { quoteDisplayStatus } from "@/modules/billing/status";
 import { formatDay } from "@/modules/billing/view";
 import { getContact, getDeal } from "@/modules/crm/queries";
+import { FiscalInfoBlock } from "@/modules/workspace/components/fiscal-info-block";
+import { fiscalDefaults, hasFiscalInfo } from "@/modules/workspace/profile-schema";
 import { getCurrentWorkspace, requireWorkspace } from "@/modules/workspace/queries";
 
 type Props = PageProps<"/[locale]/devis/[id]">;
@@ -165,6 +167,10 @@ export default async function QuotePage({ params, searchParams }: Props) {
 
       {status === "sent" && <p className="text-base text-ink-muted">{t("detail.sentHint")}</p>}
       {quote.status === "accepted" && !invoice && <p className="text-base text-ink-muted">{t("detail.acceptedHint")}</p>}
+      {/* Devis accepté : la facture approche, NIF / STAT / régime demandés dès maintenant (la transformation reste possible). */}
+      {quote.status === "accepted" && !invoice && (
+        <FiscalInfoBlock locale={locale} back={`/devis/${quote.id}`} missing={!hasFiscalInfo(workspace)} defaults={fiscalDefaults(workspace)} />
+      )}
       {needsNewValidity && <p className="text-base text-ink-muted">{t("detail.expiredHint")}</p>}
 
       <DocumentLines

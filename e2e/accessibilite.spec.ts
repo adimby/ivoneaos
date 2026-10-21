@@ -24,6 +24,8 @@ async function insert<T>(table: string, row: object): Promise<T> {
 }
 
 test("Accessibilité des écrans principaux (fr) et de la page publique", async ({ page }) => {
+  // Seize pages analysées par axe : plus long que le délai par défaut sur une machine chargée.
+  test.setTimeout(120_000);
   const { business } = await signUpAndOnboard(page, "a11y");
   const [{ id: ws }] = (await (await adminRest(`workspaces?select=id&name=eq.${encodeURIComponent(business)}`)).json()) as { id: string }[];
   const contact = await insert<{ id: string }>("contacts", { workspace_id: ws, name: "Rakoto Jean", phone: "+261341234567" });

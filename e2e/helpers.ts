@@ -32,9 +32,15 @@ export async function openMore(page: Page, name: string) {
   await nav.getByRole("button", { name }).or(nav.getByRole("link", { name })).click();
 }
 
-// Nouveau compte au profil complet (parcours P1 abrégé), arrivé sur le tableau de bord.
-// Le nom commercial est unique : il retrouve le workspace (adminRest).
-export async function signUpAndOnboard(page: Page, prefix: string): Promise<{ email: string; business: string }> {
+// Nouveau compte (parcours P1 abrégé), arrivé sur le tableau de bord. L'accueil guidé ne
+// demande plus NIF, STAT ni régime fiscal ; fiscal (par défaut) les enregistre ensuite
+// directement en base, pour les parcours qui émettent des factures sans tester le bloc
+// « Avant ta première facture ». Le nom commercial est unique : il retrouve le workspace.
+export async function signUpAndOnboard(
+  page: Page,
+  prefix: string,
+  { fiscal = true }: { fiscal?: boolean } = {},
+): Promise<{ email: string; business: string }> {
   const stamp = Date.now();
   const email = `${prefix}-${stamp}@example.test`;
   const business = `Studio ${prefix} ${stamp}`;
@@ -48,11 +54,17 @@ export async function signUpAndOnboard(page: Page, prefix: string): Promise<{ em
   await page.getByRole("button", { name: "Continuer" }).click();
   await page.getByLabel("Nom commercial").fill(business);
   await page.getByLabel("Adresse", { exact: true }).fill("Lot II A 12, Antananarivo");
-  await page.getByLabel("NIF").fill("3000123456");
-  await page.getByLabel("STAT").fill("74111 11 2020 0 01234");
-  await page.getByLabel("Régime fiscal").selectOption("impot_synthetique");
+  await expect(page.getByTestId("fiscal-later").filter({ visible: true })).toBeVisible();
+  await expect(page.getByLabel("NIF", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Terminer" }).click();
   await expect(page).toHaveURL(/\/fr\/tableau-de-bord$/);
+  if (fiscal) {
+    const saved = await adminRest(`workspaces?name=eq.${encodeURIComponent(business)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ nif: "3000123456", stat: "74111112020001234", tax_regime: "impot_synthetique" }),
+    });
+    expect(saved.ok, await saved.clone().text()).toBe(true);
+  }
   return { email, business };
 }
 

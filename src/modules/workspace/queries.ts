@@ -8,7 +8,7 @@ import { parseManualInstructions } from "./manual-instructions";
 import { canUse, PLAN_LIMITS, type Feature, type PlanUsage } from "./plan";
 
 const WORKSPACE_COLUMNS =
-  "id, name, trade, level, default_currency, nif, stat, tax_regime, address, logo_path, invoice_footer, plan, profile_completed_at";
+  "id, name, trade, level, default_currency, nif, stat, tax_regime, address, logo_path, invoice_footer, plan, profile_completed_at, onboarded_at";
 
 // Au MVP, un freelance = un workspace (le plus ancien dont il est membre ; RLS).
 export const getCurrentWorkspace = cache(async () => {
@@ -25,9 +25,10 @@ export const getCurrentWorkspace = cache(async () => {
 
 export type Workspace = NonNullable<Awaited<ReturnType<typeof getCurrentWorkspace>>>;
 
-// Accueil guidé terminé : profil pro complet (profile_completed_at posé par la base).
+// Accueil guidé terminé : nom, métier et adresse enregistrés (onboarded_at posé par la
+// base). Les données fiscales viennent plus tard, avant la première facture.
 export function isOnboarded(workspace: Workspace | null): boolean {
-  return Boolean(workspace?.profile_completed_at);
+  return Boolean(workspace?.onboarded_at);
 }
 
 // Pages de l'application : connecté et accueil guidé terminé, sinon redirection.

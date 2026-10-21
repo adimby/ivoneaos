@@ -20,8 +20,16 @@ Principes :
 1. Inscription par e-mail avec code à usage unique (OTP Supabase). Choix de la langue fr/en.
 2. Diagnostic en 4 questions : métier, ancienneté, nombre de clients actuels, objectif de revenu mensuel en ariary.
 3. Le diagnostic place le freelance au niveau « Lancer » (0 client) ou « Remplir son agenda » (déjà des clients) et affiche une liste de démarrage adaptée.
-4. Profil pro : nom commercial, métier, logo, adresse, devise par défaut. **NIF, STAT et régime fiscal (TVA ou impôt synthétique) obligatoires** : sans eux, pas de facture.
-5. Arrivée sur le tableau de bord avec la liste de démarrage : ajouter un premier contact, connecter Papi, créer un premier devis.
+4. Profil pro : nom commercial, métier, logo, adresse, devise par défaut. Enregistré, il ouvre l'application
+   (`workspaces.onboarded_at`, posé par la base). **NIF, STAT et régime fiscal (TVA ou impôt synthétique) ne sont pas
+   demandés ici** (une ligne le dit) : ils le sont **avant la première facture**, par un bloc « Avant ta première
+   facture » affiché là où la facture se prépare (nouvelle facture, devis accepté à transformer, brouillon à envoyer).
+   Ses trois champs (NIF 10 chiffres, STAT 17 chiffres, régime) s'enregistrent dans le profil sans perdre le brouillon,
+   puis l'envoi redevient possible. La base refuse toujours d'émettre une facture sans eux. Les devis ne les exigent pas.
+   Dans Réglages, ils restent facultatifs tant qu'ils ne sont pas tous remplis, avec une aide qui dit qu'ils sont
+   nécessaires pour facturer ; une fois complets, ils se corrigent mais ne s'effacent plus.
+5. Arrivée sur le tableau de bord avec la liste de démarrage : ajouter un premier contact, connecter Papi, créer un premier
+   devis, compléter ses infos fiscales.
 
 ### P2. Connecter son compte Papi
 1. Depuis la liste de démarrage ou les réglages : « Moyens de paiement ».
@@ -73,7 +81,7 @@ pour contacts et opportunités. Factures émises jamais supprimées.
 | workspaces | name, trade, level (lancer, remplir, grandir), default_currency, nif, stat, tax_regime (tva, impot_synthetique), address, logo_path, invoice_footer |
 | workspace_members | workspace_id, user_id, role (owner, member) |
 | onboarding_answers | workspace_id, answers jsonb, completed_at |
-| contacts | kind (person, company), name, company_name, email, phone, country, tags text[], archived_at |
+| contacts | kind (person, company), name, company_name, email, phone, country (code ISO 3166-1 alpha-2, tous les pays, liste vérifiée aussi par la base ; choix avec recherche, Madagascar puis les 5 pays les plus utilisés par le workspace en tête, complétés par France, La Réunion, Maurice), tags text[], archived_at |
 | pipeline_stages | name, position, kind (open, won, lost) — 6 étapes créées avec le workspace |
 | deals | contact_id, stage_id, title, amount, currency, expected_close_on, archived_at |
 | activities | contact_id, deal_id, kind (note, call, whatsapp, email, meeting), body, occurred_at |
@@ -140,7 +148,8 @@ SMS (Mapi, V2), avoirs, abonnements payants, portfolio, prospection, projets/tâ
 ## Indicateurs de la garantie 90 jours (à pouvoir mesurer, sans module de coaching)
 Le cadrage produit prévoit un accompagnement de 3 mois avec garantie. Le modèle de données doit permettre de calculer,
 sans nouveau module : date d'inscription (`profiles.created_at`), profil terminé (`workspaces.profile_completed_at`,
-posé quand NIF, STAT, régime fiscal, nom et métier sont remplis), prospects contactés par semaine (activités de type
+posé quand NIF, STAT, régime fiscal, nom et métier sont remplis, donc au plus tard avant la première facture ; à ne pas
+confondre avec `workspaces.onboarded_at`, fin de l'accueil guidé qui ouvre l'application), prospects contactés par semaine (activités de type
 call, whatsapp, email ou meeting, par `occurred_at`), devis envoyés (`quotes.sent_at`, et `invoices.sent_at`).
 Pas de suivi des séances de coaching ni de portfolio au MVP.
 
