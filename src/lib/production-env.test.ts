@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { appUrlOrigin, missingAppUrlWarning, productionEnvErrors } from "./production-env";
 
-const valid = { IVONEA_CONTACT_EMAIL: "bonjour@ivonea.com", APP_URL: "https://app.ivonea.com/" };
+const valid = {
+  IVONEA_CONTACT_EMAIL: "bonjour@ivonea.com",
+  APP_URL: "https://app.ivonea.com/",
+  SUPABASE_SECRET_KEY: "sb_secret_x",
+  PAYMENT_SECRETS_KEY: "cle",
+  CRON_SECRET: "secret",
+  RESEND_API_KEY: "re_x",
+};
 
 describe("appUrlOrigin", () => {
   it("origine seule, sans chemin", () => {
@@ -25,6 +32,12 @@ describe("productionEnvErrors", () => {
   });
   it("adresse de contact absente", () => {
     expect(productionEnvErrors({ ...valid, IVONEA_CONTACT_EMAIL: undefined }).join()).toMatch(/IVONEA_CONTACT_EMAIL/);
+  });
+  it("secrets serveur absents ou vides", () => {
+    for (const name of ["SUPABASE_SECRET_KEY", "PAYMENT_SECRETS_KEY", "CRON_SECRET", "RESEND_API_KEY"]) {
+      expect(productionEnvErrors({ ...valid, [name]: undefined }).join()).toMatch(name);
+      expect(productionEnvErrors({ ...valid, [name]: " " })).toHaveLength(1);
+    }
   });
   it("URL de services simulés refusées", () => {
     const errors = productionEnvErrors({
