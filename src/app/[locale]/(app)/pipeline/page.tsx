@@ -98,7 +98,7 @@ export default async function PipelinePage({ params, searchParams }: Props) {
                     href={`#etape-${stage.id}`}
                     className={cn(
                       "flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-semibold",
-                      count ? "border-lagoon bg-white text-lagoon" : "border-sand bg-white/60 text-ink-muted",
+                      count ? "border-lagoon bg-surface text-lagoon" : "border-sand bg-surface/60 text-ink-muted",
                     )}
                   >
                     {stageLabel(tAll, stage.name)}

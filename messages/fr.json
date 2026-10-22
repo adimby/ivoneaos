@@ -189,7 +189,12 @@
     "lines_required": "Ajoute au moins une ligne avec une description et un prix.",
     "quantity_format": "Quantité invalide : un nombre positif, 2 décimales au plus (par exemple 1 ou 2,5).",
     "rate_format": "Taux invalide. Par exemple 5 000 pour 1 € = 5 000 Ar.",
-    "too_many_lines": "50 lignes au plus par document."
+    "too_many_lines": "50 lignes au plus par document.",
+    "color_format": "Indique une couleur au format #RRVVBB, par exemple #01515A.",
+    "primary_contrast": "Cette couleur est trop claire pour des titres lisibles sur fond blanc. Choisis une teinte plus foncée (ou garde-la comme couleur d'accent).",
+    "banner_too_large": "Cette bannière dépasse 1 Mo. Réduis-la (1600 × 400 px en JPEG suffit) puis réessaie.",
+    "banner_type": "La bannière doit être une image PNG ou JPEG.",
+    "banner_upload": "La bannière n'a pas pu être envoyée. Réessaie."
   },
   "Nav": {
     "label": "Navigation principale",
@@ -318,6 +323,14 @@
     },
     "account": {
       "title": "Compte"
+    },
+    "appearance": {
+      "title": "Apparence",
+      "description": "Mode clair ou sombre, couleur principale de l'application."
+    },
+    "branding": {
+      "title": "Image de marque",
+      "description": "Logo, bannière, couleurs et police de tes devis et factures."
     }
   },
   "Payments": {
@@ -1113,5 +1126,108 @@
     "intro": "Chaque facture doit indiquer ton NIF, ton STAT et ton régime fiscal. Tu ne les saisis qu'une fois, et ton brouillon reste tel quel.",
     "save": "Enregistrer mes infos fiscales",
     "saved": "Infos fiscales enregistrées. Tu peux émettre ta facture."
+  },
+  "Appearance": {
+    "metaTitle": "Apparence",
+    "title": "Apparence",
+    "backToSettings": "Retour aux réglages",
+    "intro": "Choisis comment Ivonea OS s'affiche pour toi, sur tous tes appareils. Tes clients voient toujours tes documents à ton image de marque.",
+    "mode": {
+      "legend": "Mode",
+      "light": "Clair",
+      "lightHint": "Fond clair, idéal en plein jour.",
+      "dark": "Sombre",
+      "darkHint": "Fond sombre, reposant le soir.",
+      "auto": "Automatique",
+      "autoHint": "Suit le réglage de ton téléphone ou ordinateur."
+    },
+    "palette": {
+      "legend": "Couleur principale",
+      "hint": "Chaque palette est vérifiée pour rester lisible en clair comme en sombre.",
+      "ocean": "Océan",
+      "foret": "Forêt",
+      "prune": "Prune",
+      "corail": "Corail",
+      "ardoise": "Ardoise",
+      "sable": "Sable"
+    },
+    "save": "Enregistrer l'apparence",
+    "saved": "Apparence enregistrée.",
+    "error": "L'apparence n'a pas pu être enregistrée. Réessaie."
+  },
+  "Branding": {
+    "metaTitle": "Image de marque",
+    "title": "Image de marque",
+    "backToSettings": "Retour aux réglages",
+    "intro": "Ton logo, tes couleurs et ta police sur tes devis, tes factures et la page que tes clients ouvrent. Les documents déjà envoyés gardent l'aspect de leur envoi.",
+    "logo": {
+      "legend": "Logo",
+      "show": "Afficher mon logo sur mes documents",
+      "none": "Tu n'as pas encore de logo.",
+      "addInProfile": "Ajouter mon logo dans le profil",
+      "size": "Taille",
+      "small": "Petit",
+      "medium": "Moyen",
+      "large": "Grand",
+      "position": "Position",
+      "left": "À gauche",
+      "center": "Centré",
+      "webp": "Ton logo est en WebP : il s'affiche sur la page client mais pas dans le PDF. Envoie-le en PNG ou JPEG dans ton profil."
+    },
+    "banner": {
+      "legend": "Bannière d'en-tête (facultative)",
+      "hint": "PNG ou JPEG, 1 Mo au plus. Format conseillé : 1600 × 400 px (4:1), affichée sur toute la largeur en haut du document.",
+      "alt": "Bannière actuelle",
+      "choose": "Choisir une bannière",
+      "change": "Changer de bannière",
+      "remove": "Retirer la bannière"
+    },
+    "colors": {
+      "legend": "Couleurs",
+      "presets": "Associations prêtes",
+      "primary": "Couleur principale",
+      "primaryHint": "Titres, nom, en-tête du tableau et total. Doit rester lisible sur fond blanc.",
+      "accent": "Couleur d'accent",
+      "accentHint": "Reste à payer, bouton du client et détails. Le texte posé dessus passe en blanc ou en noir selon la teinte.",
+      "hex": "Code couleur",
+      "picker": "Choisir au nuancier",
+      "ocean": "Océan",
+      "foret": "Forêt",
+      "prune": "Prune",
+      "nuit": "Nuit",
+      "ardoise": "Ardoise",
+      "encre": "Encre"
+    },
+    "font": {
+      "legend": "Police",
+      "liberation-sans": "Classique",
+      "montserrat": "Moderne",
+      "nunito": "Arrondie",
+      "spectral": "Élégante",
+      "barlow-condensed": "Condensée",
+      "sample": "Devis {amount}"
+    },
+    "footer": {
+      "label": "Pied de page des documents (facultatif)",
+      "hint": "Une courte phrase en bas de chaque page : remerciement, conditions, site web. 300 caractères au plus."
+    },
+    "preview": {
+      "title": "Aperçu",
+      "hint": "Aperçu de tes réglages en cours. Le PDF d'exemple reprend ce qui est enregistré.",
+      "document": "Devis",
+      "client": "Client",
+      "line": "Création de logo",
+      "total": "Total",
+      "due": "Reste à payer",
+      "pdf": "Voir un PDF d'exemple"
+    },
+    "sample": {
+      "client": "Client exemple",
+      "company": "Entreprise exemple",
+      "line1": "Création de logo et déclinaisons",
+      "line2": "Cartes de visite (impression comprise)"
+    },
+    "save": "Enregistrer l'image de marque",
+    "saved": "Image de marque enregistrée. Elle s'applique à tes prochains envois."
   }
 }

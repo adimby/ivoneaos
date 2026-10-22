@@ -12,7 +12,8 @@
     "test:db": "supabase test db",
     "test:db:concurrency": "bash scripts/test-db-concurrency.sh",
     "db:types": "supabase gen types typescript --local --schema public > src/lib/supabase/database.types.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "themes:css": "UPDATE_THEMES_CSS=1 vitest run src/modules/appearance/themes.test.ts"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.9.0",

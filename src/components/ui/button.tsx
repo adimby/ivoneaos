@@ -8,10 +8,12 @@ const base =
   "transition-colors disabled:cursor-not-allowed disabled:opacity-60 aria-busy:cursor-progress";
 
 const variants: Record<Variant, string> = {
-  // Terracotta : bouton principal, texte blanc (5,0:1).
-  primary: "bg-terracotta text-white shadow-sm hover:bg-terracotta-dark active:bg-terracotta-dark",
+  // Terracotta : bouton principal, texte on-terracotta (blanc, 5,0:1 en Océan). Contour
+  // terracotta-edge : invisible, sauf accent de marque trop pâle (page client).
+  primary:
+    "bg-terracotta text-on-terracotta shadow-sm ring-2 ring-terracotta-edge ring-inset hover:bg-terracotta-dark active:bg-terracotta-dark",
   secondary:
-    "border-2 border-lagoon bg-white text-lagoon hover:bg-sand-light active:bg-sand-light",
+    "border-2 border-lagoon bg-surface text-lagoon hover:bg-sand-light active:bg-sand-light",
   ghost: "text-lagoon underline-offset-4 hover:underline",
   // Action destructive discrète (archiver) : texte danger (6,2:1 sur spray).
   danger: "text-danger underline-offset-4 hover:underline",

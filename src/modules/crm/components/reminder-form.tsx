@@ -94,7 +94,7 @@ export function ReminderForm({
         <details
           open={customOpen}
           onToggle={(event) => setCustomOpen(event.currentTarget.open)}
-          className="rounded-card border border-sand bg-white"
+          className="rounded-card border border-sand bg-surface"
         >
           <summary className="flex min-h-12 cursor-pointer items-center px-4 text-base font-semibold text-lagoon">
             {t("custom")}

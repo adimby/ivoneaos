@@ -14,7 +14,7 @@ export default function HomePage({ params }: PageProps<"/[locale]">) {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="on-dark bg-lagoon pt-safe text-white">
+      <header className="on-dark bg-chrome pt-safe text-on-chrome">
         <div className="px-safe mx-auto flex h-16 w-full max-w-md items-center justify-between md:max-w-3xl md:px-8">
           <Brand />
           <LanguageSwitch current={locale as Locale} href="/" tone="dark" />
@@ -22,11 +22,11 @@ export default function HomePage({ params }: PageProps<"/[locale]">) {
       </header>
 
       <main className="flex flex-1 flex-col">
-        <section className="on-dark bg-lagoon pb-12 text-white">
+        <section className="on-dark bg-chrome pb-12 text-on-chrome">
           <div className="px-safe mx-auto flex w-full max-w-md flex-col gap-4 pt-6 md:max-w-3xl md:px-8 md:pt-12">
-            <p className="text-sm font-semibold tracking-wide text-sand uppercase">{t("eyebrow")}</p>
+            <p className="text-sm font-semibold tracking-wide text-on-chrome-muted uppercase">{t("eyebrow")}</p>
             <h1 className="text-4xl leading-tight font-bold text-balance">{t("title")}</h1>
-            <p className="text-lg text-spray">{t("subtitle")}</p>
+            <p className="text-lg text-on-chrome">{t("subtitle")}</p>
           </div>
         </section>
 
@@ -36,7 +36,7 @@ export default function HomePage({ params }: PageProps<"/[locale]">) {
               <li key={point} className="flex gap-3">
                 <svg viewBox="0 0 24 24" className="mt-0.5 size-6 shrink-0" aria-hidden="true">
                   <circle cx="12" cy="12" r="11" className="fill-turquoise" />
-                  <path d="m7.5 12.5 3 3 6-6.5" fill="none" className="stroke-ink" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="m7.5 12.5 3 3 6-6.5" fill="none" className="stroke-on-turquoise" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 <span className="text-base">{t(`points.${point}`)}</span>
               </li>

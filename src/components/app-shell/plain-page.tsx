@@ -5,7 +5,7 @@ import { Brand } from "../brand";
 export function PlainPage({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="on-dark bg-lagoon pt-safe text-white">
+      <header className="on-dark bg-chrome pt-safe text-on-chrome">
         <div className="px-safe mx-auto flex h-14 w-full max-w-md items-center">
           <Brand />
         </div>

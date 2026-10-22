@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { ChevronRightIcon, WalletIcon } from "@/components/icons";
+import { BrushIcon, ChevronRightIcon, PaletteIcon, WalletIcon } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/components/ui/cn";
@@ -62,6 +62,32 @@ export default async function SettingsPage({ params }: PageProps<"/[locale]/regl
           <ChevronRightIcon className="size-5 shrink-0 text-ink-muted" />
         </Link>
 
+        <Link
+          href="/reglages/image-de-marque"
+          className="flex min-h-16 items-center gap-3 rounded-card border border-sand/70 bg-sand-light p-4 shadow-card hover:border-lagoon"
+          data-testid="settings-branding"
+        >
+          <BrushIcon className="size-6 shrink-0 text-turquoise" />
+          <span className="flex flex-1 flex-col">
+            <span className="text-base font-bold text-lagoon">{t("branding.title")}</span>
+            <span className="text-sm text-ink-muted">{t("branding.description")}</span>
+          </span>
+          <ChevronRightIcon className="size-5 shrink-0 text-ink-muted" />
+        </Link>
+
+        <Link
+          href="/reglages/apparence"
+          className="flex min-h-16 items-center gap-3 rounded-card border border-sand/70 bg-sand-light p-4 shadow-card hover:border-lagoon"
+          data-testid="settings-appearance"
+        >
+          <PaletteIcon className="size-6 shrink-0 text-turquoise" />
+          <span className="flex flex-1 flex-col">
+            <span className="text-base font-bold text-lagoon">{t("appearance.title")}</span>
+            <span className="text-sm text-ink-muted">{t("appearance.description")}</span>
+          </span>
+          <ChevronRightIcon className="size-5 shrink-0 text-ink-muted" />
+        </Link>
+
         <Card aria-labelledby="language-title" className="flex flex-col gap-3">
           <div>
             <h2 id="language-title" className="text-lg font-bold text-lagoon">
@@ -81,7 +107,7 @@ export default async function SettingsPage({ params }: PageProps<"/[locale]/regl
                 aria-pressed={value === locale}
                 className={cn(
                   "min-h-11 flex-1 rounded-xl border-2 px-4 text-base font-semibold",
-                  value === locale ? "border-lagoon bg-lagoon text-white" : "border-sand-strong bg-white text-ink hover:border-lagoon",
+                  value === locale ? "border-lagoon bg-lagoon text-on-lagoon" : "border-sand-strong bg-surface text-ink hover:border-lagoon",
                 )}
               >
                 {tCommon(`languages.${value}`)}

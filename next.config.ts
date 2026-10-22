@@ -64,7 +64,7 @@ const nextConfig: NextConfig = {
       { source: "/:path*", headers: SECURITY_HEADERS },
       // PDF (aperçus, page publique) : le lecteur PDF du navigateur ne supporte pas une
       // politique stricte ; seul l'anti-cadre reste.
-      ...["/:locale/p/:token/pdf", "/:locale/devis/:id/apercu", "/:locale/factures/:id/apercu"].map((source) => ({
+      ...["/:locale/p/:token/pdf", "/:locale/devis/:id/apercu", "/:locale/factures/:id/apercu", "/:locale/reglages/image-de-marque/apercu"].map((source) => ({
         source,
         headers: [{ key: "Content-Security-Policy", value: "frame-ancestors 'none'" }],
       })),

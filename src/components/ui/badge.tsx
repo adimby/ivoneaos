@@ -5,7 +5,7 @@ type Tone = "accent" | "neutral" | "success" | "danger";
 
 const tones: Record<Tone, string> = {
   // Turquoise : texte ink (4,5:1), jamais blanc.
-  accent: "bg-turquoise text-ink",
+  accent: "bg-turquoise text-on-turquoise",
   neutral: "bg-spray text-ink",
   success: "bg-success-soft text-success",
   danger: "bg-danger-soft text-danger",

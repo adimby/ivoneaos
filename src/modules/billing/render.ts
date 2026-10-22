@@ -5,11 +5,13 @@ import { publicAppUrl } from "@/lib/app-url";
 import { createClient } from "@/lib/supabase/server";
 import { localDate } from "@/lib/time";
 import { getContact } from "@/modules/crm/queries";
+import { imageFormat } from "@/modules/branding/banner";
+import { brandSnapshot } from "@/modules/branding/brand";
 import { whopEnabled } from "@/modules/payments/whop/service";
 import { composeManualInstructions } from "@/modules/workspace/manual-instructions";
 import { getCurrentWorkspace, getManualPayment, type Workspace } from "@/modules/workspace/queries";
 import { invoiceDocument, parsePublicDocument, quoteDocument, type BillingDocument, type DraftSource } from "./document";
-import { logoFormat, renderDocumentPdf, type Translate } from "./pdf";
+import { renderDocumentPdf, type PdfImage, type Translate } from "./pdf";
 import { downloadLogo, getInvoice, getQuote, type Invoice, type Quote } from "./queries";
 import { pdfFileName, publicPath } from "./share";
 import { documentView } from "./view";
@@ -41,6 +43,7 @@ export async function appDocument(
       tax_regime: workspace.tax_regime,
       address: workspace.address,
       invoice_footer: workspace.invoice_footer,
+      brand: brandSnapshot(workspace),
     },
     client: { name: contact?.name ?? "", company_name: contact?.company_name ?? null },
     lines: record.lines,
@@ -57,9 +60,19 @@ export async function documentPdf(
 ): Promise<Buffer> {
   const t = await getTranslations({ locale: doc.language, namespace: "Pdf" });
   const view = documentView(doc, { locale: doc.language, now, publicUrl, whop: whopEnabled() });
-  const format = logoFormat(view.freelancer.logoPath);
-  const data = format && view.freelancer.logoPath ? await downloadLogo(view.freelancer.logoPath, logoAs) : null;
-  return renderDocumentPdf(view, t as unknown as Translate, data && format ? { data, format } : null);
+  const [logo, banner] = await Promise.all([
+    view.brand.showLogo ? pdfImage(view.freelancer.logoPath, logoAs) : null,
+    pdfImage(view.brand.bannerPath, logoAs),
+  ]);
+  return renderDocumentPdf(view, t as unknown as Translate, { logo, banner });
+}
+
+// Logo ou bannière (bucket privé « logos ») : PNG et JPEG seulement, le moteur PDF ne lit
+// pas le WebP (le document part alors sans cette image).
+async function pdfImage(path: string | null, as: "public" | "member"): Promise<PdfImage> {
+  const format = imageFormat(path);
+  const data = format && path ? await downloadLogo(path, as) : null;
+  return data && format ? { data, format } : null;
 }
 
 // PDF de la page publique : le lien circule (WhatsApp, e-mail) et chaque ouverture

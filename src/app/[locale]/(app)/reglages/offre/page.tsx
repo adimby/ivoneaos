@@ -105,7 +105,7 @@ export default async function PlanPage({ params }: Props) {
               <li
                 key={p}
                 data-testid={`offer-${p}`}
-                className={cn("flex flex-col gap-1 rounded-card border bg-white p-4", p === plan ? "border-2 border-lagoon" : "border-sand/70")}
+                className={cn("flex flex-col gap-1 rounded-card border bg-surface p-4", p === plan ? "border-2 border-lagoon" : "border-sand/70")}
               >
                 <div className="flex items-baseline justify-between gap-3">
                   <h3 className="text-base font-bold text-lagoon">{tSettings(`plan.${p}`)}</h3>

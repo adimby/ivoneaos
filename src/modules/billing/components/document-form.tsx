@@ -213,7 +213,7 @@ export function DocumentForm({
               const id = `line-${line.key}`;
               const p = priced[index];
               return (
-                <li key={line.key} data-testid="line" className="@container rounded-card border border-sand/70 bg-white p-3 shadow-card">
+                <li key={line.key} data-testid="line" className="@container rounded-card border border-sand/70 bg-surface p-3 shadow-card">
                   {/* Description, quantité et prix sur une ligne quand la carte a la place
                       (requête de conteneur, pas de largeur d'écran : sur un petit portable, la
                       colonne des champs est étroite à cause de l'encadré des totaux). */}

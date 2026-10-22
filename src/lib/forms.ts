@@ -42,6 +42,8 @@ const KEYS = new Set([
   "email_format",
   "reachable_required",
   "date_format",
+  "color_format",
+  "primary_contrast",
 ]);
 function knownKey(message: string): string {
   return KEYS.has(message) ? message : "required";

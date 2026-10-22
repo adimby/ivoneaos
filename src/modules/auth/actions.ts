@@ -4,6 +4,8 @@ import { z } from "zod";
 import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { rememberLocale } from "@/lib/locale-cookie";
+import { forgetAppearance, rememberAppearance } from "@/modules/appearance/cookie";
+import { parseAppearance } from "@/modules/appearance/preference";
 import { createClient } from "@/lib/supabase/server";
 import { authErrorKey, type AuthErrorKey } from "./errors";
 import { safeNextPath } from "./next-path";
@@ -65,14 +67,19 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   // Langue : celle du profil, sauf si la personne vient d'en choisir une sur la page de
   // connexion (lien de langue, champ locale_chosen). Nouveau compte : le profil a été
   // créé dans la langue de la page (handle_new_user).
+  // Apparence du profil recopiée dans le cookie de cet appareil (affichage sans éclair).
   let appLocale = locale;
   if (formData.get("locale_chosen") === "1") {
     await supabase.from("profiles").update({ locale }).eq("user_id", data.user.id);
-  } else {
-    const { data: profile } = await supabase.from("profiles").select("locale").eq("user_id", data.user.id).maybeSingle();
-    appLocale = localeSchema.parse(profile?.locale ?? locale);
   }
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("locale, theme_mode, theme_palette")
+    .eq("user_id", data.user.id)
+    .maybeSingle();
+  if (formData.get("locale_chosen") !== "1") appLocale = localeSchema.parse(profile?.locale ?? locale);
   await rememberLocale(appLocale);
+  if (profile) await rememberAppearance(parseAppearance(`${profile.theme_mode}.${profile.theme_palette}`));
 
   const { data: workspace } = await supabase
     .from("workspaces")
@@ -94,6 +101,9 @@ export async function signOut(formData: FormData) {
   const supabase = await createClient();
   // Cet appareil seulement : les sessions des autres appareils restent ouvertes.
   await supabase.auth.signOut({ scope: "local" });
+  // Appareil partagé : l'écran de connexion revient à l'apparence par défaut (le profil
+  // la rétablit à la prochaine connexion).
+  await forgetAppearance();
   redirect({ href: "/connexion", locale });
 }
 

@@ -23,7 +23,7 @@ export default async function ConnexionPage({ params, searchParams }: Props) {
   const locale = (await params).locale as Locale;
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="on-dark bg-lagoon pt-safe text-white">
+      <header className="on-dark bg-chrome pt-safe text-on-chrome">
         <div className="px-safe mx-auto flex h-16 w-full max-w-md items-center justify-between md:max-w-6xl md:px-8">
           <Link href="/" className="rounded-lg">
             <Brand />

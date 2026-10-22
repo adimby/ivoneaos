@@ -11,6 +11,7 @@ import { acceptQuotePublic } from "@/modules/billing/actions";
 import { PublicShell } from "@/modules/billing/components/public-shell";
 import { getPublicDocument, publicLogoUrl } from "@/modules/billing/queries";
 import { STATUS_TONE } from "@/modules/billing/status";
+import { LOGO_WEB_SIZE } from "@/modules/branding/brand";
 import { documentView } from "@/modules/billing/view";
 import { whopEnabled } from "@/modules/payments/whop/service";
 
@@ -56,7 +57,13 @@ async function PublicDocument({ params, searchParams }: Props) {
 
   const { doc } = found;
   const view = documentView(doc, { locale, now: new Date(), publicUrl: null, whop: whopEnabled() });
-  const logoUrl = await publicLogoUrl(view.freelancer.logoPath);
+  const { brand } = view;
+  const [logoUrl, bannerUrl] = await Promise.all([
+    brand.showLogo ? publicLogoUrl(view.freelancer.logoPath) : null,
+    publicLogoUrl(brand.bannerPath),
+  ]);
+  const logoSize = LOGO_WEB_SIZE[brand.logoSize];
+  const centered = brand.logoPosition === "center";
   const result = typeof query.r === "string" && (RESULTS as readonly string[]).includes(query.r) ? query.r : null;
   const business = view.freelancer.name;
   const otherLocale = routing.locales.find((l) => l !== locale)!;
@@ -70,6 +77,7 @@ async function PublicDocument({ params, searchParams }: Props) {
 
   return (
     <PublicShell
+      brand={brand}
       madeWith={tDoc("madeWith")}
       bottom={
         canPayOnline ? (
@@ -101,7 +109,7 @@ async function PublicDocument({ params, searchParams }: Props) {
                 className={buttonClasses(
                   "primary",
                   true,
-                  "cursor-pointer list-none select-none group-open:bg-transparent group-open:text-lagoon group-open:shadow-none group-open:hover:underline [&::-webkit-details-marker]:hidden",
+                  "cursor-pointer list-none select-none group-open:bg-transparent group-open:text-lagoon group-open:shadow-none group-open:ring-0 group-open:hover:underline [&::-webkit-details-marker]:hidden",
                 )}
               >
                 <span className="group-open:hidden">{t("accept.button")}</span>
@@ -120,12 +128,24 @@ async function PublicDocument({ params, searchParams }: Props) {
       }
       languageLink={{ href: `/${otherLocale}/p/${token}`, label: otherLocale === "fr" ? "Français" : "English", lang: otherLocale }}
     >
-      <header className="flex items-center gap-3">
+      {bannerUrl && (
+        // Bannière d'en-tête (format conseillé 4:1), décorative : le nom suit en texte.
+        // eslint-disable-next-line @next/next/no-img-element -- URL signée temporaire du stockage
+        <img src={bannerUrl} alt="" className="-mx-4 -mt-5 aspect-[4/1] w-[calc(100%+2rem)] max-w-none object-cover md:mx-0 md:mt-0 md:w-full md:rounded-card" data-testid="public-banner" />
+      )}
+      <header className={centered ? "flex flex-col items-center gap-2 text-center" : "flex items-center gap-3"}>
         {logoUrl && (
           // eslint-disable-next-line @next/next/no-img-element -- URL signée temporaire du stockage, sans optimisation d'image
-          <img src={logoUrl} alt="" width={56} height={56} className="size-14 shrink-0 rounded-xl bg-white object-contain" />
+          <img
+            src={logoUrl}
+            alt=""
+            height={logoSize}
+            style={{ height: logoSize, maxWidth: logoSize * 3 }}
+            className="w-auto shrink-0 rounded-xl bg-white object-contain"
+            data-testid="public-logo"
+          />
         )}
-        <div className="min-w-0">
+        <div className="min-w-0 max-w-full">
           <p className="text-xs font-semibold tracking-wide text-ink-muted uppercase">{t("from")}</p>
           <p className="truncate text-lg font-bold text-lagoon">{business}</p>
         </div>
@@ -168,7 +188,7 @@ async function PublicDocument({ params, searchParams }: Props) {
         <Alert tone="success">{t("accept.done", { date: view.dates.find((d) => d.key === "acceptedAt")?.value ?? "" })}</Alert>
       )}
 
-      <Card aria-labelledby="lines-title" className="flex flex-col gap-3 bg-white">
+      <Card aria-labelledby="lines-title" className="flex flex-col gap-3 bg-surface">
         <h2 id="lines-title" className="sr-only">
           {tDoc("columns.description")}
         </h2>

@@ -6,7 +6,7 @@ import { setLanguage, signOut } from "../actions";
 
 const darkButton =
   "inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg px-2 text-sm font-semibold " +
-  "text-sand hover:text-white aria-pressed:bg-white/15 aria-pressed:text-white";
+  "text-on-chrome-muted hover:text-on-chrome aria-pressed:bg-on-chrome/15 aria-pressed:text-on-chrome";
 
 // En-tête sombre (accueil guidé) : langue (enregistrée dans le profil) et déconnexion,
 // en formulaires d'actions serveur (sans JavaScript). back : page où revenir.

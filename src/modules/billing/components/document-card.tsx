@@ -48,7 +48,7 @@ export function DocumentCard({
       href={href}
       data-testid="document-card"
       className={cn(
-        "flex min-h-16 items-center gap-3 rounded-xl border border-sand/70 bg-white p-3 hover:border-lagoon",
+        "flex min-h-16 items-center gap-3 rounded-xl border border-sand/70 bg-surface p-3 hover:border-lagoon",
         table && cn(documentColumns, "xl:grid xl:min-h-14 xl:px-4"),
       )}
     >

@@ -9,11 +9,11 @@ export function Brand({ className }: { className?: string }) {
         <path
           d="M6 18c2.5 0 2.5-3 5-3s2.5 3 5 3 2.5-3 5-3 2.5 3 5 3M6 23c2.5 0 2.5-3 5-3s2.5 3 5 3 2.5-3 5-3 2.5 3 5 3"
           fill="none"
-          className="stroke-ink"
+          className="stroke-on-turquoise"
           strokeWidth="2.2"
           strokeLinecap="round"
         />
-        <circle cx="16" cy="10" r="3" className="fill-sand-light" />
+        <circle cx="16" cy="10" r="3" fill="#f4f1ea" />
       </svg>
       Ivonea OS
     </span>

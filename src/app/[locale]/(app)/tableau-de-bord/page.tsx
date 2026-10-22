@@ -70,12 +70,12 @@ export default async function DashboardPage({ params }: PageProps<"/[locale]/tab
               href={item.href}
               data-testid={`checklist-${item.key}`}
               data-done={item.done}
-              className="flex min-h-16 items-center gap-3 rounded-xl border border-sand/70 bg-white p-3 hover:border-lagoon"
+              className="flex min-h-16 items-center gap-3 rounded-xl border border-sand/70 bg-surface p-3 hover:border-lagoon"
             >
               <span
                 className={cn(
                   "flex size-8 shrink-0 items-center justify-center rounded-full border-2",
-                  item.done ? "border-success bg-success text-white" : "border-sand-strong text-transparent",
+                  item.done ? "border-success bg-success text-surface" : "border-sand-strong text-transparent",
                 )}
                 aria-hidden="true"
               >

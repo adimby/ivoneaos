@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Palettes de l'application (Réglages > Apparence), générées depuis themes.ts. */
+@import "./themes.css";
 
 /*
  * Palette de marque « Océan » (docs/spec-mvp.md). Contrastes AA vérifiés :
@@ -9,6 +11,10 @@
  * - terracotta en texte : seulement sur blanc (5,0:1), pas sur spray (4,3:1)
  * - sand-strong sur blanc 4,3:1 : contour des champs (≥ 3:1 exigé)
  * - danger sur blanc 7,3:1, sur spray 6,2:1
+ * Valeurs ci-dessous : Océan clair (défaut). Les autres palettes et le mode sombre
+ * redéfinissent les mêmes jetons (src/modules/appearance/themes.ts, contrastes vérifiés
+ * par themes.test.ts). Jetons de rôle : surface (cartes, champs), chrome (zones sombres),
+ * on-* (texte posé sur l'aplat du même nom).
  */
 @theme {
   --color-lagoon: #01515a;
@@ -27,6 +33,16 @@
   --color-danger-soft: #f8e4e1;
   --color-success: #1e6b47;
   --color-success-soft: #dcefe4;
+  --color-surface: #ffffff;
+  --color-on-lagoon: #ffffff;
+  --color-on-turquoise: #0b2a2e;
+  --color-on-terracotta: #ffffff;
+  --color-chrome: #01515a;
+  --color-on-chrome: #ffffff;
+  --color-on-chrome-muted: #c9c5ba;
+  /* Contour du bouton principal : transparent dans l'application ; sur la page client,
+     couleur principale de la marque quand l'accent choisi est trop pâle (< 3:1). */
+  --color-terracotta-edge: transparent;
 
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
@@ -65,7 +81,7 @@
 
   /* Zones sombres (en-tête, barre de navigation) : anneau clair. */
   .on-dark :focus-visible {
-    outline-color: var(--color-spray);
+    outline-color: var(--color-on-chrome);
   }
 }
 
@@ -89,4 +105,69 @@
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Polices de l'image de marque (page publique d'un devis ou d'une facture, aperçu dans
+   Réglages) : mêmes fichiers que le PDF (scripts/build-brand-fonts.py), servis par le site.
+   Une police n'est téléchargée que si une page l'utilise. Classique : Liberation Sans,
+   renommée « Ivonea Classique » dans sa version web (nom réservé, OFL 1.1). */
+@font-face {
+  font-family: "Ivonea Classique";
+  src: url("/fonts/brand/IvoneaClassique-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Ivonea Classique";
+  src: url("/fonts/brand/IvoneaClassique-Bold.woff2") format("woff2");
+  font-weight: 600 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Montserrat";
+  src: url("/fonts/brand/Montserrat-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Montserrat";
+  src: url("/fonts/brand/Montserrat-Bold.woff2") format("woff2");
+  font-weight: 600 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Nunito";
+  src: url("/fonts/brand/Nunito-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Nunito";
+  src: url("/fonts/brand/Nunito-Bold.woff2") format("woff2");
+  font-weight: 600 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Spectral";
+  src: url("/fonts/brand/Spectral-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Spectral";
+  src: url("/fonts/brand/Spectral-Bold.woff2") format("woff2");
+  font-weight: 600 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Barlow Condensed";
+  src: url("/fonts/brand/BarlowCondensed-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Barlow Condensed";
+  src: url("/fonts/brand/BarlowCondensed-Bold.woff2") format("woff2");
+  font-weight: 600 800;
+  font-display: swap;
 }

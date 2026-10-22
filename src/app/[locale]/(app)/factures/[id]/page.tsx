@@ -207,7 +207,7 @@ export default async function InvoicePage({ params, searchParams }: Props) {
             </p>
           )}
           {invoice.amount_paid > 0 && due > 0 && (
-            <p className="text-base font-semibold text-terracotta-dark">
+            <p className="text-base font-semibold text-lagoon">
               {t("detail.amountPaid", { amount: money(invoice.amount_paid) })} · {t("detail.amountDue", { amount: money(due) })}
             </p>
           )}

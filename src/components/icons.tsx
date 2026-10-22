@@ -115,3 +115,17 @@ export const ArrowRightIcon = (p: ComponentProps<"svg">) => (
     <path d="M5 12h14M13 6l6 6-6 6" />
   </Icon>
 );
+export const PaletteIcon = (p: ComponentProps<"svg">) => (
+  <Icon {...p}>
+    <path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.8-1.9 0-.5-.2-.9-.5-1.3-.3-.3-.5-.8-.5-1.3 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4C21 6.4 17 3 12 3Z" />
+    <circle cx="7.5" cy="11" r="1" />
+    <circle cx="10" cy="7" r="1" />
+    <circle cx="15" cy="7.5" r="1" />
+  </Icon>
+);
+export const BrushIcon = (p: ComponentProps<"svg">) => (
+  <Icon {...p}>
+    <path d="M14.5 4.5 19.5 9.5 11 18l-5-5Z" />
+    <path d="M6 13c-2 0-3 1.5-3 3.5V20h3.5C8.5 20 10 19 10 17" />
+  </Icon>
+);

@@ -6,6 +6,8 @@ import { PageSkeleton } from "@/components/app-shell/page-skeleton";
 import { SideNav } from "@/components/app-shell/side-nav";
 import { Brand } from "@/components/brand";
 import type { Locale } from "@/i18n/routing";
+import { AppearanceFromCookie } from "@/modules/appearance/components/appearance-from-cookie";
+import { AppearanceNoScript, AppearanceSync } from "@/modules/appearance/components/appearance-sync";
 import { requireWorkspace } from "@/modules/workspace/queries";
 
 // En-tête statique affiché tout de suite. La navigation et le contenu attendent la
@@ -23,6 +25,8 @@ export default async function AppLayout({ children, params }: LayoutProps<"/[loc
   // Catalogue complet pour les formulaires et composants client de l'application.
   return (
     <NextIntlClientProvider>
+      <AppearanceNoScript />
+      <AppearanceFromCookie />
       <div className="flex min-h-dvh flex-col">
         <SkipLink />
         <AppHeader />
@@ -49,7 +53,7 @@ function SkipLink() {
   return (
     <a
       href={`#${MAIN_ID}`}
-      className="sr-only rounded-xl bg-white px-4 py-3 font-semibold text-lagoon shadow-card focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50"
+      className="sr-only rounded-xl bg-surface px-4 py-3 font-semibold text-lagoon shadow-card focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50"
     >
       {t("skip")}
     </a>
@@ -60,7 +64,7 @@ function ShellFallback() {
   return (
     <>
       {/* Emplacements de la navigation (mêmes dimensions) : pas de saut à l'affichage. */}
-      <div aria-hidden="true" className="on-dark fixed inset-y-0 left-0 z-20 hidden w-64 bg-lagoon px-6 pt-6 text-white lg:block">
+      <div aria-hidden="true" className="on-dark fixed inset-y-0 left-0 z-20 hidden w-64 bg-chrome px-6 pt-6 text-on-chrome lg:block">
         <Brand />
       </div>
       <div className={contentClass}>
@@ -68,7 +72,7 @@ function ShellFallback() {
           <PageSkeleton />
         </main>
       </div>
-      <div aria-hidden="true" className="fixed inset-x-0 bottom-0 z-20 bg-lagoon pb-safe lg:hidden">
+      <div aria-hidden="true" className="fixed inset-x-0 bottom-0 z-20 bg-chrome pb-safe lg:hidden">
         <div className="h-16" />
       </div>
     </>
@@ -79,6 +83,9 @@ async function OnboardedGate({ locale, children }: { locale: Locale; children: R
   await requireWorkspace(locale);
   return (
     <>
+      <Suspense fallback={null}>
+        <AppearanceSync />
+      </Suspense>
       <SideNav locale={locale} />
       <div className={contentClass}>
         <main id={MAIN_ID} tabIndex={-1} className={mainClass}>

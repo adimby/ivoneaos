@@ -73,7 +73,7 @@ export default async function DealPage({ params }: Props) {
         )}
 
         {contact && contactArchived && !deal.archived_at && (
-          <div role="status" className="flex flex-col items-start gap-1 rounded-xl bg-lagoon px-4 py-3 text-sm text-white on-dark">
+          <div role="status" className="flex flex-col items-start gap-1 rounded-xl bg-chrome px-4 py-3 text-sm text-on-chrome on-dark">
             <span className="font-medium">{t("contactArchived", { name: contact.name })}</span>
             <Link href={`/contacts/${contact.id}`} className="inline-flex min-h-11 items-center font-semibold underline underline-offset-4">
               {t("openContact")}
@@ -106,7 +106,7 @@ export default async function DealPage({ params }: Props) {
           <div className="flex items-center gap-2">
             <Link
               href={`/contacts/${contact.id}`}
-              className="flex min-h-12 min-w-0 flex-1 flex-col justify-center rounded-xl border border-sand/70 bg-white px-3 hover:border-lagoon"
+              className="flex min-h-12 min-w-0 flex-1 flex-col justify-center rounded-xl border border-sand/70 bg-surface px-3 hover:border-lagoon"
             >
               <span className="text-xs text-ink-muted">{t("contact.label")}</span>
               <span className="truncate text-base font-semibold text-lagoon">{contact.name}</span>
@@ -145,7 +145,7 @@ export default async function DealPage({ params }: Props) {
                     {isCurrent ? (
                       <span
                         aria-current="step"
-                        className="flex min-h-11 flex-1 items-center justify-center rounded-xl border-2 border-lagoon bg-lagoon px-3 text-base font-semibold text-white"
+                        className="flex min-h-11 flex-1 items-center justify-center rounded-xl border-2 border-lagoon bg-lagoon px-3 text-base font-semibold text-on-lagoon"
                       >
                         {label(stage.name)}
                       </span>

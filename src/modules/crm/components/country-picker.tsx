@@ -259,7 +259,7 @@ function CountryCombobox({
         role="listbox"
         aria-label={t("label")}
         hidden={!open || entries.length === 0}
-        className="max-h-72 overflow-y-auto overscroll-contain rounded-xl border border-sand-strong bg-white py-1"
+        className="max-h-72 overflow-y-auto overscroll-contain rounded-xl border border-sand-strong bg-surface py-1"
         // Garde le focus dans le champ (clavier ouvert, saisie possible).
         onMouseDown={(event) => event.preventDefault()}
       >

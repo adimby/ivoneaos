@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 import { routing } from "@/i18n/routing";
+import { APPEARANCE_SCRIPT } from "@/modules/appearance/preference";
 import "../globals.css";
 
 export function generateStaticParams() {
@@ -21,6 +22,7 @@ export async function generateMetadata({
 }
 
 // viewport-fit=cover : l'en-tête et la barre d'onglets gèrent les zones sûres (encoche).
+// themeColor : Océan clair ; le script d'apparence la remplace par celle de la palette.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -42,8 +44,16 @@ export default async function LocaleLayout({
   // catalogue par leur propre provider ; la page publique /p/[token] n'en reçoit rien.
   const { Errors } = await getMessages({ locale });
 
+  // Apparence (Réglages > Apparence) : posée sur <html> avant la première peinture par un
+  // script qui lit le cookie ivn_apparence (src/modules/appearance/preference.ts). Lire le
+  // cookie ici, côté serveur, rendrait toute l'application dynamique (plus de coquille
+  // statique, Cache Components) ; le script garde les pages rapides sans éclair de thème.
+  // suppressHydrationWarning : React garde les attributs posés par le script.
   return (
-    <html lang={locale} className="h-full antialiased">
+    <html lang={locale} className="h-full antialiased" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: APPEARANCE_SCRIPT }} />
+      </head>
       <body className="flex min-h-full flex-col bg-spray text-ink">
         <NextIntlClientProvider messages={{ Errors }}>{children}</NextIntlClientProvider>
       </body>

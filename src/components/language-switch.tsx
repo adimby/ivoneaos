@@ -31,10 +31,10 @@ export function LanguageSwitch({
                   "inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg px-3 text-sm font-semibold",
                   tone === "dark"
                     ? active
-                      ? "bg-white/15 text-white"
-                      : "text-sand hover:text-white"
+                      ? "bg-on-chrome/15 text-on-chrome"
+                      : "text-on-chrome-muted hover:text-on-chrome"
                     : active
-                      ? "bg-lagoon text-white"
+                      ? "bg-lagoon text-on-lagoon"
                       : "text-lagoon hover:bg-sand-light",
                 )}
               >

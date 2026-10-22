@@ -54,6 +54,8 @@ test("Accessibilité des écrans principaux (fr) et de la page publique", async 
     "/fr/reglages",
     "/fr/reglages/paiements",
     "/fr/reglages/offre",
+    "/fr/reglages/apparence",
+    "/fr/reglages/image-de-marque",
     "/fr/plus",
     `/fr/p/${public_token}`,
   ]) {

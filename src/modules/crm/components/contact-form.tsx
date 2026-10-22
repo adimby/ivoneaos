@@ -116,7 +116,7 @@ export function ContactForm({
               {CONTACT_KINDS.map((kind) => (
                 <label
                   key={kind}
-                  className="flex min-h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-sand-strong bg-white px-3 text-base font-semibold has-checked:border-lagoon has-checked:bg-lagoon has-checked:text-white has-focus-visible:outline-3 has-focus-visible:outline-lagoon"
+                  className="flex min-h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-sand-strong bg-surface px-3 text-base font-semibold has-checked:border-lagoon has-checked:bg-lagoon has-checked:text-on-lagoon has-focus-visible:outline-3 has-focus-visible:outline-lagoon"
                 >
                   <input type="radio" name="kind" value={kind} defaultChecked={defaults.kind === kind} className="sr-only" />
                   {t(`kind.${kind}`)}

@@ -25,7 +25,7 @@ export function DealCard({
     <Link
       href={`/pipeline/${deal.id}`}
       data-testid="deal-card"
-      className="flex min-h-16 items-center gap-3 rounded-xl border border-sand/70 bg-white p-3 hover:border-lagoon"
+      className="flex min-h-16 items-center gap-3 rounded-xl border border-sand/70 bg-surface p-3 hover:border-lagoon"
     >
       <span className="flex min-w-0 flex-1 flex-col">
         <span className={cn("truncate text-base font-semibold text-ink", column && "lg:line-clamp-2 lg:whitespace-normal lg:break-words")}>

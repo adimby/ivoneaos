@@ -44,7 +44,7 @@ export async function ReminderList({
         const href = reminder.deal_id ? `/pipeline/${reminder.deal_id}` : reminder.contact_id ? `/contacts/${reminder.contact_id}` : null;
 
         return (
-          <li key={reminder.id} data-testid="reminder" className="flex flex-col gap-3 rounded-xl border border-sand/70 bg-white p-3">
+          <li key={reminder.id} data-testid="reminder" className="flex flex-col gap-3 rounded-xl border border-sand/70 bg-surface p-3">
             <div className="flex flex-col gap-1">
               <p className="text-base font-semibold text-ink">{reminder.title}</p>
               <p className="flex flex-wrap items-center gap-2 text-sm text-ink-muted">
