@@ -53,14 +53,17 @@ test("Anglais : inscription, accueil guidé et écrans principaux", async ({ pag
   await page.getByLabel(en.Onboarding.experience.label).selectOption("gt3");
   await page.getByLabel(en.Onboarding.clients.label).fill("3");
   await page.getByLabel(en.Onboarding.incomeGoal.label).fill("3000000");
+  await expect(page.getByTestId("level-preview")).toContainText(en.Levels.remplir.name);
   await page.getByRole("button", { name: en.Onboarding.next }).click();
   await expectEnglish(page, en.Onboarding.step2.title);
   await page.getByLabel(en.Profile.businessName.label).fill(business);
-  await page.getByLabel(en.Profile.address.label, { exact: true }).fill("Lot II A 12, Antananarivo");
-  // NIF, STAT et régime fiscal : demandés avant la première facture, pas ici.
-  await expect(page.getByTestId("fiscal-later")).toHaveText(en.Onboarding.step2.fiscalLater);
-  await expect(page.getByLabel(en.Profile.nif.label)).toHaveCount(0);
-  await page.getByRole("button", { name: en.Onboarding.submit }).click();
+  await page.getByRole("textbox", { name: `${en.Profile.address.label} (${en.Onboarding.required})` }).fill("Lot II A 12, Antananarivo");
+  await expect(page.getByRole("heading", { name: en.Onboarding.step2.brandTitle })).toBeVisible();
+  await page.getByRole("button", { name: en.Onboarding.next }).click();
+  await expectEnglish(page, en.Onboarding.step3.title);
+  await expect(page.getByTestId("onboarding-fiscal-limit")).toHaveText(en.Onboarding.step3.limit);
+  await expect(page.getByText(en.Onboarding.stepOf.replace("{current}", "3").replace("{total}", "3")).filter({ visible: true })).toBeVisible();
+  await page.getByRole("button", { name: en.Onboarding.step3.later }).click();
 
   await expect(page).toHaveURL(/\/en\/tableau-de-bord$/);
   await expectEnglish(page, business);

@@ -52,15 +52,61 @@
   },
   "Onboarding": {
     "metaTitle": "Welcome",
-    "progress": "Step {current} of {total}",
+    "stepsLabel": "Getting started steps",
+    "stepOf": "Step {current} / {total}",
+    "stepLabel": "Step {n}",
+    "stepDone": "done",
+    "steps": {
+      "activity": "Your business",
+      "profile": "Your profile and brand",
+      "admin": "Paperwork"
+    },
+    "required": "required",
+    "requiredLegend": "Required fields",
+    "previous": "Previous",
+    "next": "Next",
+    "promise": {
+      "label": "What Ivonea OS gives you",
+      "badge": "New workspace",
+      "title": "Your freelance business, well in hand.",
+      "intro": "Clients, quotes, invoices and payments in one place, designed for your phone first.",
+      "benefits": {
+        "clients": {
+          "title": "Clients well followed up",
+          "text": "Prospects, conversations and reminders, nothing forgotten."
+        },
+        "documents": {
+          "title": "Quotes that look like you",
+          "text": "Your logo and colours, sent as a link."
+        },
+        "payments": {
+          "title": "Paid faster",
+          "text": "MVola, Orange Money and Airtel Money, through Papi."
+        }
+      }
+    },
     "step1": {
-      "title": "Let's get to know you",
+      "title": "Your business",
       "intro": "4 questions to fit Ivonea OS to your business."
     },
     "step2": {
-      "title": "Your business profile",
+      "title": "Your profile and brand",
       "intro": "This information appears on your quotes and invoices.",
-      "fiscalLater": "NIF, STAT and tax regime? Not now: we'll ask for them before your first invoice."
+      "brandTitle": "Your brand",
+      "brandIntro": "Colours and font of your quotes and invoices. You can change everything later in Settings.",
+      "previewName": "Your business name"
+    },
+    "step3": {
+      "title": "Paperwork",
+      "intro": "Your NIF, your STAT and your tax card, to invoice by the rules.",
+      "limit": "You can send up to 3 invoices before your card is verified.",
+      "cardTitle": "Your tax card",
+      "cardHint": "Upload the front and the back: we check your NIF and STAT automatically, then the photos are deleted. Not at hand? You can do it later in Settings.",
+      "finish": "Finish",
+      "later": "Later",
+      "verified": "Your tax card is verified: you can send all your invoices.",
+      "pending": "Your tax card is being verified. You will get an email as soon as it is done; meanwhile you can send up to 3 invoices.",
+      "goToApp": "Go to my workspace"
     },
     "trade": {
       "label": "Your trade",
@@ -81,9 +127,7 @@
       "hint": "In ariary, for example 1,500,000."
     },
     "levelIntro": "Your starting point",
-    "next": "Continue",
-    "submit": "Finish",
-    "fixErrors": "Fix the highlighted fields to continue."
+    "levelPending": "Enter your number of clients to see your starting point."
   },
   "Levels": {
     "lancer": {
@@ -1247,9 +1291,13 @@
   },
   "FileDrop": {
     "browse": "Browse",
+    "choose": "Choose a file",
+    "chooseOrDrop": "Choose or drop a file",
+    "current": "Current image",
+    "limits": "{formats} · {size} max",
+    "selected": "File selected.",
     "replace": "Replace",
     "remove": "Remove",
-    "dropHere": "Drop the file here, or",
     "uploading": "Uploading…",
     "uploaded": "Photo uploaded.",
     "size": "{size} MB",

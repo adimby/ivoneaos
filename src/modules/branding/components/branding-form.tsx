@@ -33,7 +33,7 @@ import {
   type LogoSize,
 } from "../brand";
 
-const option =
+export const option =
   "flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border-2 border-sand-strong bg-surface px-3 py-2 " +
   "has-checked:border-lagoon has-checked:ring-2 has-checked:ring-lagoon " +
   "has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-lagoon";
@@ -355,7 +355,7 @@ function RadioRow<T extends string>({
   );
 }
 
-function ColorField({
+export function ColorField({
   id,
   label,
   hint,

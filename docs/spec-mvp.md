@@ -22,20 +22,35 @@ Principes :
 
 ### P1. S'inscrire et démarrer (Lancer)
 1. Inscription par e-mail avec code à usage unique (OTP Supabase). Choix de la langue fr/en.
-2. Diagnostic en 4 questions : métier, ancienneté, nombre de clients actuels, objectif de revenu mensuel en ariary.
-3. Le diagnostic place le freelance au niveau « Lancer » (0 client) ou « Remplir son agenda » (déjà des clients) et affiche une liste de démarrage adaptée.
-4. Profil pro : nom commercial, métier, logo, adresse, devise par défaut. Enregistré, il ouvre l'application
-   (`workspaces.onboarded_at`, posé par la base). **NIF, STAT et régime fiscal (TVA ou impôt synthétique) ne sont pas
-   demandés ici** (une ligne le dit) : ils le sont **avant la première facture**, par un bloc « Avant ta première
-   facture » affiché là où la facture se prépare (nouvelle facture, devis accepté à transformer, brouillon à envoyer).
-   Ses trois champs (NIF 10 chiffres, STAT 17 chiffres, régime) s'enregistrent dans le profil sans perdre le brouillon,
-   puis l'envoi redevient possible. La base refuse toujours d'émettre une facture sans eux. Les devis ne les exigent pas.
-   Dans Réglages, ils restent facultatifs tant qu'ils ne sont pas tous remplis, avec une aide qui dit qu'ils sont
-   nécessaires pour facturer ; une fois complets, ils se corrigent mais ne s'effacent plus (règle en base, comme les
-   formats : NIF 10 chiffres, STAT 17 chiffres). Les 3 premières factures partent sans contrôle de la carte fiscale ;
-   la 4e attend qu'elle soit vérifiée (voir « Vérification fiscale »).
-5. Arrivée sur le tableau de bord avec la liste de démarrage : ajouter un premier contact, connecter Papi, créer un premier
-   devis, compléter ses infos fiscales.
+2. Démarrage en 3 étapes (`/demarrage`), chacune son formulaire POST, enregistrée dès « Suivant » : un rechargement ou
+   une nouvelle connexion reprend à la bonne étape, et revenir en arrière (« Précédent ») garde les réponses. Indicateur
+   d'étapes (« Étape 2 / 3 » et une barre sur téléphone ; les trois étapes avec icône, nom et coche sur tablette et
+   ordinateur), titre de l'étape focalisé à chaque changement, astérisque sur les champs obligatoires. Ordinateur : deux
+   panneaux, la promesse d'Ivonea OS à gauche (trois bénéfices), le formulaire à droite.
+3. **Ton activité** : diagnostic en 4 questions (métier, ancienneté, nombre de clients actuels, objectif de revenu
+   mensuel en ariary) et aperçu du niveau « Lancer » (0 client) ou « Remplir son agenda » (déjà des clients), qui
+   adapte la liste de démarrage. L'étape crée le workspace (nom provisoire : le métier) et enregistre les réponses
+   (`onboarding_answers`).
+4. **Ton profil et ta marque** : nom commercial, métier, adresse, devise par défaut, logo (dépôt de fichier, 1 Mo) et
+   image de marque essentielle (associations prêtes, couleur principale et d'accent, police ; mêmes règles et contrôles
+   de contraste que Réglages > Image de marque) avec l'aperçu d'un devis qui suit les choix. Enregistrée, elle ouvre
+   l'application (`workspaces.onboarded_at`, posé par la base) : si la personne s'arrête là, l'application est ouverte.
+   Les coordonnées de paiement direct (MVola, RIB) se règlent ensuite dans Réglages.
+5. **Administratif** : NIF (10 chiffres), STAT (17 chiffres), régime fiscal (TVA ou impôt synthétique) et photos recto /
+   verso de la carte fiscale, avec le même service que Réglages (dépôt direct, lecture automatique, états ; voir
+   « Vérification fiscale »). Une phrase explique le plafond : « Tu peux envoyer jusqu'à 3 factures avant que ta carte
+   soit vérifiée ». Les photos sont facultatives à cette étape (« Terminer » sans photo enregistre les numéros). Ces
+   infos **ne bloquent pas le démarrage** : « Plus tard » mène au tableau de bord. La fin du démarrage (« Terminer » ou
+   « Plus tard ») est notée dans `onboarding_answers.completed_at`.
+   Si elles manquent, NIF, STAT et régime fiscal sont demandés **avant la première facture**, par un bloc « Avant ta
+   première facture » affiché là où la facture se prépare (nouvelle facture, devis accepté à transformer, brouillon à
+   envoyer). Ses trois champs s'enregistrent dans le profil sans perdre le brouillon, puis l'envoi redevient possible. La
+   base refuse toujours d'émettre une facture sans eux. Les devis ne les exigent pas. Dans Réglages, ils restent
+   facultatifs tant qu'ils ne sont pas tous remplis, avec une aide qui dit qu'ils sont nécessaires pour facturer ; une
+   fois complets, ils se corrigent mais ne s'effacent plus (règle en base, comme les formats). Les 3 premières factures
+   partent sans contrôle de la carte fiscale ; la 4e attend qu'elle soit vérifiée (voir « Vérification fiscale »).
+6. Arrivée sur le tableau de bord (ou sur la page demandée avant la connexion) avec la liste de démarrage : ajouter un
+   premier contact, connecter Papi, créer un premier devis, compléter ses infos fiscales.
 
 ### P2. Connecter son compte Papi
 1. Depuis la liste de démarrage ou les réglages : « Moyens de paiement ».
@@ -231,7 +246,7 @@ Le freelance prouve son NIF et son STAT par une photo de sa carte fiscale ; on n
   `verified` (avec `fiscal_status_at`), `rejected` (avec `fiscal_rejection_reason`). Colonnes non modifiables par le
   freelance (droits par colonne). Un changement de NIF ou de STAT remet l'état à `unverified` (trigger) et annule une
   demande en cours. `fiscal_verifications` garde la trace des décisions, sans les photos.
-- Dépôt (Réglages ; sur une facture brouillon dont l'envoi est bloqué par le plafond, avec le bouton du bas qui y
+- Dépôt (Réglages ; étape « Administratif » du démarrage ; sur une facture brouillon dont l'envoi est bloqué par le plafond, avec le bouton du bas qui y
   mène ; ailleurs sur les écrans de facture, seulement le compteur et un lien vers Réglages) : recto et verso, JPG, PNG
   ou WEBP, 10 Mo chacun, envoyés directement du navigateur dans le bucket privé `fiscal-documents/{workspace_id}/`.
   Une photo de plus de 2000 px de côté est d'abord réduite dans le navigateur (`createImageBitmap` puis canvas, JPEG

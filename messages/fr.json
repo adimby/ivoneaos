@@ -52,15 +52,61 @@
   },
   "Onboarding": {
     "metaTitle": "Bienvenue",
-    "progress": "Étape {current} sur {total}",
+    "stepsLabel": "Étapes du démarrage",
+    "stepOf": "Étape {current} / {total}",
+    "stepLabel": "Étape {n}",
+    "stepDone": "terminée",
+    "steps": {
+      "activity": "Ton activité",
+      "profile": "Ton profil et ta marque",
+      "admin": "Administratif"
+    },
+    "required": "obligatoire",
+    "requiredLegend": "Champs obligatoires",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "promise": {
+      "label": "Ce qu'Ivonea OS t'apporte",
+      "badge": "Nouvel espace",
+      "title": "Ton activité freelance, bien en main.",
+      "intro": "Clients, devis, factures et paiements au même endroit, pensé d'abord pour ton téléphone.",
+      "benefits": {
+        "clients": {
+          "title": "Tes clients bien suivis",
+          "text": "Prospects, échanges et rappels, sans rien oublier."
+        },
+        "documents": {
+          "title": "Des devis à ton image",
+          "text": "Ton logo et tes couleurs, envoyés en un lien."
+        },
+        "payments": {
+          "title": "Payé plus vite",
+          "text": "MVola, Orange Money et Airtel Money, grâce à Papi."
+        }
+      }
+    },
     "step1": {
-      "title": "Faisons connaissance",
+      "title": "Ton activité",
       "intro": "4 questions pour adapter Ivonea OS à ton activité."
     },
     "step2": {
-      "title": "Ton profil pro",
+      "title": "Ton profil et ta marque",
       "intro": "Ces informations figurent sur tes devis et factures.",
-      "fiscalLater": "NIF, STAT et régime fiscal ? Pas maintenant : on te les demandera avant ta première facture."
+      "brandTitle": "Ton image de marque",
+      "brandIntro": "Couleurs et police de tes devis et factures. Tu pourras tout changer plus tard dans Réglages.",
+      "previewName": "Ton nom commercial"
+    },
+    "step3": {
+      "title": "Administratif",
+      "intro": "Ton NIF, ton STAT et ta carte fiscale, pour facturer en règle.",
+      "limit": "Tu peux envoyer jusqu'à 3 factures avant que ta carte soit vérifiée.",
+      "cardTitle": "Ta carte fiscale",
+      "cardHint": "Dépose le recto et le verso : on vérifie ton NIF et ton STAT automatiquement, puis les photos sont supprimées. Pas sous la main ? Tu pourras le faire plus tard dans Réglages.",
+      "finish": "Terminer",
+      "later": "Plus tard",
+      "verified": "Ta carte fiscale est vérifiée : tu peux envoyer toutes tes factures.",
+      "pending": "Ta carte fiscale est en cours de vérification. Tu recevras un e-mail dès que c'est fait ; en attendant, tu peux envoyer jusqu'à 3 factures.",
+      "goToApp": "Accéder à mon espace"
     },
     "trade": {
       "label": "Ton métier",
@@ -81,9 +127,7 @@
       "hint": "En ariary, par exemple 1 500 000."
     },
     "levelIntro": "Ton point de départ",
-    "next": "Continuer",
-    "submit": "Terminer",
-    "fixErrors": "Corrige les champs signalés pour continuer."
+    "levelPending": "Indique ton nombre de clients pour voir ton point de départ."
   },
   "Levels": {
     "lancer": {
@@ -1247,9 +1291,13 @@
   },
   "FileDrop": {
     "browse": "Parcourir",
+    "choose": "Choisir un fichier",
+    "chooseOrDrop": "Choisis ou dépose un fichier",
+    "current": "Image actuelle",
+    "limits": "{formats} · {size} max",
+    "selected": "Fichier choisi.",
     "replace": "Remplacer",
     "remove": "Retirer",
-    "dropHere": "Dépose le fichier ici, ou",
     "uploading": "Envoi en cours…",
     "uploaded": "Photo envoyée.",
     "size": "{size} Mo",
