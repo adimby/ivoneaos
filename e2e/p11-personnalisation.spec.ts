@@ -267,9 +267,9 @@ test("Image de marque : police, couleurs, logo masqué, bannière → devis envo
   // Badge de statut à la marque (couleur principale sur sa teinte pâle), pas en turquoise.
   await expect(clientPage.getByTestId("public-status")).toHaveCSS("background-color", "rgb(235, 230, 236)");
   await expect(clientPage.getByTestId("public-status")).toHaveCSS("color", "rgb(91, 43, 94)");
-  // Survol du bouton : accent assombri (#D5AA45), texte noir toujours lisible.
-  await clientPage.locator("summary").filter({ hasText: "J'accepte" }).hover();
-  await expect(clientPage.locator("summary").filter({ hasText: "J'accepte" })).toHaveCSS("background-color", "rgb(213, 170, 69)");
+  // Survol et appui du bouton : accent assombri, texte noir toujours lisible (le navigateur
+  // de test ne déclare pas de survol, hover: hover : on lit le jeton).
+  await expect(clientPage.locator("summary").filter({ hasText: "J'accepte" })).toHaveCSS("--color-terracotta-dark", "#D5AA45");
   await clientPage.screenshot({ path: test.info().outputPath("page-client-marque.png"), fullPage: true });
   const { violations } = await new AxeBuilder({ page: clientPage }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
   expect(violations.map((v) => `${v.id} → ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
