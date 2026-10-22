@@ -677,6 +677,16 @@
     "currentStage": "Étape : {stage}",
     "nextStage": "Étape suivante : {stage}",
     "chooseStage": "Changer d'étape",
+    "drag": {
+      "instructions": "Glisse une carte vers une autre étape pour la déplacer. Au clavier, ouvre l'opportunité et choisis « Étape suivante » ou une autre étape.",
+      "start": "Carte {title} prise.",
+      "over": "Au-dessus de l'étape {stage}.",
+      "outside": "Hors des étapes.",
+      "unchanged": "Carte {title} reposée, rien n'a changé.",
+      "moved": "Carte {title} déplacée vers {stage}.",
+      "error": "La carte {title} n'a pas pu être déplacée (connexion coupée ou refus du serveur). Elle est restée dans {stage}. Réessaie.",
+      "unavailable": "La carte {title} n'a pas été déplacée : cette opportunité a été archivée ou n'est plus disponible."
+    },
     "moveTo": "Passer à l'étape {stage}",
     "confirm": {
       "won": {

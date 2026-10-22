@@ -191,8 +191,12 @@ test("Démarrage : carte à vérifier à la main → « en cours de vérificatio
   // Carte envoyée entre-temps depuis un autre onglet : « déjà en cours », la page se met à
   // jour et montre le résultat.
   const photos = await cardPhotos(page, NIF, STAT);
-  await page.locator("#fiscal-front").setInputFiles({ name: "recto.png", mimeType: "image/png", buffer: photos.front });
-  await expect(page.getByTestId("file-drop-fiscal-front")).toHaveAttribute("data-status", "done");
+  // Juste après le rechargement, la page peut ne pas être hydratée : un fichier choisi avant
+  // serait ignoré. On recommence le choix jusqu'à ce que le dépôt le prenne.
+  await expect(async () => {
+    await page.locator("#fiscal-front").setInputFiles({ name: "recto.png", mimeType: "image/png", buffer: photos.front });
+    await expect(page.getByTestId("file-drop-fiscal-front")).toHaveAttribute("data-status", "done", { timeout: 2_000 });
+  }).toPass();
   await page.locator("#fiscal-back").setInputFiles({ name: "verso.png", mimeType: "image/png", buffer: photos.back });
   await expect(page.getByTestId("file-drop-fiscal-back")).toHaveAttribute("data-status", "done");
   expect((await patch({ fiscal_status: "pending", fiscal_rejection_reason: null })).ok).toBe(true);

@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 import { productionEnvErrors } from "./src/lib/production-env";
 
-// Production (Vercel) : réglages obligatoires (adresse de contact, APP_URL) et aucune URL
+// Production (Vercel) : réglages obligatoires (adresse de contact, APP_URL, secrets) et aucune URL
 // de service simulé. La construction échoue avec la liste des problèmes.
 if (process.env.VERCEL_ENV === "production") {
   const errors = productionEnvErrors(process.env);
