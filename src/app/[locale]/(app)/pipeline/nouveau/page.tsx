@@ -37,7 +37,7 @@ export default async function NewDealPage({ params, searchParams }: Props) {
   const backHref = fromContact ? `/contacts/${fromContact.id}` : "/pipeline";
 
   return (
-    <div className="flex flex-1 flex-col gap-5">
+    <div className="flex flex-1 flex-col gap-5 md:max-w-2xl">
       <Link href={backHref} className="inline-flex min-h-11 items-center self-start text-base font-semibold text-lagoon">
         ← {fromContact ? fromContact.name : t("backToPipeline")}
       </Link>

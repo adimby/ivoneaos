@@ -39,6 +39,8 @@ const EMPTY_LINE: LineDraft = { description: "", quantity: "1", unitPrice: "" };
 // Devis ou facture : client, devise, langue, lignes (ajout et retrait en un geste),
 // remise, validité ou échéance, taux de change (facture dans une autre devise que la
 // devise principale). Total recalculé à chaque saisie, comme la base le calculera.
+// Ordinateur : champs à gauche, totaux et bouton dans un encadré collé à droite.
+// L'encadré est plus étroit entre lg et xl pour laisser de la place aux champs.
 export function DocumentForm({
   kind,
   defaults,
@@ -125,7 +127,7 @@ export function DocumentForm({
       ref={formRef}
       action={formAction}
       noValidate
-      className="flex flex-1 flex-col gap-5"
+      className="flex flex-1 flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1fr)_17rem] lg:content-start lg:items-start lg:gap-x-8 xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-x-10"
       onSubmit={(event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
@@ -137,197 +139,205 @@ export function DocumentForm({
       {defaults.id && <input type="hidden" name="id" value={defaults.id} />}
       {defaults.deal_id && <input type="hidden" name="deal_id" value={defaults.deal_id} />}
 
-      {sentWarning && (
-        <p role="note" className="rounded-xl bg-turquoise-soft px-4 py-3 text-sm font-medium text-ink">
-          {t("sentWarning")}
-        </p>
-      )}
+      <div className="flex flex-col gap-5">
+        {sentWarning && (
+          <p role="note" className="rounded-xl bg-turquoise-soft px-4 py-3 text-sm font-medium text-ink">
+            {t("sentWarning")}
+          </p>
+        )}
 
-      {fixedContact ? (
-        <Field id="contact_id" label={t("client.label")} hint={fixedContact.hint}>
-          {(c) => (
-            <>
-              <input type="hidden" name="contact_id" value={defaults.contact_id} />
-              <Input {...c} value={fixedContact.label} readOnly />
-            </>
-          )}
-        </Field>
-      ) : (
-        <Field
-          id="contact_id"
-          label={t("client.label")}
-          hint={
-            contactsTotal !== undefined && contactsTotal > contacts.length
-              ? t("client.truncated", { shown: contacts.length, total: contactsTotal })
-              : undefined
-          }
-          error={error("contact_id")}
-        >
-          {(c) => (
-            <Select {...c} name="contact_id" defaultValue={defaults.contact_id} required>
-              <option value="" disabled>
-                {tAll("Profile.choose")}
-              </option>
-              {contacts.map((contact) => (
-                <option key={contact.id} value={contact.id}>
-                  {contact.label}
+        {fixedContact ? (
+          <Field id="contact_id" label={t("client.label")} hint={fixedContact.hint}>
+            {(c) => (
+              <>
+                <input type="hidden" name="contact_id" value={defaults.contact_id} />
+                <Input {...c} value={fixedContact.label} readOnly />
+              </>
+            )}
+          </Field>
+        ) : (
+          <Field
+            id="contact_id"
+            label={t("client.label")}
+            hint={
+              contactsTotal !== undefined && contactsTotal > contacts.length
+                ? t("client.truncated", { shown: contacts.length, total: contactsTotal })
+                : undefined
+            }
+            error={error("contact_id")}
+          >
+            {(c) => (
+              <Select {...c} name="contact_id" defaultValue={defaults.contact_id} required>
+                <option value="" disabled>
+                  {tAll("Profile.choose")}
                 </option>
-              ))}
-            </Select>
-          )}
-        </Field>
-      )}
+                {contacts.map((contact) => (
+                  <option key={contact.id} value={contact.id}>
+                    {contact.label}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+        )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <Field id="currency" label={t("currency.label")} error={error("currency")}>
+        <div className="grid grid-cols-2 gap-3">
+          <Field id="currency" label={t("currency.label")} error={error("currency")}>
+            {(c) => (
+              <Select {...c} name="currency" value={currency} onChange={(e) => setCurrency(e.target.value as Currency)}>
+                {CURRENCIES.map((code) => (
+                  <option key={code} value={code}>
+                    {code} ({SYMBOL[code]})
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+          <Field id="language" label={t("language.label")}>
+            {(c) => (
+              <Select {...c} name="language" defaultValue={defaults.language}>
+                <option value="fr">{t("languages.fr")}</option>
+                <option value="en">{t("languages.en")}</option>
+              </Select>
+            )}
+          </Field>
+        </div>
+
+        <section aria-labelledby={linesTitleId} className="flex flex-col gap-3">
+          <h2 id={linesTitleId} className="text-lg font-bold text-lagoon">
+            {t("lines.title")}
+          </h2>
+          {errors.lines && <Alert tone="error">{tAll(`FormErrors.${errors.lines}`)}</Alert>}
+          <ol className="flex flex-col gap-3">
+            {lines.map((line, index) => {
+              const id = `line-${line.key}`;
+              const p = priced[index];
+              return (
+                <li key={line.key} data-testid="line" className="@container rounded-card border border-sand/70 bg-white p-3 shadow-card">
+                  {/* Description, quantité et prix sur une ligne quand la carte a la place
+                      (requête de conteneur, pas de largeur d'écran : sur un petit portable, la
+                      colonne des champs est étroite à cause de l'encadré des totaux). */}
+                  <fieldset
+                    aria-labelledby={`${id}-title`}
+                    className="flex flex-col gap-3 @lg:grid @lg:grid-cols-[minmax(0,1fr)_5.5rem_10rem] @lg:items-start"
+                  >
+                    <div className="flex items-center justify-between gap-2 @lg:col-span-3">
+                      <span id={`${id}-title`} className="text-sm font-bold text-lagoon">
+                        {t("lines.line", { n: index + 1 })}
+                      </span>
+                      {lines.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeLine(line.key)}
+                          aria-label={t("lines.remove", { n: index + 1 })}
+                          className="-my-1 -mr-1 inline-flex size-11 items-center justify-center rounded-xl text-ink-muted hover:bg-sand-light hover:text-danger"
+                        >
+                          <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                            <path d="M6 6l12 12M18 6 6 18" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                    <Field id={`${id}-description`} label={t("lines.description")} error={error(`line_${index}_description`)}>
+                      {(c) => (
+                        <Input
+                          {...c}
+                          name="line_description"
+                          value={line.description}
+                          onChange={(e) => update(line.key, { description: e.target.value })}
+                          placeholder={t("lines.descriptionHint")}
+                          maxLength={2000}
+                          autoComplete="off"
+                        />
+                      )}
+                    </Field>
+                    <div className="grid grid-cols-[5.5rem_1fr] gap-3 @lg:contents">
+                      <Field id={`${id}-quantity`} label={t("lines.quantity")} error={error(`line_${index}_quantity`)}>
+                        {(c) => (
+                          <Input
+                            {...c}
+                            name="line_quantity"
+                            inputMode="decimal"
+                            autoComplete="off"
+                            value={line.quantity}
+                            onChange={(e) => update(line.key, { quantity: e.target.value })}
+                            maxLength={12}
+                          />
+                        )}
+                      </Field>
+                      <Field id={`${id}-price`} label={`${t("lines.unitPrice")} (${SYMBOL[currency]})`} error={error(`line_${index}_unit_price`)}>
+                        {(c) => (
+                          <Input
+                            {...c}
+                            name="line_unit_price"
+                            inputMode="decimal"
+                            autoComplete="off"
+                            value={line.unitPrice}
+                            onChange={(e) => update(line.key, { unitPrice: e.target.value })}
+                            maxLength={24}
+                          />
+                        )}
+                      </Field>
+                    </div>
+                    <p className="flex justify-between text-sm text-ink-muted @lg:col-span-3">
+                      <span>{t("lines.lineTotal")}</span>
+                      <output htmlFor={`${id}-quantity ${id}-price`} className="font-semibold text-ink">
+                        {p ? money(lineTotal(p.quantity, p.unit_price)) : "—"}
+                      </output>
+                    </p>
+                  </fieldset>
+                </li>
+              );
+            })}
+          </ol>
+          {lines.length < MAX_LINES && (
+            <Button variant="secondary" block onClick={addLine} disabled={!hydrated}>
+              <PlusIcon className="size-5" />
+              {t("lines.add")}
+            </Button>
+          )}
+        </section>
+
+        <Field id="discount" label={`${t("discount.label")} (${SYMBOL[currency]})`} hint={t("discount.hint")} error={error("discount")}>
           {(c) => (
-            <Select {...c} name="currency" value={currency} onChange={(e) => setCurrency(e.target.value as Currency)}>
-              {CURRENCIES.map((code) => (
-                <option key={code} value={code}>
-                  {code} ({SYMBOL[code]})
-                </option>
-              ))}
-            </Select>
+            <Input {...c} name="discount" inputMode="decimal" autoComplete="off" value={discount} onChange={(e) => setDiscount(e.target.value)} maxLength={24} />
           )}
         </Field>
-        <Field id="language" label={t("language.label")}>
-          {(c) => (
-            <Select {...c} name="language" defaultValue={defaults.language}>
-              <option value="fr">{t("languages.fr")}</option>
-              <option value="en">{t("languages.en")}</option>
-            </Select>
-          )}
-        </Field>
+
+        {kind === "quote" ? (
+          <Field id="valid_until" label={t("validUntil.label")} hint={t("validUntil.hint")} error={error("valid_until")}>
+            {(c) => <Input {...c} name="valid_until" type="date" min={minDate} defaultValue={defaults.date} required />}
+          </Field>
+        ) : (
+          <Field id="due_on" label={t("dueOn.label")} error={error("due_on")}>
+            {(c) => <Input {...c} name="due_on" type="date" min={minDate} defaultValue={defaults.date} required />}
+          </Field>
+        )}
+
+        {needsRate && (
+          <Field
+            id="exchange_rate"
+            label={t("rate.label", { default: defaultCurrency })}
+            hint={
+              <>
+                {t("rate.hint", { currency, default: defaultCurrency })}
+                {converted !== null && <> {t("rate.converted", { amount: formatMoney(converted, defaultCurrency, locale) })}</>}
+              </>
+            }
+            error={error("exchange_rate")}
+          >
+            {(c) => (
+              <div className="flex items-center gap-2">
+                <span className="shrink-0 text-base font-semibold text-ink">1 {SYMBOL[currency]} =</span>
+                <Input {...c} name="exchange_rate" inputMode="decimal" autoComplete="off" value={rate} onChange={(e) => setRate(e.target.value)} maxLength={20} />
+                <span className="shrink-0 text-base font-semibold text-ink">{SYMBOL[defaultCurrency]}</span>
+              </div>
+            )}
+          </Field>
+        )}
       </div>
 
-      <section aria-labelledby={linesTitleId} className="flex flex-col gap-3">
-        <h2 id={linesTitleId} className="text-lg font-bold text-lagoon">
-          {t("lines.title")}
-        </h2>
-        {errors.lines && <Alert tone="error">{tAll(`FormErrors.${errors.lines}`)}</Alert>}
-        <ol className="flex flex-col gap-3">
-          {lines.map((line, index) => {
-            const id = `line-${line.key}`;
-            const p = priced[index];
-            return (
-              <li key={line.key} data-testid="line" className="rounded-card border border-sand/70 bg-white p-3 shadow-card">
-                <fieldset aria-labelledby={`${id}-title`} className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span id={`${id}-title`} className="text-sm font-bold text-lagoon">
-                      {t("lines.line", { n: index + 1 })}
-                    </span>
-                    {lines.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeLine(line.key)}
-                        aria-label={t("lines.remove", { n: index + 1 })}
-                        className="-my-1 -mr-1 inline-flex size-11 items-center justify-center rounded-xl text-ink-muted hover:bg-sand-light hover:text-danger"
-                      >
-                        <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                          <path d="M6 6l12 12M18 6 6 18" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                  <Field id={`${id}-description`} label={t("lines.description")} error={error(`line_${index}_description`)}>
-                    {(c) => (
-                      <Input
-                        {...c}
-                        name="line_description"
-                        value={line.description}
-                        onChange={(e) => update(line.key, { description: e.target.value })}
-                        placeholder={t("lines.descriptionHint")}
-                        maxLength={2000}
-                        autoComplete="off"
-                      />
-                    )}
-                  </Field>
-                  <div className="grid grid-cols-[5.5rem_1fr] gap-3">
-                    <Field id={`${id}-quantity`} label={t("lines.quantity")} error={error(`line_${index}_quantity`)}>
-                      {(c) => (
-                        <Input
-                          {...c}
-                          name="line_quantity"
-                          inputMode="decimal"
-                          autoComplete="off"
-                          value={line.quantity}
-                          onChange={(e) => update(line.key, { quantity: e.target.value })}
-                          maxLength={12}
-                        />
-                      )}
-                    </Field>
-                    <Field id={`${id}-price`} label={`${t("lines.unitPrice")} (${SYMBOL[currency]})`} error={error(`line_${index}_unit_price`)}>
-                      {(c) => (
-                        <Input
-                          {...c}
-                          name="line_unit_price"
-                          inputMode="decimal"
-                          autoComplete="off"
-                          value={line.unitPrice}
-                          onChange={(e) => update(line.key, { unitPrice: e.target.value })}
-                          maxLength={24}
-                        />
-                      )}
-                    </Field>
-                  </div>
-                  <p className="flex justify-between text-sm text-ink-muted">
-                    <span>{t("lines.lineTotal")}</span>
-                    <output htmlFor={`${id}-quantity ${id}-price`} className="font-semibold text-ink">
-                      {p ? money(lineTotal(p.quantity, p.unit_price)) : "—"}
-                    </output>
-                  </p>
-                </fieldset>
-              </li>
-            );
-          })}
-        </ol>
-        {lines.length < MAX_LINES && (
-          <Button variant="secondary" block onClick={addLine} disabled={!hydrated}>
-            <PlusIcon className="size-5" />
-            {t("lines.add")}
-          </Button>
-        )}
-      </section>
-
-      <Field id="discount" label={`${t("discount.label")} (${SYMBOL[currency]})`} hint={t("discount.hint")} error={error("discount")}>
-        {(c) => (
-          <Input {...c} name="discount" inputMode="decimal" autoComplete="off" value={discount} onChange={(e) => setDiscount(e.target.value)} maxLength={24} />
-        )}
-      </Field>
-
-      {kind === "quote" ? (
-        <Field id="valid_until" label={t("validUntil.label")} hint={t("validUntil.hint")} error={error("valid_until")}>
-          {(c) => <Input {...c} name="valid_until" type="date" min={minDate} defaultValue={defaults.date} required />}
-        </Field>
-      ) : (
-        <Field id="due_on" label={t("dueOn.label")} error={error("due_on")}>
-          {(c) => <Input {...c} name="due_on" type="date" min={minDate} defaultValue={defaults.date} required />}
-        </Field>
-      )}
-
-      {needsRate && (
-        <Field
-          id="exchange_rate"
-          label={t("rate.label", { default: defaultCurrency })}
-          hint={
-            <>
-              {t("rate.hint", { currency, default: defaultCurrency })}
-              {converted !== null && <> {t("rate.converted", { amount: formatMoney(converted, defaultCurrency, locale) })}</>}
-            </>
-          }
-          error={error("exchange_rate")}
-        >
-          {(c) => (
-            <div className="flex items-center gap-2">
-              <span className="shrink-0 text-base font-semibold text-ink">1 {SYMBOL[currency]} =</span>
-              <Input {...c} name="exchange_rate" inputMode="decimal" autoComplete="off" value={rate} onChange={(e) => setRate(e.target.value)} maxLength={20} />
-              <span className="shrink-0 text-base font-semibold text-ink">{SYMBOL[defaultCurrency]}</span>
-            </div>
-          )}
-        </Field>
-      )}
-
-      <BottomBar>
+      <BottomBar layout="aside">
         <div aria-live="polite">
           {state.formError && !pending && <Alert tone="error">{formErrorMessage(tAll, state.formError)}</Alert>}
         </div>

@@ -8,7 +8,7 @@ import { cn } from "@/components/ui/cn";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { CURRENCIES, formatMoney } from "@/lib/money";
-import { DealCard } from "@/modules/crm/components/deal-card";
+import { breakableAmount, DealCard } from "@/modules/crm/components/deal-card";
 import { UndoBanner } from "@/modules/crm/components/undo-banner";
 import { getDeal, listDeals, listPipelineTotals, listStages, type PipelineTotal } from "@/modules/crm/queries";
 import { stageLabel } from "@/modules/crm/stage-label";
@@ -32,8 +32,12 @@ function stageTotal(totals: PipelineTotal[], locale: string): string | null {
   return parts.length ? parts.join(" · ") : null;
 }
 
-// Pipeline : les 6 étapes en colonnes à faire défiler du doigt (une par écran), avec un
-// raccourci par étape en haut. Changer d'étape se fait depuis l'opportunité.
+// Pipeline : les 6 étapes en colonnes à faire défiler du doigt (une par écran sur
+// téléphone, deux sur tablette), avec un raccourci par étape en haut. Ordinateur : toutes
+// les étapes visibles sans défilement caché, en 3 colonnes sur 2 rangées sur un petit
+// portable (lg, moins de 1280 px), puis les 6 colonnes côte à côte (kanban, xl).
+// Pas de raccourcis sur ordinateur. Changer d'étape se fait depuis
+// l'opportunité (« Étape suivante » ou choix d'une étape, pas de glisser-déposer).
 export default async function PipelinePage({ params, searchParams }: Props) {
   const locale = (await params).locale as Locale;
   const workspace = await requireWorkspace(locale);
@@ -62,7 +66,16 @@ export default async function PipelinePage({ params, searchParams }: Props) {
       {archived?.archived_at && (
         <UndoBanner kind="deal" id={archived.id} message={t("archived", { title: archived.title })} undoLabel={t("undo")} back="/pipeline" />
       )}
-      <h1 className="text-2xl font-bold text-lagoon">{t("title")}</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold text-lagoon">{t("title")}</h1>
+        {/* Ordinateur : action principale en haut à droite (la barre du bas est masquée). */}
+        <div className="hidden lg:block">
+          <Link href="/pipeline/nouveau" className={buttonClasses("primary")}>
+            <PlusIcon className="size-5" />
+            {t("new")}
+          </Link>
+        </div>
+      </div>
 
       {deals.length === 0 ? (
         <Card className="flex flex-col items-center gap-3 py-8 text-center">
@@ -77,7 +90,7 @@ export default async function PipelinePage({ params, searchParams }: Props) {
               {t("truncated", { shown: deals.length, total })}
             </p>
           )}
-          <nav aria-label={t("stagesNav")} className="-mx-4 overflow-x-auto px-4">
+          <nav aria-label={t("stagesNav")} className="-mx-4 overflow-x-auto px-4 md:-mx-8 md:px-8 lg:hidden">
             <ul className="flex gap-2 pb-1">
               {columns.map(({ stage, count }) => (
                 <li key={stage.id} className="shrink-0">
@@ -96,7 +109,10 @@ export default async function PipelinePage({ params, searchParams }: Props) {
             </ul>
           </nav>
 
-          <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2">
+          <div
+            data-testid="pipeline-board"
+            className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 md:-mx-8 md:scroll-px-8 md:px-8 lg:mx-0 lg:grid lg:snap-none lg:grid-cols-3 lg:overflow-visible lg:px-0 xl:grid-cols-6"
+          >
             {columns.map(({ stage, deals: inStage, count, total: stageSum }) => {
               return (
                 <section
@@ -104,19 +120,20 @@ export default async function PipelinePage({ params, searchParams }: Props) {
                   id={`etape-${stage.id}`}
                   aria-labelledby={`etape-${stage.id}-title`}
                   data-testid={`stage-${stage.name}`}
-                  className="flex w-[85%] shrink-0 snap-start flex-col gap-3 rounded-card border border-sand/70 bg-sand-light p-3"
+                  className="flex w-[85%] shrink-0 snap-start flex-col gap-3 rounded-card border border-sand/70 bg-sand-light p-3 md:w-[calc(50%-0.375rem)] lg:min-h-48 lg:w-auto lg:min-w-0 xl:min-h-80"
                 >
                   <header className="flex flex-col gap-0.5">
                     <h2 id={`etape-${stage.id}-title`} className="text-base font-bold text-lagoon">
                       {stageLabel(tAll, stage.name)}
                     </h2>
+                    {/* Ordinateur (colonne étroite) : nombre et total sur deux lignes. */}
                     <p className="text-sm text-ink-muted">
                       {t("stageCount", { count })}
                       {stageSum && (
                         <>
-                          {" · "}
-                          <span className="font-semibold text-ink" data-testid="stage-total">
-                            {stageSum}
+                          <span className="lg:hidden">{" · "}</span>
+                          <span className="font-semibold text-ink lg:block" data-testid="stage-total">
+                            {breakableAmount(stageSum)}
                           </span>
                         </>
                       )}
@@ -128,7 +145,7 @@ export default async function PipelinePage({ params, searchParams }: Props) {
                     <ul className="flex flex-col gap-2">
                       {inStage.map((deal) => (
                         <li key={deal.id}>
-                          <DealCard deal={deal} locale={locale} noAmount={t("noAmount")} />
+                          <DealCard deal={deal} locale={locale} noAmount={t("noAmount")} column />
                         </li>
                       ))}
                     </ul>
@@ -140,7 +157,7 @@ export default async function PipelinePage({ params, searchParams }: Props) {
         </>
       )}
 
-      <BottomBar>
+      <BottomBar className="lg:hidden">
         <Link href="/pipeline/nouveau" className={buttonClasses("primary", true)}>
           <PlusIcon className="size-5" />
           {t("new")}

@@ -44,6 +44,14 @@
     scroll-padding-bottom: calc(10rem + env(safe-area-inset-bottom));
   }
 
+  /* Ordinateur (lg) : ni en-tête collant ni barres en bas, la navigation est à gauche. */
+  @media (width >= 64rem) {
+    html {
+      scroll-padding-top: 1.5rem;
+      scroll-padding-bottom: 1.5rem;
+    }
+  }
+
   body {
     background: var(--color-spray);
     color: var(--color-ink);
@@ -61,17 +69,17 @@
   }
 }
 
-@layer utilities {
-  .pt-safe {
-    padding-top: env(safe-area-inset-top);
-  }
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  .px-safe {
-    padding-left: max(1rem, env(safe-area-inset-left));
-    padding-right: max(1rem, env(safe-area-inset-right));
-  }
+/* @utility (et non @layer utilities) : classées avec les utilitaires de Tailwind, une variante
+   (md:px-8, lg:pb-0) l'emporte donc sur elles aux grandes largeurs. */
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility px-safe {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -42,6 +42,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 // Devis : statut, client, lignes et total, aperçu PDF ; envoi, partage, acceptation et
 // « Transformer en facture » (action principale en bas selon le statut).
+// Ordinateur : document à gauche (en-tête, lignes, aperçu), partage à droite ; dessous, une
+// ligne d'actions (secondaires à gauche, principale à droite). Ordre de lecture et de
+// focus ligne par ligne, le même que sur téléphone.
 export default async function QuotePage({ params, searchParams }: Props) {
   const { locale: rawLocale, id } = await params;
   const locale = rawLocale as Locale;
@@ -128,76 +131,82 @@ export default async function QuotePage({ params, searchParams }: Props) {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-5">
-      <Link href="/factures?vue=devis" className="inline-flex min-h-11 items-center self-start text-base font-semibold text-lagoon">
-        ← {t("backToList")}
-      </Link>
-      <Notices query={query} />
-
-      <div className="flex flex-col gap-2">
-        <StatusBadge kind="quote" status={status} className="self-start" />
-        <h1 className="text-2xl font-bold break-words text-lagoon">
-          {quote.number ? t("quoteTitle", { number: quote.number }) : t("quoteDraftTitle")}
-        </h1>
-        <p className="text-xl font-bold text-ink" data-testid="document-total">
-          {formatMoney(quote.total, quote.currency, locale)}
-        </p>
-        <p className="text-base text-ink">
-          <span className="text-ink-muted">{t("detail.client")} </span>
-          {contact ? (
-            <Link href={`/contacts/${contact.id}`} className="font-semibold text-lagoon underline-offset-4 hover:underline">
-              {contact.name}
-            </Link>
-          ) : null}
-        </p>
-        {deal && (
-          <p className="text-base text-ink">
-            <span className="text-ink-muted">{t("detail.deal")} </span>
-            <Link href={`/pipeline/${deal.id}`} className="font-semibold text-lagoon underline-offset-4 hover:underline">
-              {deal.title}
-            </Link>
-          </p>
-        )}
-        <ul className="text-sm text-ink-muted">
-          {quote.sent_at && <li>{t("detail.sentAt", { date: formatDay(localDate(new Date(quote.sent_at)), locale) })}</li>}
-          {quote.valid_until && <li>{t("validUntil", { date: formatDay(quote.valid_until, locale) })}</li>}
-          {quote.accepted_at && <li>{t("detail.acceptedAt", { date: formatDay(localDate(new Date(quote.accepted_at)), locale) })}</li>}
-        </ul>
+    <div className="flex flex-1 flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:content-start lg:items-start lg:gap-x-10">
+      <div className="flex flex-col gap-5 lg:col-span-2">
+        <Link href="/factures?vue=devis" className="inline-flex min-h-11 items-center self-start text-base font-semibold text-lagoon">
+          ← {t("backToList")}
+        </Link>
+        <Notices query={query} />
       </div>
 
-      {status === "sent" && <p className="text-base text-ink-muted">{t("detail.sentHint")}</p>}
-      {quote.status === "accepted" && !invoice && <p className="text-base text-ink-muted">{t("detail.acceptedHint")}</p>}
-      {/* Devis accepté : la facture approche, NIF / STAT / régime demandés dès maintenant (la transformation reste possible). */}
-      {quote.status === "accepted" && !invoice && (
-        <FiscalInfoBlock locale={locale} back={`/devis/${quote.id}`} missing={!hasFiscalInfo(workspace)} defaults={fiscalDefaults(workspace)} />
-      )}
-      {needsNewValidity && <p className="text-base text-ink-muted">{t("detail.expiredHint")}</p>}
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-2">
+          <StatusBadge kind="quote" status={status} className="self-start" />
+          <h1 className="text-2xl font-bold break-words text-lagoon">
+            {quote.number ? t("quoteTitle", { number: quote.number }) : t("quoteDraftTitle")}
+          </h1>
+          <p className="text-xl font-bold text-ink" data-testid="document-total">
+            {formatMoney(quote.total, quote.currency, locale)}
+          </p>
+          <p className="text-base text-ink">
+            <span className="text-ink-muted">{t("detail.client")} </span>
+            {contact ? (
+              <Link href={`/contacts/${contact.id}`} className="font-semibold text-lagoon underline-offset-4 hover:underline">
+                {contact.name}
+              </Link>
+            ) : null}
+          </p>
+          {deal && (
+            <p className="text-base text-ink">
+              <span className="text-ink-muted">{t("detail.deal")} </span>
+              <Link href={`/pipeline/${deal.id}`} className="font-semibold text-lagoon underline-offset-4 hover:underline">
+                {deal.title}
+              </Link>
+            </p>
+          )}
+          <ul className="text-sm text-ink-muted">
+            {quote.sent_at && <li>{t("detail.sentAt", { date: formatDay(localDate(new Date(quote.sent_at)), locale) })}</li>}
+            {quote.valid_until && <li>{t("validUntil", { date: formatDay(quote.valid_until, locale) })}</li>}
+            {quote.accepted_at && <li>{t("detail.acceptedAt", { date: formatDay(localDate(new Date(quote.accepted_at)), locale) })}</li>}
+          </ul>
+        </div>
 
-      <DocumentLines
-        lines={quote.lines}
-        currency={quote.currency}
-        locale={locale}
-        subtotal={quote.subtotal}
-        discount={quote.discount}
-        total={quote.total}
-      />
+        {status === "sent" && <p className="text-base text-ink-muted">{t("detail.sentHint")}</p>}
+        {quote.status === "accepted" && !invoice && <p className="text-base text-ink-muted">{t("detail.acceptedHint")}</p>}
+        {/* Devis accepté : la facture approche, NIF / STAT / régime demandés dès maintenant (la transformation reste possible). */}
+        {quote.status === "accepted" && !invoice && (
+          <FiscalInfoBlock locale={locale} back={`/devis/${quote.id}`} missing={!hasFiscalInfo(workspace)} defaults={fiscalDefaults(workspace)} />
+        )}
+        {needsNewValidity && <p className="text-base text-ink-muted">{t("detail.expiredHint")}</p>}
 
-      <a href={`/${locale}/devis/${quote.id}/apercu`} target="_blank" rel="noopener" className={buttonClasses("secondary", true)}>
-        {t("detail.preview")}
-      </a>
+        <DocumentLines
+          lines={quote.lines}
+          currency={quote.currency}
+          locale={locale}
+          subtotal={quote.subtotal}
+          discount={quote.discount}
+          total={quote.total}
+        />
+
+        <a href={`/${locale}/devis/${quote.id}/apercu`} target="_blank" rel="noopener" className={buttonClasses("secondary", true)}>
+          {t("detail.preview")}
+        </a>
+      </div>
 
       {share && (
-        <SharePanel
-          kind="quote"
-          id={quote.id}
-          locale={locale}
-          emailEnabled={Boolean(process.env.RESEND_API_KEY)}
-          showWhatsapp={quote.status !== "sent"}
-          {...share}
-        />
+        <div className="lg:col-start-2">
+          <SharePanel
+            kind="quote"
+            id={quote.id}
+            locale={locale}
+            emailEnabled={Boolean(process.env.RESEND_API_KEY)}
+            showWhatsapp={quote.status !== "sent"}
+            {...share}
+          />
+        </div>
       )}
 
-      <div className="flex flex-col gap-3 border-t border-sand pt-4">
+      <div className="flex flex-col gap-3 border-t border-sand pt-4 lg:col-start-1 lg:flex-row lg:flex-wrap lg:items-center lg:gap-x-6 lg:border-t-0 lg:pt-0 lg:*:w-auto">
         {(quote.status === "draft" || ((quote.status === "sent" || quote.status === "expired") && !needsNewValidity)) && (
           <Link href={`/devis/${quote.id}/modifier`} className={buttonClasses("secondary", true)}>
             {t("detail.edit")}
@@ -244,7 +253,7 @@ export default async function QuotePage({ params, searchParams }: Props) {
         )}
       </div>
 
-      {main && <BottomBar>{main}</BottomBar>}
+      {main && <BottomBar className="lg:col-start-2 lg:flex-col lg:items-stretch lg:*:w-full">{main}</BottomBar>}
     </div>
   );
 }

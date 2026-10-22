@@ -50,6 +50,9 @@ const METHODS = ["manual", "MVOLA", "ORANGE_MONEY", "AIRTEL_MONEY"] as const;
 
 // Facture : statut (« en retard » d'après l'échéance), client, lignes et total, taux vers
 // la devise principale ; envoi, partage, « Marquer payée » (paiement manuel), annulation.
+// Ordinateur : document à gauche (en-tête, lignes, aperçu), partage à droite ; dessous, une
+// ligne d'actions (secondaires à gauche, principale à droite). Ordre de lecture et de
+// focus ligne par ligne, le même que sur téléphone.
 export default async function InvoicePage({ params, searchParams }: Props) {
   const { locale: rawLocale, id } = await params;
   const locale = rawLocale as Locale;
@@ -149,126 +152,134 @@ export default async function InvoicePage({ params, searchParams }: Props) {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-5">
-      <Link href="/factures" className="inline-flex min-h-11 items-center self-start text-base font-semibold text-lagoon">
-        ← {t("backToList")}
-      </Link>
-      {/* Refus « infos fiscales manquantes » périmé une fois le bloc enregistré (l'URL le garde). */}
-      <Notices
-        query={!fiscalMissing && query.erreur === "workspace_tax_info_missing" ? { ...query, erreur: undefined } : query}
-        manualPayment={manual ? Boolean(manual.mvola || manual.rib || manual.other) : undefined} />
-      {invoice.status === "paid" && invoice.number && (
-        <Alert tone="success">
-          <span className="block text-base font-bold" data-testid="paid-notice">
-            {t("detail.paidNotice", { number: invoice.number, amount: money(invoice.amount_paid) })}
-          </span>
-          {onlinePayment && (
-            <span className="block">
-              {onlinePayment.method === "manual"
-                ? t("detail.paidOnlineAny")
-                : t("detail.paidOnline", { method: t(`paid.methods.${onlinePayment.method}`) })}
+    <div className="flex flex-1 flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:content-start lg:items-start lg:gap-x-10">
+      <div className="flex flex-col gap-5 lg:col-span-2">
+        <Link href="/factures" className="inline-flex min-h-11 items-center self-start text-base font-semibold text-lagoon">
+          ← {t("backToList")}
+        </Link>
+        {/* Refus « infos fiscales manquantes » périmé une fois le bloc enregistré (l'URL le garde). */}
+        <Notices
+          query={!fiscalMissing && query.erreur === "workspace_tax_info_missing" ? { ...query, erreur: undefined } : query}
+          manualPayment={manual ? Boolean(manual.mvola || manual.rib || manual.other) : undefined} />
+        {invoice.status === "paid" && invoice.number && (
+          <Alert tone="success">
+            <span className="block text-base font-bold" data-testid="paid-notice">
+              {t("detail.paidNotice", { number: invoice.number, amount: money(invoice.amount_paid) })}
             </span>
-          )}
-        </Alert>
-      )}
-      {invoice.status === "paid" && invoice.amount_paid > invoice.total && (
-        <Alert tone="error">
-          <span data-testid="overpaid-notice">{t("detail.overpaid", { amount: money(invoice.amount_paid - invoice.total) })}</span>
-        </Alert>
-      )}
-      {paidWhileCancelled > 0 && (
-        <Alert tone="error">
-          <span data-testid="paid-while-cancelled">{t("detail.paidWhileCancelled", { amount: money(paidWhileCancelled) })}</span>
-        </Alert>
-      )}
-      {paymentLinks?.issues.map((issue) => (
-        <Alert key={issue.reference} tone="error">
-          <span data-testid={`${issue.provider}-issue`}>{t(`detail.${issue.provider}Issue.${issue.error}`, { reference: issue.reference })}</span>
-        </Alert>
-      ))}
-
-      <div className="flex flex-col gap-2">
-        <StatusBadge kind="invoice" status={status} className="self-start" />
-        <h1 className="text-2xl font-bold break-words text-lagoon">
-          {invoice.number ? t("invoiceTitle", { number: invoice.number }) : t("invoiceDraftTitle")}
-        </h1>
-        <p className="text-xl font-bold text-ink" data-testid="document-total">
-          {money(invoice.total)}
-        </p>
-        {converted !== null && foreign && (
-          <p className="text-sm text-ink-muted">
-            {t("detail.inDefault", { amount: formatMoney(converted, workspace.default_currency, locale), rate: rateText })}
-          </p>
+            {onlinePayment && (
+              <span className="block">
+                {onlinePayment.method === "manual"
+                  ? t("detail.paidOnlineAny")
+                  : t("detail.paidOnline", { method: t(`paid.methods.${onlinePayment.method}`) })}
+              </span>
+            )}
+          </Alert>
         )}
-        {invoice.amount_paid > 0 && due > 0 && (
-          <p className="text-base font-semibold text-terracotta-dark">
-            {t("detail.amountPaid", { amount: money(invoice.amount_paid) })} · {t("detail.amountDue", { amount: money(due) })}
-          </p>
+        {invoice.status === "paid" && invoice.amount_paid > invoice.total && (
+          <Alert tone="error">
+            <span data-testid="overpaid-notice">{t("detail.overpaid", { amount: money(invoice.amount_paid - invoice.total) })}</span>
+          </Alert>
         )}
-        <p className="text-base text-ink">
-          <span className="text-ink-muted">{t("detail.client")} </span>
-          {contact && (
-            <Link href={`/contacts/${contact.id}`} className="font-semibold text-lagoon underline-offset-4 hover:underline">
-              {contact.name}
-            </Link>
-          )}
-        </p>
-        {invoice.quote_id && quoteNumber && (
-          <Link href={`/devis/${invoice.quote_id}`} className="self-start text-base font-semibold text-lagoon underline-offset-4 hover:underline">
-            {t("detail.fromQuote", { number: quoteNumber })}
-          </Link>
+        {paidWhileCancelled > 0 && (
+          <Alert tone="error">
+            <span data-testid="paid-while-cancelled">{t("detail.paidWhileCancelled", { amount: money(paidWhileCancelled) })}</span>
+          </Alert>
         )}
-        <ul className="text-sm text-ink-muted">
-          {invoice.issued_on && <li>{t("detail.issuedOn", { date: formatDay(invoice.issued_on, locale) })}</li>}
-          {invoice.due_on && invoice.status !== "paid" && invoice.status !== "cancelled" && (
-            <li>{t("dueOn", { date: formatDay(invoice.due_on, locale) })}</li>
-          )}
-          {invoice.paid_at && <li>{t("detail.paidAt", { date: formatDay(localDate(new Date(invoice.paid_at)), locale) })}</li>}
-        </ul>
+        {paymentLinks?.issues.map((issue) => (
+          <Alert key={issue.reference} tone="error">
+            <span data-testid={`${issue.provider}-issue`}>{t(`detail.${issue.provider}Issue.${issue.error}`, { reference: issue.reference })}</span>
+          </Alert>
+        ))}
       </div>
 
-      {invoice.status === "draft" && (
-        <FiscalInfoBlock locale={locale} back={`/factures/${invoice.id}`} missing={fiscalMissing} defaults={fiscalDefaults(workspace)} primary />
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-2">
+          <StatusBadge kind="invoice" status={status} className="self-start" />
+          <h1 className="text-2xl font-bold break-words text-lagoon">
+            {invoice.number ? t("invoiceTitle", { number: invoice.number }) : t("invoiceDraftTitle")}
+          </h1>
+          <p className="text-xl font-bold text-ink" data-testid="document-total">
+            {money(invoice.total)}
+          </p>
+          {converted !== null && foreign && (
+            <p className="text-sm text-ink-muted">
+              {t("detail.inDefault", { amount: formatMoney(converted, workspace.default_currency, locale), rate: rateText })}
+            </p>
+          )}
+          {invoice.amount_paid > 0 && due > 0 && (
+            <p className="text-base font-semibold text-terracotta-dark">
+              {t("detail.amountPaid", { amount: money(invoice.amount_paid) })} · {t("detail.amountDue", { amount: money(due) })}
+            </p>
+          )}
+          <p className="text-base text-ink">
+            <span className="text-ink-muted">{t("detail.client")} </span>
+            {contact && (
+              <Link href={`/contacts/${contact.id}`} className="font-semibold text-lagoon underline-offset-4 hover:underline">
+                {contact.name}
+              </Link>
+            )}
+          </p>
+          {invoice.quote_id && quoteNumber && (
+            <Link href={`/devis/${invoice.quote_id}`} className="self-start text-base font-semibold text-lagoon underline-offset-4 hover:underline">
+              {t("detail.fromQuote", { number: quoteNumber })}
+            </Link>
+          )}
+          <ul className="text-sm text-ink-muted">
+            {invoice.issued_on && <li>{t("detail.issuedOn", { date: formatDay(invoice.issued_on, locale) })}</li>}
+            {invoice.due_on && invoice.status !== "paid" && invoice.status !== "cancelled" && (
+              <li>{t("dueOn", { date: formatDay(invoice.due_on, locale) })}</li>
+            )}
+            {invoice.paid_at && <li>{t("detail.paidAt", { date: formatDay(localDate(new Date(invoice.paid_at)), locale) })}</li>}
+          </ul>
+        </div>
+
+        {invoice.status === "draft" && (
+          <FiscalInfoBlock locale={locale} back={`/factures/${invoice.id}`} missing={fiscalMissing} defaults={fiscalDefaults(workspace)} primary />
+        )}
+
+        {/* Pas juste après un échec de création du lien : la notice d'échec dit déjà quoi faire. */}
+        {papiAccount?.status === "connected" && papiEligible && typeof query.papi !== "string" && (
+          <p role="note" className="rounded-xl bg-turquoise-soft px-4 py-3 text-sm font-medium text-ink" data-testid="papi-note">
+            {t("detail.papiOpen")}
+          </p>
+        )}
+        {papiAccount?.status === "error" && papiEligible && (
+          <p role="note" className="rounded-xl bg-turquoise-soft px-4 py-3 text-sm font-medium text-ink" data-testid="papi-reconnect">
+            {t("detail.papiReconnect")}{" "}
+            <Link href="/reglages/paiements" className="font-semibold text-lagoon underline underline-offset-4">
+              {t("detail.papiReconnectLink")}
+            </Link>
+          </p>
+        )}
+
+        {invoice.status === "draft" && foreign && converted === null && (
+          <p role="note" className="rounded-xl bg-turquoise-soft px-4 py-3 text-sm font-medium text-ink">
+            {t("detail.rateMissing", { default: workspace.default_currency })}
+          </p>
+        )}
+
+        <DocumentLines
+          lines={invoice.lines}
+          currency={invoice.currency}
+          locale={locale}
+          subtotal={invoice.subtotal}
+          discount={invoice.discount}
+          total={invoice.total}
+        />
+
+        <a href={`/${locale}/factures/${invoice.id}/apercu`} target="_blank" rel="noopener" className={buttonClasses("secondary", true)}>
+          {t("detail.preview")}
+        </a>
+      </div>
+
+      {share && (
+        <div className="lg:col-start-2">
+          <SharePanel kind="invoice" id={invoice.id} locale={locale} emailEnabled={Boolean(process.env.RESEND_API_KEY)} {...share} />
+        </div>
       )}
-
-      {/* Pas juste après un échec de création du lien : la notice d'échec dit déjà quoi faire. */}
-      {papiAccount?.status === "connected" && papiEligible && typeof query.papi !== "string" && (
-        <p role="note" className="rounded-xl bg-turquoise-soft px-4 py-3 text-sm font-medium text-ink" data-testid="papi-note">
-          {t("detail.papiOpen")}
-        </p>
-      )}
-      {papiAccount?.status === "error" && papiEligible && (
-        <p role="note" className="rounded-xl bg-turquoise-soft px-4 py-3 text-sm font-medium text-ink" data-testid="papi-reconnect">
-          {t("detail.papiReconnect")}{" "}
-          <Link href="/reglages/paiements" className="font-semibold text-lagoon underline underline-offset-4">
-            {t("detail.papiReconnectLink")}
-          </Link>
-        </p>
-      )}
-
-      {invoice.status === "draft" && foreign && converted === null && (
-        <p role="note" className="rounded-xl bg-turquoise-soft px-4 py-3 text-sm font-medium text-ink">
-          {t("detail.rateMissing", { default: workspace.default_currency })}
-        </p>
-      )}
-
-      <DocumentLines
-        lines={invoice.lines}
-        currency={invoice.currency}
-        locale={locale}
-        subtotal={invoice.subtotal}
-        discount={invoice.discount}
-        total={invoice.total}
-      />
-
-      <a href={`/${locale}/factures/${invoice.id}/apercu`} target="_blank" rel="noopener" className={buttonClasses("secondary", true)}>
-        {t("detail.preview")}
-      </a>
-
-      {share && <SharePanel kind="invoice" id={invoice.id} locale={locale} emailEnabled={Boolean(process.env.RESEND_API_KEY)} {...share} />}
 
       {(invoice.status === "draft" || invoice.status === "sent" || invoice.status === "overdue") && (
-        <div className="flex flex-col gap-3 border-t border-sand pt-4">
+        <div className="flex flex-col gap-3 border-t border-sand pt-4 lg:col-start-1 lg:flex-row lg:flex-wrap lg:items-center lg:gap-x-6 lg:border-t-0 lg:pt-0 lg:*:w-auto">
           {invoice.status === "draft" ? (
             <>
               <Link href={`/factures/${invoice.id}/modifier`} className={buttonClasses("secondary", true)}>
@@ -302,7 +313,7 @@ export default async function InvoicePage({ params, searchParams }: Props) {
         </div>
       )}
 
-      {main && <BottomBar>{main}</BottomBar>}
+      {main && <BottomBar className="lg:col-start-2 lg:flex-col lg:items-stretch lg:*:w-full">{main}</BottomBar>}
     </div>
   );
 }

@@ -197,7 +197,7 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
   );
 
   return (
-    <div className="flex flex-1 flex-col gap-5">
+    <div className="flex flex-1 flex-col gap-5 md:max-w-3xl">
       <Link href="/reglages" className="inline-flex min-h-11 items-center self-start text-base font-semibold text-lagoon">
         ← {t("backToSettings")}
       </Link>

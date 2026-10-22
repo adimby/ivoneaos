@@ -33,7 +33,8 @@ const tabClass =
 const noSubscribe = () => () => {};
 const popoverSupported = () => typeof HTMLElement.prototype.showPopover === "function";
 
-// Barre d'onglets en bas (à portée du pouce). « Plus » est d'abord un lien vers la page
+// Téléphone et tablette (sous lg) : barre d'onglets en bas (à portée du pouce) ; sur
+// ordinateur, display: none, la navigation de gauche (side-nav.tsx) la remplace. « Plus » est d'abord un lien vers la page
 // /plus (marche partout, même sans JavaScript ni API Popover) ; une fois la page chargée,
 // si le navigateur connaît l'API Popover, il ouvre un menu sur place.
 export function BottomNav({ locale }: { locale: string }) {
@@ -54,7 +55,7 @@ export function BottomNav({ locale }: { locale: string }) {
 
   return (
     <>
-    <nav aria-label={t("label")} className="on-dark fixed inset-x-0 bottom-0 z-20 bg-lagoon pb-safe text-sand shadow-[0_-4px_16px_rgb(11_42_46/0.15)]">
+    <nav aria-label={t("label")} data-testid="bottom-nav" className="on-dark fixed inset-x-0 bottom-0 z-20 bg-lagoon pb-safe text-sand shadow-[0_-4px_16px_rgb(11_42_46/0.15)] lg:hidden">
       <ul className="px-safe mx-auto flex max-w-md gap-1 py-1">
         {TABS.map((tab) => {
           const { href, label, Icon } = tab;
@@ -101,7 +102,7 @@ export function BottomNav({ locale }: { locale: string }) {
           ref={menu}
           id="plus-menu"
           popover="auto"
-          className="fixed inset-x-3 top-auto bottom-[calc(4.5rem+env(safe-area-inset-bottom))] m-0 mx-auto w-auto max-w-md rounded-card border border-sand bg-white p-2 text-ink shadow-card backdrop:bg-ink/30"
+          className="fixed inset-x-3 top-auto bottom-[calc(4.5rem+env(safe-area-inset-bottom))] m-0 mx-auto w-auto max-w-md rounded-card border border-sand bg-white p-2 text-ink shadow-card backdrop:bg-ink/30 lg:hidden"
         >
           <nav aria-label={t("more")}>
             <MoreMenu locale={locale} isActive={isActive} onNavigate={() => menu.current?.hidePopover()} />

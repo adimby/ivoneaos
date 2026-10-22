@@ -148,7 +148,7 @@ export function ContactForm({
       </details>
 
       <BottomBar>
-        <div aria-live="polite">
+        <div aria-live="polite" className="md:basis-full">
           {state.formError && !pending && <Alert tone="error">{formErrorMessage(tAll, state.formError)}</Alert>}
           {!pending && <PlanLimitLink error={state.formError} />}
         </div>

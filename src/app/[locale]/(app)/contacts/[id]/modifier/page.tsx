@@ -30,7 +30,7 @@ export default async function EditContactPage({ params }: Props) {
   if (contact.archived_at) redirect({ href: `/contacts/${contact.id}`, locale });
 
   return (
-    <div className="flex flex-1 flex-col gap-5">
+    <div className="flex flex-1 flex-col gap-5 md:max-w-2xl">
       <Link href={`/contacts/${contact.id}`} className="inline-flex min-h-11 items-center self-start text-base font-semibold text-lagoon">
         ← {t("backToContact")}
       </Link>

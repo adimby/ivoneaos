@@ -24,27 +24,30 @@ export default async function ConnexionPage({ params, searchParams }: Props) {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="on-dark bg-lagoon pt-safe text-white">
-        <div className="px-safe mx-auto flex h-16 w-full max-w-md items-center justify-between">
+        <div className="px-safe mx-auto flex h-16 w-full max-w-md items-center justify-between md:max-w-6xl md:px-8">
           <Link href="/" className="rounded-lg">
             <Brand />
           </Link>
         </div>
       </header>
-      <main className="px-safe mx-auto flex w-full max-w-md flex-1 flex-col gap-6 pt-6 pb-safe">
-        <div className="flex justify-end">
-          <Suspense fallback={<LanguageSwitch current={locale} href={`/connexion?${CHOSEN}=1`} />}>
-            <LanguageLinks locale={locale} searchParams={searchParams} />
-          </Suspense>
-        </div>
-        <div className="flex flex-1 flex-col pb-6">
-          <LoginForm
-            locale={locale}
-            nextField={
-              <Suspense>
-                <RequestFields searchParams={searchParams} />
-              </Suspense>
-            }
-          />
+      {/* Tablette et ordinateur : carte centrée, pas une colonne de téléphone étirée. */}
+      <main className="px-safe mx-auto flex w-full max-w-md flex-1 flex-col pt-6 pb-safe md:max-w-lg md:justify-center md:py-12">
+        <div className="flex flex-1 flex-col gap-6 md:flex-none md:rounded-card md:border md:border-sand/70 md:bg-sand-light md:p-8 md:shadow-card">
+          <div className="flex justify-end">
+            <Suspense fallback={<LanguageSwitch current={locale} href={`/connexion?${CHOSEN}=1`} />}>
+              <LanguageLinks locale={locale} searchParams={searchParams} />
+            </Suspense>
+          </div>
+          <div className="flex flex-1 flex-col pb-6 md:pb-0">
+            <LoginForm
+              locale={locale}
+              nextField={
+                <Suspense>
+                  <RequestFields searchParams={searchParams} />
+                </Suspense>
+              }
+            />
+          </div>
         </div>
       </main>
     </div>

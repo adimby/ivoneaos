@@ -199,7 +199,11 @@
     "more": "Plus",
     "contacts": "Contacts",
     "settings": "Réglages",
-    "signOut": "Se déconnecter"
+    "signOut": "Se déconnecter",
+    "dashboard": "Tableau de bord",
+    "billing": "Devis et factures",
+    "skip": "Aller au contenu principal",
+    "moreInSidebar": "Sur grand écran, tout est dans le menu à gauche : contacts, réglages, langue et déconnexion."
   },
   "Dashboard": {
     "metaTitle": "Accueil",
@@ -539,7 +543,13 @@
       "title": "Historique",
       "empty": "Aucun échange noté pour l'instant."
     },
-    "truncated": "{shown} contacts affichés sur {total} : affine ta recherche pour trouver les autres."
+    "truncated": "{shown} contacts affichés sur {total} : affine ta recherche pour trouver les autres.",
+    "columns": {
+      "name": "Nom",
+      "company": "Entreprise",
+      "reach": "Téléphone ou e-mail",
+      "tags": "Étiquettes"
+    }
   },
   "Deals": {
     "metaTitle": "Pipeline",
@@ -939,7 +949,17 @@
     },
     "whop": {
       "failed": "Facture envoyée, mais Whop n'a pas pu préparer le paiement par carte : le bouton « Payer par carte » réessaiera quand ton client ouvrira la facture. {manual, select, yes {Ton client voit aussi tes coordonnées de paiement direct.} other {Ajoute tes coordonnées bancaires dans Réglages pour que ton client puisse te payer en direct.}}"
-    }
+    },
+    "columns": {
+      "number": "Numéro",
+      "client": "Client",
+      "amount": "Montant",
+      "due": "Échéance",
+      "validity": "Validité",
+      "status": "Statut"
+    },
+    "noDue": "Aucune échéance à suivre",
+    "noValidity": "Sans date de validité"
   },
   "Pdf": {
     "lang": "fr",
