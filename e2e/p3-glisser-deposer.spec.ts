@@ -127,6 +127,8 @@ test.describe("ordinateur (1440 × 900)", () => {
     const dialog = page.getByRole("dialog", { name: "Marquer comme gagnée ?" });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole("button", { name: "Annuler" })).toBeFocused();
+    // @dnd-kit ignore les clics 50 ms après un dépôt : attendre comme un humain (voir plus bas).
+    await page.waitForTimeout(100);
     await dialog.getByRole("button", { name: "Annuler" }).click();
     await expect(dialog).toBeHidden();
     await expect(announcement(page)).toHaveText("Carte Contrat LinkedIn reposée, rien n'a changé.");
