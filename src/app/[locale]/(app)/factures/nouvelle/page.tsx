@@ -8,6 +8,8 @@ import type { Locale } from "@/i18n/routing";
 import { DocumentForm } from "@/modules/billing/components/document-form";
 import { dayIn, newDocumentDefaults } from "@/modules/billing/form-defaults";
 import { listContactOptions } from "@/modules/crm/queries";
+import { FiscalVerificationPanel } from "@/modules/verification/components/fiscal-verification-panel";
+import { getFiscalState } from "@/modules/verification/queries";
 import { FiscalInfoBlock } from "@/modules/workspace/components/fiscal-info-block";
 import { fiscalDefaults, hasFiscalInfo } from "@/modules/workspace/profile-schema";
 import { requireWorkspace } from "@/modules/workspace/queries";
@@ -26,8 +28,10 @@ export default async function NewInvoicePage({ params, searchParams }: Props) {
   const workspace = await requireWorkspace(locale);
   const query = await searchParams;
   const contactParam = typeof query.contact === "string" ? query.contact : undefined;
-  const [{ contacts, total }, t] = await Promise.all([
+  const fiscalComplete = hasFiscalInfo(workspace);
+  const [{ contacts, total }, fiscal, t] = await Promise.all([
     listContactOptions(workspace.id, contactParam),
+    fiscalComplete ? getFiscalState(workspace) : null,
     getTranslations({ locale, namespace: "Billing.form" }),
   ]);
   const prefilled = contacts.find((c) => c.id === contactParam);
@@ -43,10 +47,12 @@ export default async function NewInvoicePage({ params, searchParams }: Props) {
       <FiscalInfoBlock
         locale={locale}
         back="/factures/nouvelle"
-        missing={!hasFiscalInfo(workspace)}
+        missing={!fiscalComplete}
         defaults={fiscalDefaults(workspace)}
+        fiscalStatus={workspace.fiscal_status}
         compact
       />
+      {fiscal && <FiscalVerificationPanel workspaceId={workspace.id} state={fiscal} hasNumbers locale={locale} context="invoice" compact />}
       {contacts.length === 0 ? (
         <Card className="flex flex-col items-center gap-3 py-8 text-center">
           <ContactsIcon className="size-10 text-turquoise" />

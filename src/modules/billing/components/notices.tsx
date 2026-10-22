@@ -26,6 +26,16 @@ export function Notices({ query, manualPayment = false }: { query: Record<string
     <div className="flex flex-col gap-2" data-testid="notices">
       {error && <Alert tone="error">{t(`errors.db.${error}`)}</Alert>}
       <PlanLimitLink error={error} />
+      {/* Plafond sans carte vérifiée : accès direct au dépôt des photos (même page). */}
+      {error === "fiscal_verification_required" && (
+        <a
+          href="#verification-fiscale"
+          className="inline-flex min-h-11 items-center self-start text-base font-semibold text-lagoon underline underline-offset-4"
+          data-testid="fiscal-limit-link"
+        >
+          {t("Verification.goUpload")}
+        </a>
+      )}
       {ok && !error && <Alert tone="success">{t(`Billing.notices.${ok}`)}</Alert>}
       {email && <Alert tone={email === "sent" ? "success" : "error"}>{t(`Billing.email.${email}`)}</Alert>}
       {papi && <Alert tone="error">{t(`Billing.papi.${papi}`, { manual: manualPayment ? "yes" : "no" })}</Alert>}

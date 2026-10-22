@@ -11,6 +11,7 @@ import {
   MoreIcon,
   PipelineIcon,
   SettingsIcon,
+  ShieldIcon,
   SignOutIcon,
 } from "../icons";
 import { cn } from "../ui/cn";
@@ -27,6 +28,9 @@ const MORE = [
   { href: "/reglages", label: "settings", Icon: SettingsIcon },
 ] as const;
 
+// Admins de la plateforme seulement (la page répond 404 aux autres).
+const ADMIN_ITEM = { href: "/admin/verifications", label: "admin", Icon: ShieldIcon } as const;
+
 const tabClass =
   "flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl text-xs font-semibold";
 
@@ -37,13 +41,13 @@ const popoverSupported = () => typeof HTMLElement.prototype.showPopover === "fun
 // ordinateur, display: none, la navigation de gauche (side-nav.tsx) la remplace. « Plus » est d'abord un lien vers la page
 // /plus (marche partout, même sans JavaScript ni API Popover) ; une fois la page chargée,
 // si le navigateur connaît l'API Popover, il ouvre un menu sur place.
-export function BottomNav({ locale }: { locale: string }) {
+export function BottomNav({ locale, isAdmin = false }: { locale: string; isAdmin?: boolean }) {
   const t = useTranslations("Nav");
   const pathname = usePathname();
   const menu = useRef<HTMLDivElement>(null);
   const withPopover = useSyncExternalStore(noSubscribe, popoverSupported, () => false);
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
-  const moreActive = isActive("/plus") || MORE.some((item) => isActive(item.href));
+  const moreActive = isActive("/plus") || [...MORE, ADMIN_ITEM].some((item) => isActive(item.href));
   const moreContent = (
     <>
       <span className={cn("flex h-7 w-12 items-center justify-center rounded-full", moreActive && "bg-on-chrome/15")}>
@@ -105,7 +109,7 @@ export function BottomNav({ locale }: { locale: string }) {
           className="fixed inset-x-3 top-auto bottom-[calc(4.5rem+env(safe-area-inset-bottom))] m-0 mx-auto w-auto max-w-md rounded-card border border-sand bg-surface p-2 text-ink shadow-card backdrop:bg-black/40 lg:hidden"
         >
           <nav aria-label={t("more")}>
-            <MoreMenu locale={locale} isActive={isActive} onNavigate={() => menu.current?.hidePopover()} />
+            <MoreMenu locale={locale} isAdmin={isAdmin} isActive={isActive} onNavigate={() => menu.current?.hidePopover()} />
           </nav>
         </div>
       )}
@@ -116,17 +120,19 @@ export function BottomNav({ locale }: { locale: string }) {
 // Contenu du menu « Plus » : popover de la barre d'onglets et page /plus.
 export function MoreMenu({
   locale,
+  isAdmin = false,
   isActive,
   onNavigate,
 }: {
   locale: string;
+  isAdmin?: boolean;
   isActive?: (href: string) => boolean;
   onNavigate?: () => void;
 }) {
   const t = useTranslations("Nav");
   return (
     <ul className="flex flex-col">
-      {MORE.map(({ href, label, Icon }) => (
+      {[...MORE, ...(isAdmin ? [ADMIN_ITEM] : [])].map(({ href, label, Icon }) => (
         <li key={href}>
           <Link
             href={href}

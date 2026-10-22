@@ -15,7 +15,7 @@ select public.create_workspace('Studio Alice') as wa \gset
 reset role;
 -- Offre Lancement : plusieurs envois sans la limite Découverte (testée en 06).
 update public.workspaces
-set nif = '1234567890', stat = '12345 11 2026 0 00001', tax_regime = 'tva', plan = 'lancement'
+set nif = '1234567890', stat = '12345112026000001', tax_regime = 'tva', plan = 'lancement'
 where id = :'wa';
 select tests.authenticate_as(:'alice');
 

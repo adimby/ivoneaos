@@ -7,6 +7,8 @@ import { cn } from "@/components/ui/cn";
 import { Link } from "@/i18n/navigation";
 import { routing, type Locale } from "@/i18n/routing";
 import { setLanguage } from "@/modules/auth/actions";
+import { FiscalVerificationPanel } from "@/modules/verification/components/fiscal-verification-panel";
+import { getFiscalState } from "@/modules/verification/queries";
 import { ProfileForm } from "@/modules/workspace/components/profile-form";
 import { hasFiscalInfo } from "@/modules/workspace/profile-schema";
 import { getLogoUrl, getManualPayment, requireWorkspace } from "@/modules/workspace/queries";
@@ -21,9 +23,10 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/reglages
 export default async function SettingsPage({ params }: PageProps<"/[locale]/reglages">) {
   const locale = (await params).locale as Locale;
   const workspace = await requireWorkspace(locale);
-  const [manual, logoUrl, t, tCommon] = await Promise.all([
+  const [manual, logoUrl, fiscal, t, tCommon] = await Promise.all([
     getManualPayment(workspace.id),
     getLogoUrl(workspace.logo_path),
+    getFiscalState(workspace),
     getTranslations({ locale, namespace: "Settings" }),
     getTranslations({ locale, namespace: "Common" }),
   ]);
@@ -125,6 +128,7 @@ export default async function SettingsPage({ params }: PageProps<"/[locale]/regl
           locale={locale}
           logoUrl={logoUrl}
           fiscalRequired={hasFiscalInfo(workspace)}
+          fiscalStatus={workspace.fiscal_status}
           defaults={{
             name: workspace.name,
             trade: workspace.trade ?? "",
@@ -137,6 +141,13 @@ export default async function SettingsPage({ params }: PageProps<"/[locale]/regl
             rib: manual.rib,
             other: manual.other,
           }}
+        />
+        <FiscalVerificationPanel
+          workspaceId={workspace.id}
+          state={fiscal}
+          hasNumbers={Boolean(workspace.nif && workspace.stat)}
+          locale={locale}
+          context="settings"
         />
       </section>
     </div>

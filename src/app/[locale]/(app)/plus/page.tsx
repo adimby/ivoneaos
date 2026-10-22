@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { MoreMenu } from "@/components/app-shell/bottom-nav";
 import { Card } from "@/components/ui/card";
+import { isPlatformAdmin } from "@/modules/verification/queries";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/plus">): Promise<Metadata> {
   const { locale } = await params;
@@ -16,10 +17,10 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/plus">):
 // fenêtre agrandie).
 export default async function MorePage({ params }: PageProps<"/[locale]/plus">) {
   const { locale } = await params;
-  return <MoreContent locale={locale} />;
+  return <MoreContent locale={locale} isAdmin={await isPlatformAdmin()} />;
 }
 
-function MoreContent({ locale }: { locale: string }) {
+function MoreContent({ locale, isAdmin }: { locale: string; isAdmin: boolean }) {
   const t = useTranslations("Nav");
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
@@ -27,7 +28,7 @@ function MoreContent({ locale }: { locale: string }) {
       <p className="hidden text-base text-ink-muted lg:block">{t("moreInSidebar")}</p>
       <Card className="p-2 lg:hidden">
         <nav aria-label={t("more")}>
-          <MoreMenu locale={locale} />
+          <MoreMenu locale={locale} isAdmin={isAdmin} />
         </nav>
       </Card>
     </div>

@@ -11,7 +11,7 @@ select public.create_workspace('Studio Alice') as wa \gset
 reset role;
 
 update public.workspaces
-set nif = '1234567890', stat = '12345 11 2026 0 00001', tax_regime = 'impot_synthetique',
+set nif = '1234567890', stat = '12345112026000001', tax_regime = 'impot_synthetique',
     address = 'Lot II A 12, Antananarivo', logo_path = :'wa' || '/logo.png'
 where id = :'wa';
 insert into public.contacts (workspace_id, name, company_name, phone, email)
@@ -60,7 +60,7 @@ insert into storage.objects (bucket_id, name) values ('logos', :'wa' || '/logo.p
 
 -- Après émission, le contact et le profil changent : les documents émis gardent leur copie.
 update public.contacts set name = 'Rakoto renommé', company_name = null where id = :'ca';
-update public.workspaces set name = 'Nouveau nom', nif = '999' where id = :'wa';
+update public.workspaces set name = 'Nouveau nom', nif = '9999999999' where id = :'wa';
 
 -- ---------------------------------------------------------------------------
 select tests.as_anon();

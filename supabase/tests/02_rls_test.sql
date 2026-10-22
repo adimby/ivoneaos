@@ -15,7 +15,7 @@ select tests.authenticate_as(:'bob');
 select public.create_workspace('Atelier Bob') as wb \gset
 reset role;
 
-update public.workspaces set nif = '1234567890', stat = '12345 11 2026 0 00001', tax_regime = 'impot_synthetique'
+update public.workspaces set nif = '1234567890', stat = '12345112026000001', tax_regime = 'impot_synthetique'
 where id = :'wa';
 insert into public.onboarding_answers (workspace_id, answers) values (:'wa', '{"trade": "design"}');
 insert into public.contacts (workspace_id, name, phone) values (:'wa', 'Rakoto', '+261340000000')

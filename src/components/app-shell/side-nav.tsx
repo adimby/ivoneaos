@@ -7,7 +7,7 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { routing, type Locale } from "@/i18n/routing";
 import { setLanguage, signOut } from "@/modules/auth/actions";
 import { Brand } from "../brand";
-import { ContactsIcon, HomeIcon, InvoiceIcon, PipelineIcon, SettingsIcon, SignOutIcon } from "../icons";
+import { ContactsIcon, HomeIcon, InvoiceIcon, PipelineIcon, SettingsIcon, ShieldIcon, SignOutIcon } from "../icons";
 import { cn } from "../ui/cn";
 
 const ITEMS = [
@@ -18,12 +18,15 @@ const ITEMS = [
   { href: "/reglages", label: "settings", Icon: SettingsIcon },
 ] as const;
 
+// Visible seulement pour les admins de la plateforme (la page répond 404 aux autres).
+const ADMIN_ITEM = { href: "/admin/verifications", label: "admin", Icon: ShieldIcon } as const;
+
 const itemClass = "flex min-h-11 items-center gap-3 rounded-xl px-3 text-base font-semibold";
 
 // Ordinateur (lg et plus) : navigation fixe à gauche, à la place de l'en-tête, de la barre
 // d'onglets et du menu « Plus ». En dessous de lg, display: none (hidden) : une seule
 // navigation principale exposée à la fois, aux lecteurs d'écran comme à l'œil.
-export function SideNav({ locale }: { locale: Locale }) {
+export function SideNav({ locale, isAdmin = false }: { locale: Locale; isAdmin?: boolean }) {
   const t = useTranslations("Nav");
   const tCommon = useTranslations("Common");
   const pathname = usePathname();
@@ -40,7 +43,7 @@ export function SideNav({ locale }: { locale: Locale }) {
 
       <nav aria-label={t("label")} className="flex flex-1 flex-col">
         <ul className="flex flex-col gap-1">
-          {ITEMS.map((item) => {
+          {[...ITEMS, ...(isAdmin ? [ADMIN_ITEM] : [])].map((item) => {
             const { href, label, Icon } = item;
             const active = isActive(href) || ("also" in item && isActive(item.also));
             return (

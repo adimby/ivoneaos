@@ -31,7 +31,9 @@ Principes :
    Ses trois champs (NIF 10 chiffres, STAT 17 chiffres, régime) s'enregistrent dans le profil sans perdre le brouillon,
    puis l'envoi redevient possible. La base refuse toujours d'émettre une facture sans eux. Les devis ne les exigent pas.
    Dans Réglages, ils restent facultatifs tant qu'ils ne sont pas tous remplis, avec une aide qui dit qu'ils sont
-   nécessaires pour facturer ; une fois complets, ils se corrigent mais ne s'effacent plus.
+   nécessaires pour facturer ; une fois complets, ils se corrigent mais ne s'effacent plus (règle en base, comme les
+   formats : NIF 10 chiffres, STAT 17 chiffres). Les 3 premières factures partent sans contrôle de la carte fiscale ;
+   la 4e attend qu'elle soit vérifiée (voir « Vérification fiscale »).
 5. Arrivée sur le tableau de bord avec la liste de démarrage : ajouter un premier contact, connecter Papi, créer un premier
    devis, compléter ses infos fiscales.
 
@@ -98,6 +100,8 @@ pour contacts et opportunités. Factures émises jamais supprimées.
 | payment_links | invoice_id, payment_account_id, provider, merchant_reference, provider_url, notification_token, status, expires_at |
 | payments | invoice_id, payment_link_id, provider, method (MVOLA, ORANGE_MONEY, AIRTEL_MONEY, CARD, manual), amount, fee, currency, provider_reference (unique), paid_at |
 | webhook_events | provider, payload jsonb, signature_valid, processed_at, error |
+| fiscal_verifications | workspace_id, nif, stat (au dépôt), front_path, back_path (vidés à la décision), status (pending, verified, rejected, cancelled), method (automatic, manual), decided_by, decided_at, rejection_reason |
+| platform_admins | user_id |
 
 Sécurité et intégrité :
 - Clés Papi chiffrées (AES-256-GCM côté serveur avec une clé `PAYMENT_SECRETS_KEY`, ou Vault). Colonnes chiffrées lisibles par le rôle serveur seulement, jamais par le navigateur, même pour leur propriétaire.
@@ -216,8 +220,67 @@ Pas de paiement d'abonnement au MVP : le plan se change à la main en base (rôl
 - Découverte : au plus 20 contacts actifs, au plus 3 devis + factures envoyés par mois calendaire (le compteur porte
   sur les documents qui quittent l'état brouillon). Au-delà, message clair et invitation à passer à Lancement.
 - Lancement et au-dessus : illimité.
+- Tous les plans : au plus 3 factures émises tant que la carte fiscale n'est pas vérifiée (« Vérification fiscale »).
+  Quand les deux limites tombent ensemble, le message de la vérification passe en premier (il dit quoi faire).
 Les limites sont vérifiées côté serveur (action serveur et, si possible, en base), pas seulement dans l'interface.
 Le coaching n'est pas un module du MVP.
+
+## Vérification fiscale
+Le freelance prouve son NIF et son STAT par une photo de sa carte fiscale ; on ne garde jamais les images.
+- États (`workspaces.fiscal_status`) : `unverified` (défaut, aussi pour les workspaces existants), `pending`,
+  `verified` (avec `fiscal_status_at`), `rejected` (avec `fiscal_rejection_reason`). Colonnes non modifiables par le
+  freelance (droits par colonne). Un changement de NIF ou de STAT remet l'état à `unverified` (trigger) et annule une
+  demande en cours. `fiscal_verifications` garde la trace des décisions, sans les photos.
+- Dépôt (Réglages ; sur une facture brouillon dont l'envoi est bloqué par le plafond, avec le bouton du bas qui y
+  mène ; ailleurs sur les écrans de facture, seulement le compteur et un lien vers Réglages) : recto et verso, JPG, PNG
+  ou WEBP, 10 Mo chacun, envoyés directement du navigateur dans le bucket privé `fiscal-documents/{workspace_id}/`.
+  Une photo de plus de 2000 px de côté est d'abord réduite dans le navigateur (`createImageBitmap` puis canvas, JPEG
+  qualité 0,85, redressée selon son EXIF) : une photo de 50 ou 108 Mpx passe sous les 10 Mo et part plus vite ; si le
+  navigateur ne sait pas la réduire, le refus « plus de 10 Mo » s'applique comme avant. Chemin imposé par la
+  politique : `{workspace_id}/{uuid}.{jpg|png|webp}`, sans sous-dossier.
+  Seul l'ajout est permis au membre, et seulement tant que la carte est à déposer (non vérifiée ou refusée) ; ni
+  lecture, ni remplacement, ni suppression. Les fichiers d'une demande décidée ou annulée sont supprimés ; les dépôts
+  jamais soumis le sont après une heure (au dépôt suivant et par le passage quotidien du cron). Composant réutilisable
+  `FileDrop` (`src/components/ui/file-drop.tsx`).
+- Lecture : la route `POST /api/fiscal/verification` (même origine, session, workspace lu avec le client de la
+  personne) refuse d'abord une carte déjà vérifiée ou en attente (sans rien télécharger ni supprimer), puis contrôle
+  les fichiers (type réel ; une photo refusée est supprimée, jamais celles d'une demande en attente), crée la demande (`submit_fiscal_verification`, réservée au rôle serveur :
+  pas de contournement par un appel direct), puis lit les deux faces par OCR (tesseract.js, modèle anglais livré avec
+  l'application via `@tesseract.js-data/eng`, aucun CDN ; fichiers inclus dans la fonction Vercel par
+  `outputFileTracingIncludes`). Chaque photo est d'abord redressée selon son EXIF, réduite à 2000 px et passée en gris
+  (sharp, 50 Mpx au plus d'après l'en-tête : au-delà, lecture impossible et vérification manuelle) ; si les numéros ne concordent pas, elle est relue tournée de 90°, 180° et 270° tant que le délai le permet.
+  Lecture synchrone (le freelance attend la réponse, 40 s au plus, `maxDuration` 60 s) ; le texte lu n'est ni stocké
+  ni journalisé. Règle de concordance pure et testée (`src/modules/verification/match.ts`) :
+  suites de chiffres par ligne, espaces et tirets ignorés, confusions courantes corrigées (O→0, I/l→1, S→5, B→8) ;
+  le NIF doit être lu ailleurs qu'à l'intérieur du STAT (un NIF saisi contenu dans le STAT ne suffit pas).
+  NIF et STAT retrouvés : vérifiée automatiquement, photos supprimées. Sinon : en attente et e-mail aux admins (Resend,
+  ou journal sans Resend), seulement si la demande est toujours en attente ; l'avis est noté
+  (`admins_notified_at`). Si la fonction est arrêtée par la plateforme avant l'avis, le passage quotidien du cron
+  (`/api/cron/reminders`, 05:00 UTC) prévient les admins pour les demandes en attente depuis plus de 5 minutes sans
+  avis. Délai accepté pour le MVP : dans ce cas rare, l'avis peut arriver jusqu'à environ 24 h après le dépôt (le
+  freelance voit « en cours de vérification » et peut être bloqué à 3 factures pendant ce temps ; la page admin, elle,
+  liste la demande dès le dépôt). Plus tard, si besoin : un cron plus fréquent (Vercel Pro) limité à ce rattrapage.
+- Ordre des verrous : toujours la ligne du workspace, puis la demande (`next_document_number`,
+  `submit_fiscal_verification`, `decide_fiscal_verification`, changement de NIF ou de STAT) ; une décision prise
+  pendant un changement de NIF attend, puis trouve la demande annulée (`scripts/test-db-concurrency.sh`, cas 7).
+- NIF ou STAT modifiés alors que la carte est vérifiée ou en cours de vérification : l'aide sous chaque champ prévient
+  que la vérification sera annulée, et un message le confirme après l'enregistrement.
+- Limite connue de la lecture automatique : elle accepte toute image où figurent le NIF et le STAT saisis (une image
+  de texte fabriquée passe aussi). Elle prouve la cohérence des numéros, pas l'authenticité de la carte. Pistes plus
+  tard : exiger des mots de la carte (« CARTE FISCALE », « NIF », « STAT ») ou contrôler à la main un échantillon.
+- Admins de la plateforme : table `platform_admins`, fonction `is_platform_admin()`. `/admin/verifications` (file,
+  détail avec les photos par URL signées de 5 minutes, historique) répond 404 à tout autre compte ; entrée de
+  navigation réservée. « Valider » ou « Refuser » (motif obligatoire, montré au freelance) : photos supprimées et
+  e-mail au freelance dans sa langue (la page admin dit si l'e-mail est parti). Une demande déjà traitée ou annulée
+  renvoie à la liste avec « Cette demande a déjà été traitée ». Les pages admin sont dans la coquille de l'app :
+  l'admin doit avoir un compte avec un workspace prêt (démarrage terminé), sinon elle est renvoyée vers le démarrage.
+  En production, ajouter l'admin à la main (SQL, rôle serveur) :
+  `insert into public.platform_admins (user_id) select id from auth.users where email = '…';`
+- Plafond : `next_document_number` refuse la 4e facture (`fiscal_verification_required`) tant que la carte n'est pas
+  vérifiée, sous verrou de la ligne du workspace ; l'action serveur le vérifie aussi, avec un lien vers le dépôt
+  (« Tu as atteint la limite de 3 factures sans carte vérifiée… », ou « en cours de vérification » si les photos sont
+  déjà déposées) et le compteur « Encore N factures avant la vérification ». Les factures déjà émises comptent ; les devis ne sont pas
+  concernés. Rien n'apparaît sur la facture ni sur la page du client.
 
 ## Palette de marque « Océan » (choisie par Ivonea)
 À définir une fois comme variables de thème Tailwind 4 (`@theme` dans globals.css) et à utiliser partout :

@@ -7,6 +7,11 @@
 #   4. Offre Découverte, 2 envois ce mois-ci : A envoie un devis, B une facture en même
 #      temps ; B attend A puis est refusée (free_limit_reached) : jamais 4 envois.
 #   5. Offre Découverte, 19 contacts : A et B en créent un en même temps ; B est refusée.
+#   6. Carte fiscale non vérifiée, 2 factures émises : A et B en émettent une en même temps ;
+#      B attend A puis est refusée (fiscal_verification_required) : jamais 4 factures.
+#   7. Décision sur une carte (lecture automatique ou admin) pendant un changement de NIF :
+#      la décision prend le verrou du workspace avant celui de la demande (même ordre que le
+#      changement de NIF) ; elle attend, puis voit la demande annulée. Jamais d'interblocage.
 # Données créées dans des workspaces dédiés, supprimés à la fin.
 set -euo pipefail
 
@@ -14,11 +19,15 @@ DB_URL="${DB_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}"
 q() { psql "$DB_URL" -X -q -t -A -v ON_ERROR_STOP=1 "$@"; }
 fail() { echo "ÉCHEC : $*" >&2; exit 1; }
 
-ws=$(q -c "insert into public.workspaces (name, nif, stat, tax_regime, plan)
-           values ('Test concurrence', '1234567890', '12345', 'tva', 'lancement') returning id")
-free_ws=$(q -c "insert into public.workspaces (name, nif, stat, tax_regime)
-                values ('Test concurrence Découverte', '1234567890', '12345', 'tva') returning id")
-cleanup() { q -c "delete from public.workspaces where id in ('$ws', '$free_ws')" >/dev/null || true; }
+# Carte fiscale vérifiée : seuls la numérotation (1-3) et les limites de l'offre (4-5) jouent.
+ws=$(q -c "insert into public.workspaces (name, nif, stat, tax_regime, plan, fiscal_status)
+           values ('Test concurrence', '1234567890', '12345112026000001', 'tva', 'lancement', 'verified') returning id")
+free_ws=$(q -c "insert into public.workspaces (name, nif, stat, tax_regime, fiscal_status)
+                values ('Test concurrence Découverte', '1234567890', '12345112026000001', 'tva', 'verified') returning id")
+# Carte non vérifiée, offre Lancement : seul le plafond de 3 factures joue (6).
+fiscal_ws=$(q -c "insert into public.workspaces (name, nif, stat, tax_regime, plan)
+                  values ('Test concurrence carte fiscale', '1234567890', '12345112026000001', 'tva', 'lancement') returning id")
+cleanup() { q -c "delete from public.workspaces where id in ('$ws', '$free_ws', '$fiscal_ws')" >/dev/null || true; }
 trap cleanup EXIT
 
 contact=$(q -c "insert into public.contacts (workspace_id, name, phone)
@@ -128,3 +137,46 @@ wait "$pid"
 active=$(q -c "select count(*) from public.contacts where workspace_id = '$free_ws' and archived_at is null")
 [ "$active" = 20 ] || fail "contacts actifs : $active"
 echo "ok 5 - limite Découverte : deux créations simultanées, B refusée, 20 contacts actifs"
+
+# --- 6. Carte fiscale non vérifiée : deux factures émises en même temps ---------
+fiscal_contact=$(q -c "insert into public.contacts (workspace_id, name, phone)
+                       values ('$fiscal_ws', 'Client', '+261340000000') returning id")
+for _ in 1 2; do
+  q -c "update public.invoices set status = 'sent' where id = '$(new_invoice "$fiscal_ws" "$fiscal_contact")'" >/dev/null
+done
+ia=$(new_invoice "$fiscal_ws" "$fiscal_contact"); ib=$(new_invoice "$fiscal_ws" "$fiscal_contact")
+issue_and_hold "$ia" fiscal-a commit &
+pid=$!
+wait_holding fiscal-a
+start=$(date +%s%3N)
+err=$(q -c "update public.invoices set status = 'sent' where id = '$ib'" 2>&1 || true)
+waited=$(( $(date +%s%3N) - start ))
+wait "$pid"
+[ "$waited" -ge 1000 ] || fail "B n'a pas attendu le verrou du workspace (${waited} ms)"
+[[ "$err" == *fiscal_verification_required* ]] || fail "4e facture sans carte vérifiée acceptée : ${err:-aucune erreur}"
+issued=$(q -c "select count(*) from public.invoices where workspace_id = '$fiscal_ws' and sent_at is not null")
+[ "$issued" = 3 ] || fail "factures émises : $issued"
+echo "ok 6 - carte non vérifiée : B attend ${waited} ms puis fiscal_verification_required, 3 factures au total"
+
+# --- 7. Décision pendant un changement de NIF : même ordre de verrous ----------
+# A verrouille le workspace (comme tout enregistrement des Réglages), attend 3 s, puis
+# change le NIF (le déclencheur annule la demande en attente). B décide pendant ce temps.
+# Avant correction, B verrouillait d'abord la demande : interblocage.
+q -c "update public.workspaces set fiscal_status = 'pending' where id = '$fiscal_ws'" >/dev/null
+req=$(q -c "insert into public.fiscal_verifications (workspace_id, nif, stat)
+            values ('$fiscal_ws', '1234567890', '12345112026000001') returning id")
+run_and_hold decide-a "update public.workspaces set name = name where id = '$fiscal_ws'" \
+  "update public.workspaces set nif = '2234567890' where id = '$fiscal_ws'; commit" &
+pid=$!
+wait_holding decide-a
+start=$(date +%s%3N)
+err=$(q -c "select * from public.decide_fiscal_verification('$req', true, 'automatic')" 2>&1 || true)
+waited=$(( $(date +%s%3N) - start ))
+wait "$pid" || fail "le changement de NIF a échoué"
+[[ "$err" != *deadlock* ]] || fail "interblocage : $err"
+[ "$waited" -ge 1000 ] || fail "la décision n'a pas attendu le verrou du workspace (${waited} ms)"
+[[ "$err" == *fiscal_request_not_pending* ]] || fail "décision prise sur une demande annulée : ${err:-aucune erreur}"
+state=$(q -c "select v.status || ' ' || w.fiscal_status || ' ' || w.nif from public.fiscal_verifications v
+              join public.workspaces w on w.id = v.workspace_id where v.id = '$req'")
+[ "$state" = "cancelled unverified 2234567890" ] || fail "état : $state"
+echo "ok 7 - décision pendant un changement de NIF : attend ${waited} ms puis fiscal_request_not_pending, sans interblocage"

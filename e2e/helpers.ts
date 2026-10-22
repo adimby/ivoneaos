@@ -1,5 +1,7 @@
+import { execFileSync } from "node:child_process";
 import { expect, type BrowserContext, type Page } from "@playwright/test";
 import { attemptKey, type AttemptScope } from "../src/modules/auth/attempt-key";
+import { createClient } from "@supabase/supabase-js";
 import { readOtp } from "./mailpit";
 
 // Note : Next garde les pages déjà visitées dans le DOM, masquées (retour instantané) ;
@@ -36,10 +38,13 @@ export async function openMore(page: Page, name: string) {
 // demande plus NIF, STAT ni régime fiscal ; fiscal (par défaut) les enregistre ensuite
 // directement en base, pour les parcours qui émettent des factures sans tester le bloc
 // « Avant ta première facture ». Le nom commercial est unique : il retrouve le workspace.
+// verified (par défaut avec fiscal) : carte fiscale déjà vérifiée, comme le ferait un
+// admin, pour les parcours qui émettent plus de 3 factures sans tester la vérification
+// (e2e/p12-verification-fiscale.spec.ts la teste).
 export async function signUpAndOnboard(
   page: Page,
   prefix: string,
-  { fiscal = true }: { fiscal?: boolean } = {},
+  { fiscal = true, verified = fiscal }: { fiscal?: boolean; verified?: boolean } = {},
 ): Promise<{ email: string; business: string }> {
   const stamp = Date.now();
   const email = `${prefix}-${stamp}@example.test`;
@@ -61,7 +66,12 @@ export async function signUpAndOnboard(
   if (fiscal) {
     const saved = await adminRest(`workspaces?name=eq.${encodeURIComponent(business)}`, {
       method: "PATCH",
-      body: JSON.stringify({ nif: "3000123456", stat: "74111112020001234", tax_regime: "impot_synthetique" }),
+      body: JSON.stringify({
+        nif: "3000123456",
+        stat: "74111112020001234",
+        tax_regime: "impot_synthetique",
+        ...(verified && { fiscal_status: "verified", fiscal_status_at: new Date().toISOString() }),
+      }),
     });
     expect(saved.ok, await saved.clone().text()).toBe(true);
   }
@@ -98,6 +108,32 @@ export async function adminRest(path: string, init: RequestInit = {}): Promise<R
     ...init,
     headers: { apikey: key, "Content-Type": "application/json", ...init.headers },
   });
+}
+
+function storageAdmin() {
+  return createClient(env("NEXT_PUBLIC_SUPABASE_URL"), env("SUPABASE_SECRET_KEY"), {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
+// Fichiers d'un dossier de bucket Storage (clé secrète) : vérifier qu'ils ont été supprimés.
+export async function storageFiles(bucket: string, folder: string): Promise<string[]> {
+  const { data, error } = await storageAdmin().storage.from(bucket).list(folder);
+  if (error) throw error;
+  return data.map((file) => file.name);
+}
+
+// Dépôt direct dans un bucket (clé secrète) : préparation des tests seulement.
+export async function storageUpload(bucket: string, path: string, bytes: Buffer, contentType: string) {
+  const { error } = await storageAdmin().storage.from(bucket).upload(path, bytes, { contentType });
+  if (error) throw error;
+}
+
+// SQL direct sur la base locale (psql, comme scripts/test-db-concurrency.sh) : ce que l'API
+// ne permet pas, par exemple vieillir un fichier de Storage. Tests seulement.
+export function sql(query: string): string {
+  const url = process.env.DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+  return execFileSync("psql", [url, "-X", "-q", "-t", "-A", "-v", "ON_ERROR_STOP=1", "-c", query], { encoding: "utf8" }).trim();
 }
 
 // Même session, avant le chargement du JavaScript (connexion lente) : fichiers JS de

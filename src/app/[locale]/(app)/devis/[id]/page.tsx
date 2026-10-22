@@ -23,6 +23,8 @@ import { mailtoUrl, publicPath, whatsappShareUrl } from "@/modules/billing/share
 import { quoteDisplayStatus } from "@/modules/billing/status";
 import { formatDay } from "@/modules/billing/view";
 import { getContact, getDeal } from "@/modules/crm/queries";
+import { FiscalVerificationPanel } from "@/modules/verification/components/fiscal-verification-panel";
+import { getFiscalState } from "@/modules/verification/queries";
 import { FiscalInfoBlock } from "@/modules/workspace/components/fiscal-info-block";
 import { fiscalDefaults, hasFiscalInfo } from "@/modules/workspace/profile-schema";
 import { getCurrentWorkspace, requireWorkspace } from "@/modules/workspace/queries";
@@ -55,10 +57,13 @@ export default async function QuotePage({ params, searchParams }: Props) {
   const today = localDate(new Date());
   const status = quoteDisplayStatus(quote.status, quote.valid_until, today);
 
-  const [contact, deal, invoice, t, tShare] = await Promise.all([
+  const accepted = quote.status === "accepted";
+  const [contact, deal, invoice, fiscal, t, tShare] = await Promise.all([
     getContact(workspace.id, quote.contact_id),
     quote.deal_id ? getDeal(workspace.id, quote.deal_id) : null,
-    quote.status === "accepted" ? getQuoteInvoice(workspace.id, quote.id) : null,
+    accepted ? getQuoteInvoice(workspace.id, quote.id) : null,
+    // Devis accepté : la facture approche, la vérification de la carte fiscale aussi.
+    accepted && hasFiscalInfo(workspace) ? getFiscalState(workspace) : null,
     getTranslations({ locale, namespace: "Billing" }),
     getTranslations({ locale: quote.language, namespace: "Share" }),
   ]);
@@ -175,8 +180,9 @@ export default async function QuotePage({ params, searchParams }: Props) {
         {quote.status === "accepted" && !invoice && <p className="text-base text-ink-muted">{t("detail.acceptedHint")}</p>}
         {/* Devis accepté : la facture approche, NIF / STAT / régime demandés dès maintenant (la transformation reste possible). */}
         {quote.status === "accepted" && !invoice && (
-          <FiscalInfoBlock locale={locale} back={`/devis/${quote.id}`} missing={!hasFiscalInfo(workspace)} defaults={fiscalDefaults(workspace)} />
+          <FiscalInfoBlock locale={locale} back={`/devis/${quote.id}`} missing={!hasFiscalInfo(workspace)} defaults={fiscalDefaults(workspace)} fiscalStatus={workspace.fiscal_status} />
         )}
+        {fiscal && !invoice && <FiscalVerificationPanel workspaceId={workspace.id} state={fiscal} hasNumbers locale={locale} context="invoice" />}
         {needsNewValidity && <p className="text-base text-ink-muted">{t("detail.expiredHint")}</p>}
 
         <DocumentLines

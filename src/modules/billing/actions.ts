@@ -19,6 +19,7 @@ import { ensureInvoiceWhopLink, retireInvoiceWhopLinks } from "@/modules/payment
 import { canUseNow, getCurrentWorkspace, isOnboarded, type Workspace } from "@/modules/workspace/queries";
 import { safeNextPath } from "@/modules/auth/next-path";
 import { hasFiscalInfo } from "@/modules/workspace/profile-schema";
+import { invoiceSendBlock } from "@/modules/verification/queries";
 import { documentEmail } from "./email";
 import { PAYABLE_COLUMNS, payableInvoice } from "./payment-link";
 import { appDocument, documentPdf } from "./render";
@@ -196,11 +197,13 @@ export async function sendInvoice(formData: FormData) {
   const path = `/factures/${id}`;
   // NIF, STAT et régime fiscal manquants : la page les demande (la base refuserait aussi).
   if (!hasFiscalInfo(workspace)) backTo(locale, path, { erreur: "workspace_tax_info_missing" });
-  // Offre Découverte : seul un brouillon qui part compte (facture déjà envoyée resoumise :
-  // refus de transition habituel, pas de message de limite).
-  if (!(await canUseNow(workspace, "send_document")) && (await getInvoice(workspace.id, id))?.status === "draft") {
-    backTo(locale, path, { erreur: "free_limit_reached" });
-  }
+  // Plafond de 3 factures tant que la carte fiscale n'est pas vérifiée, puis offre
+  // Découverte (message le plus utile d'abord : changer d'offre ne lèverait pas le premier).
+  // Seul un brouillon qui part compte (facture déjà envoyée resoumise : refus de transition
+  // habituel, pas de message de limite).
+  const fiscalBlock = await invoiceSendBlock(workspace);
+  const blocked = fiscalBlock ?? ((await canUseNow(workspace, "send_document")) ? null : "free_limit_reached");
+  if (blocked && (await getInvoice(workspace.id, id))?.status === "draft") backTo(locale, path, { erreur: blocked });
   const { data, error } = await supabase
     .from("invoices")
     .update({ status: "sent" })
@@ -208,7 +211,13 @@ export async function sendInvoice(formData: FormData) {
     .eq("workspace_id", workspace.id)
     .eq("status", "draft")
     .select(PAYABLE_COLUMNS);
-  if (error) backTo(locale, path, { erreur: dbErrorKey(error) });
+  if (error) {
+    // Plafond atteint entre le contrôle ci-dessus et l'envoi (autre facture partie en même
+    // temps) : carte déjà déposée → message « en cours de vérification ».
+    const key = dbErrorKey(error);
+    const pending = key === "fiscal_verification_required" && workspace.fiscal_status === "pending";
+    backTo(locale, path, { erreur: pending ? "fiscal_verification_pending" : key });
+  }
   if (!data?.length) backTo(locale, path, { erreur: "invalid_status_transition" });
   // Facture en ariary et Papi connecté : lien de paiement créé maintenant (spec P5.5).
   // En cas d'échec, la facture reste envoyée avec les coordonnées manuelles ; la page
