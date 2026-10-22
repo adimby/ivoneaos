@@ -34,7 +34,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 // Opportunité : montant, contact, étape (« Étape suivante » en bas, ou choix d'une étape),
-// rappels et historique.
+// rappels et historique. Ordinateur : deux colonnes (opportunité et étape à gauche, avec
+// « Étape suivante » sous le choix d'étape ; rappels, échanges et historique à droite).
 export default async function DealPage({ params }: Props) {
   const { locale: rawLocale, id } = await params;
   const locale = rawLocale as Locale;
@@ -61,158 +62,181 @@ export default async function DealPage({ params }: Props) {
   const active = !deal.archived_at && !contactArchived;
 
   return (
-    <div className="flex flex-1 flex-col gap-6">
-      <Link href="/pipeline" className="inline-flex min-h-11 items-center self-start text-base font-semibold text-lagoon">
-        ← {t("backToPipeline")}
-      </Link>
+    <div className="flex flex-1 flex-col gap-6 lg:grid lg:grid-cols-2 lg:content-start lg:items-start lg:gap-x-10">
+      <div className="flex flex-col gap-6 lg:col-span-2">
+        <Link href="/pipeline" className="inline-flex min-h-11 items-center self-start text-base font-semibold text-lagoon">
+          ← {t("backToPipeline")}
+        </Link>
 
-      {deal.archived_at && (
-        <UndoBanner kind="deal" id={deal.id} message={t("archived", { title: deal.title })} undoLabel={tAll("Contacts.restore")} back={back} />
-      )}
-
-      {contact && contactArchived && !deal.archived_at && (
-        <div role="status" className="flex flex-col items-start gap-1 rounded-xl bg-lagoon px-4 py-3 text-sm text-white on-dark">
-          <span className="font-medium">{t("contactArchived", { name: contact.name })}</span>
-          <Link href={`/contacts/${contact.id}`} className="inline-flex min-h-11 items-center font-semibold underline underline-offset-4">
-            {t("openContact")}
-          </Link>
-        </div>
-      )}
-
-      <div className="flex flex-col gap-2">
-        {current && (
-          <Badge tone={current.kind === "won" ? "success" : current.kind === "lost" ? "danger" : "accent"} className="self-start" data-testid="deal-stage">
-            {t("currentStage", { stage: label(current.name) })}
-          </Badge>
+        {deal.archived_at && (
+          <UndoBanner kind="deal" id={deal.id} message={t("archived", { title: deal.title })} undoLabel={tAll("Contacts.restore")} back={back} />
         )}
-        <h1 className="text-2xl font-bold break-words text-lagoon">{deal.title}</h1>
-        <p className="text-xl font-bold text-ink">
-          {deal.amount !== null ? formatMoney(deal.amount, deal.currency as Currency, locale) : t("noAmount")}
-        </p>
-        {deal.expected_close_on && (
-          <p className="text-sm text-ink-muted">
-            {t("expectedClose", {
-              date: format.dateTime(new Date(`${deal.expected_close_on}T12:00:00Z`), { day: "numeric", month: "long", year: "numeric" }),
-            })}
-          </p>
+
+        {contact && contactArchived && !deal.archived_at && (
+          <div role="status" className="flex flex-col items-start gap-1 rounded-xl bg-lagoon px-4 py-3 text-sm text-white on-dark">
+            <span className="font-medium">{t("contactArchived", { name: contact.name })}</span>
+            <Link href={`/contacts/${contact.id}`} className="inline-flex min-h-11 items-center font-semibold underline underline-offset-4">
+              {t("openContact")}
+            </Link>
+          </div>
         )}
       </div>
 
-      {contact && (
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/contacts/${contact.id}`}
-            className="flex min-h-12 min-w-0 flex-1 flex-col justify-center rounded-xl border border-sand/70 bg-white px-3 hover:border-lagoon"
-          >
-            <span className="text-xs text-ink-muted">{t("contact.label")}</span>
-            <span className="truncate text-base font-semibold text-lagoon">{contact.name}</span>
-          </Link>
-          {contact.phone && (
-            <>
-              <a href={telHref(contact.phone)} aria-label={tAll("Contacts.call")} className={buttonClasses("secondary", false, "min-h-12 px-3")}>
-                <PhoneIcon className="size-5" />
-              </a>
-              <a
-                href={whatsappHref(contact.phone)}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={tAll("Contacts.whatsapp")}
-                className={buttonClasses("secondary", false, "min-h-12 px-3")}
-              >
-                <ChatIcon className="size-5" />
-              </a>
-            </>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          {current && (
+            <Badge tone={current.kind === "won" ? "success" : current.kind === "lost" ? "danger" : "accent"} className="self-start" data-testid="deal-stage">
+              {t("currentStage", { stage: label(current.name) })}
+            </Badge>
+          )}
+          <h1 className="text-2xl font-bold break-words text-lagoon">{deal.title}</h1>
+          <p className="text-xl font-bold text-ink">
+            {deal.amount !== null ? formatMoney(deal.amount, deal.currency as Currency, locale) : t("noAmount")}
+          </p>
+          {deal.expected_close_on && (
+            <p className="text-sm text-ink-muted">
+              {t("expectedClose", {
+                date: format.dateTime(new Date(`${deal.expected_close_on}T12:00:00Z`), { day: "numeric", month: "long", year: "numeric" }),
+              })}
+            </p>
           )}
         </div>
-      )}
 
-      <DealQuotes workspaceId={workspace.id} dealId={deal.id} client={contact?.name ?? ""} locale={locale} canCreate={active} />
+        {contact && (
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/contacts/${contact.id}`}
+              className="flex min-h-12 min-w-0 flex-1 flex-col justify-center rounded-xl border border-sand/70 bg-white px-3 hover:border-lagoon"
+            >
+              <span className="text-xs text-ink-muted">{t("contact.label")}</span>
+              <span className="truncate text-base font-semibold text-lagoon">{contact.name}</span>
+            </Link>
+            {contact.phone && (
+              <>
+                <a href={telHref(contact.phone)} aria-label={tAll("Contacts.call")} className={buttonClasses("secondary", false, "min-h-12 px-3")}>
+                  <PhoneIcon className="size-5" />
+                </a>
+                <a
+                  href={whatsappHref(contact.phone)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={tAll("Contacts.whatsapp")}
+                  className={buttonClasses("secondary", false, "min-h-12 px-3")}
+                >
+                  <ChatIcon className="size-5" />
+                </a>
+              </>
+            )}
+          </div>
+        )}
 
-      {active && (
-        <>
-        <section aria-labelledby="stage-title" className="flex flex-col gap-3">
-          <h2 id="stage-title" className="text-lg font-bold text-lagoon">
-            {t("chooseStage")}
+        <DealQuotes workspaceId={workspace.id} dealId={deal.id} client={contact?.name ?? ""} locale={locale} canCreate={active} />
+
+        {active && (
+          <section aria-labelledby="stage-title" className="flex flex-col gap-3">
+            <h2 id="stage-title" className="text-lg font-bold text-lagoon">
+              {t("chooseStage")}
+            </h2>
+            <ul className="grid grid-cols-2 gap-2">
+              {stages.map((stage) => {
+                const isCurrent = stage.id === deal.stage_id;
+                return (
+                  <li key={stage.id} className="flex">
+                    {isCurrent ? (
+                      <span
+                        aria-current="step"
+                        className="flex min-h-11 flex-1 items-center justify-center rounded-xl border-2 border-lagoon bg-lagoon px-3 text-base font-semibold text-white"
+                      >
+                        {label(stage.name)}
+                      </span>
+                    ) : (
+                      <StageButton
+                        dealId={deal.id}
+                        stage={{ id: stage.id, kind: stage.kind, label: label(stage.name) }}
+                        back={back}
+                        label={t("moveTo", { stage: label(stage.name) })}
+                        className="flex-1 px-3"
+                      >
+                        {label(stage.name)}
+                      </StageButton>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+            {/* Ordinateur : « Étape suivante » sous le choix d'étape (la barre du bas est masquée). */}
+            {next && (
+              <div className="hidden lg:flex">
+                <StageButton
+                  dealId={deal.id}
+                  stage={{ id: next.id, kind: next.kind, label: label(next.name) }}
+                  back={back}
+                  variant="primary"
+                  className="w-full"
+                >
+                  {t("nextStage", { stage: label(next.name) })}
+                  <ArrowRightIcon className="size-5" />
+                </StageButton>
+              </div>
+            )}
+          </section>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-6">
+        {active && (
+          <>
+          <Card aria-labelledby="reminders-title" className="flex flex-col gap-4">
+            <h2 id="reminders-title" className="flex items-center gap-2 text-lg font-bold text-lagoon">
+              <BellIcon className="size-5 text-turquoise" />
+              {tAll("Reminders.remindMe")}
+            </h2>
+            {reminders.length > 0 && <ReminderList reminders={reminders} locale={locale} back={back} now={now} />}
+            <ReminderForm
+              about={{ dealId: deal.id }}
+              back={back}
+              defaultTitle={tAll("Reminders.defaultTitle", { name: contact?.name ?? deal.title })}
+              minDate={toLocalInputValue(now)}
+            />
+          </Card>
+
+          <Card aria-labelledby="activity-title" className="flex flex-col gap-4">
+            <h2 id="activity-title" className="text-lg font-bold text-lagoon">
+              {tAll("Activities.title")}
+            </h2>
+            <ActivityForm about={{ dealId: deal.id }} back={back} now={toLocalInputValue(now)} />
+          </Card>
+          </>
+        )}
+
+        <section aria-labelledby="history-title" className="flex flex-col gap-3">
+          <h2 id="history-title" className="text-lg font-bold text-lagoon">
+            {t("history.title")}
           </h2>
-          <ul className="grid grid-cols-2 gap-2">
-            {stages.map((stage) => {
-              const isCurrent = stage.id === deal.stage_id;
-              return (
-                <li key={stage.id} className="flex">
-                  {isCurrent ? (
-                    <span
-                      aria-current="step"
-                      className="flex min-h-11 flex-1 items-center justify-center rounded-xl border-2 border-lagoon bg-lagoon px-3 text-base font-semibold text-white"
-                    >
-                      {label(stage.name)}
-                    </span>
-                  ) : (
-                    <StageButton
-                      dealId={deal.id}
-                      stage={{ id: stage.id, kind: stage.kind, label: label(stage.name) }}
-                      back={back}
-                      label={t("moveTo", { stage: label(stage.name) })}
-                      className="flex-1 px-3"
-                    >
-                      {label(stage.name)}
-                    </StageButton>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+          <Timeline activities={activities} total={activityTotal} locale={locale} empty={t("history.empty")} />
         </section>
 
-        <Card aria-labelledby="reminders-title" className="flex flex-col gap-4">
-          <h2 id="reminders-title" className="flex items-center gap-2 text-lg font-bold text-lagoon">
-            <BellIcon className="size-5 text-turquoise" />
-            {tAll("Reminders.remindMe")}
-          </h2>
-          {reminders.length > 0 && <ReminderList reminders={reminders} locale={locale} back={back} now={now} />}
-          <ReminderForm
-            about={{ dealId: deal.id }}
-            back={back}
-            defaultTitle={tAll("Reminders.defaultTitle", { name: contact?.name ?? deal.title })}
-            minDate={toLocalInputValue(now)}
-          />
-        </Card>
-
-        <Card aria-labelledby="activity-title" className="flex flex-col gap-4">
-          <h2 id="activity-title" className="text-lg font-bold text-lagoon">
-            {tAll("Activities.title")}
-          </h2>
-          <ActivityForm about={{ dealId: deal.id }} back={back} now={toLocalInputValue(now)} />
-        </Card>
-        </>
-      )}
-
-      <section aria-labelledby="history-title" className="flex flex-col gap-3">
-        <h2 id="history-title" className="text-lg font-bold text-lagoon">
-          {t("history.title")}
-        </h2>
-        <Timeline activities={activities} total={activityTotal} locale={locale} empty={t("history.empty")} />
-      </section>
-
-      <div className="flex flex-col gap-3 border-t border-sand pt-4">
-        {active && (
-          <Link href={`/pipeline/${deal.id}/modifier`} className={buttonClasses("secondary", true)}>
-            {t("edit")}
-          </Link>
-        )}
-        {!deal.archived_at && (
-          <form action={archiveDeal}>
-            <input type="hidden" name="locale" value={locale} />
-            <input type="hidden" name="back" value={back} />
-            <input type="hidden" name="id" value={deal.id} />
-            <SubmitButton variant="danger" block>
-              {t("archive")}
-            </SubmitButton>
-          </form>
-        )}
+        <div className="flex flex-col gap-3 border-t border-sand pt-4">
+          {active && (
+            <Link href={`/pipeline/${deal.id}/modifier`} className={buttonClasses("secondary", true)}>
+              {t("edit")}
+            </Link>
+          )}
+          {!deal.archived_at && (
+            <form action={archiveDeal}>
+              <input type="hidden" name="locale" value={locale} />
+              <input type="hidden" name="back" value={back} />
+              <input type="hidden" name="id" value={deal.id} />
+              <SubmitButton variant="danger" block>
+                {t("archive")}
+              </SubmitButton>
+            </form>
+          )}
+        </div>
       </div>
 
       {next && active && (
-        <BottomBar>
+        <BottomBar className="lg:hidden">
           <StageButton
             dealId={deal.id}
             stage={{ id: next.id, kind: next.kind, label: label(next.name) }}

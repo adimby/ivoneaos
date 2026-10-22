@@ -23,7 +23,7 @@ export default async function NewContactPage({ params }: Props) {
     getFavouriteCountries(workspace.id),
   ]);
   return (
-    <div className="flex flex-1 flex-col gap-5">
+    <div className="flex flex-1 flex-col gap-5 md:max-w-2xl">
       <Link href="/contacts" className="inline-flex min-h-11 items-center self-start text-base font-semibold text-lagoon">
         ← {t("backToList")}
       </Link>

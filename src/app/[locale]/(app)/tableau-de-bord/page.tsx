@@ -26,6 +26,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/tableau-
 
 // Accueil : 4 blocs (encaissé ce mois-ci, factures en attente, opportunités ouvertes par
 // étape, rappels du jour) et la liste de démarrage, en tête tant qu'elle n'est pas finie.
+// Tablette et ordinateur : les 4 blocs en grille de deux colonnes.
 export default async function DashboardPage({ params }: PageProps<"/[locale]/tableau-de-bord">) {
   const locale = (await params).locale as Locale;
   const workspace = await requireWorkspace(locale);
@@ -62,7 +63,7 @@ export default async function DashboardPage({ params }: PageProps<"/[locale]/tab
         <div className="h-full rounded-full bg-turquoise" style={{ width: `${(doneCount / items.length) * 100}%` }} />
       </div>
       {allDone && <p className="text-sm font-semibold text-success">{t("checklist.allDone")}</p>}
-      <ol className="flex flex-col gap-2">
+      <ol className="flex flex-col gap-2 lg:grid lg:grid-cols-2">
         {items.map((item) => (
           <li key={item.key}>
             <Link
@@ -125,7 +126,7 @@ export default async function DashboardPage({ params }: PageProps<"/[locale]/tab
 
       {!allDone && checklist}
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-4" data-testid="dash-blocks">
         <ActivityBlocks summary={summary} locale={locale} next={{ hasContact, hasQuote: quote, papiConnected, whopConnected: whopAccount === undefined ? null : whopAccount?.status === "connected" }} />
         <TodayReminders workspaceId={workspace.id} locale={locale} />
       </div>

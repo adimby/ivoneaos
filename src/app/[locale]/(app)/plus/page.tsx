@@ -11,7 +11,9 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/plus">):
 }
 
 // Menu « Plus » en page : pour les navigateurs sans API Popover, ou avant le chargement
-// du JavaScript (l'onglet « Plus » est alors un simple lien).
+// du JavaScript (l'onglet « Plus » est alors un simple lien). Ordinateur : la navigation de
+// gauche contient déjà tout, la page le dit au lieu de répéter le menu (lien gardé ou
+// fenêtre agrandie).
 export default async function MorePage({ params }: PageProps<"/[locale]/plus">) {
   const { locale } = await params;
   return <MoreContent locale={locale} />;
@@ -20,9 +22,10 @@ export default async function MorePage({ params }: PageProps<"/[locale]/plus">) 
 function MoreContent({ locale }: { locale: string }) {
   const t = useTranslations("Nav");
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex w-full max-w-md flex-col gap-4">
       <h1 className="text-2xl font-bold text-lagoon">{t("more")}</h1>
-      <Card className="p-2">
+      <p className="hidden text-base text-ink-muted lg:block">{t("moreInSidebar")}</p>
+      <Card className="p-2 lg:hidden">
         <nav aria-label={t("more")}>
           <MoreMenu locale={locale} />
         </nav>

@@ -171,7 +171,8 @@ export function OnboardingForm({
         </p>
       </div>
 
-      <div className="sticky bottom-0 -mx-4 mt-6 flex flex-col gap-3 border-t border-sand/70 bg-spray/95 px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur">
+      {/* Tablette et ordinateur (carte centrée) : boutons en fin de carte, pas de barre collée. */}
+      <div className="sticky bottom-0 -mx-4 mt-6 flex flex-col gap-3 border-t border-sand/70 bg-spray/95 px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur md:static md:mx-0 md:border-t-0 md:bg-transparent md:px-0 md:pt-0 md:pb-0 md:backdrop-blur-none">
         <div aria-live="polite">
           {state.formError && !pending && <Alert tone="error">{formErrorMessage(tAll, state.formError)}</Alert>}
         </div>

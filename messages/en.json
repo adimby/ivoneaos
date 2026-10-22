@@ -199,7 +199,11 @@
     "more": "More",
     "contacts": "Contacts",
     "settings": "Settings",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "dashboard": "Dashboard",
+    "billing": "Quotes and invoices",
+    "skip": "Skip to main content",
+    "moreInSidebar": "On a wide screen, everything is in the menu on the left: contacts, settings, language and sign out."
   },
   "Dashboard": {
     "metaTitle": "Home",
@@ -539,7 +543,13 @@
       "title": "History",
       "empty": "No exchange logged yet."
     },
-    "truncated": "Showing {shown} of {total} contacts: refine your search to find the others."
+    "truncated": "Showing {shown} of {total} contacts: refine your search to find the others.",
+    "columns": {
+      "name": "Name",
+      "company": "Company",
+      "reach": "Phone or email",
+      "tags": "Tags"
+    }
   },
   "Deals": {
     "metaTitle": "Pipeline",
@@ -939,7 +949,17 @@
     },
     "whop": {
       "failed": "Invoice sent, but Whop could not prepare the card payment: the “Pay by card” button will try again when your client opens the invoice. {manual, select, yes {Your client also sees your direct payment details.} other {Add your bank details in Settings so your client can pay you directly.}}"
-    }
+    },
+    "columns": {
+      "number": "Number",
+      "client": "Client",
+      "amount": "Amount",
+      "due": "Due date",
+      "validity": "Valid until",
+      "status": "Status"
+    },
+    "noDue": "No due date to track",
+    "noValidity": "No expiry date"
   },
   "Pdf": {
     "lang": "en",

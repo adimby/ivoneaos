@@ -49,7 +49,7 @@ export default async function PlanPage({ params }: Props) {
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-5">
+    <div className="flex flex-1 flex-col gap-5 md:max-w-4xl">
       <Link href="/reglages" className="inline-flex min-h-11 items-center self-start text-base font-semibold text-lagoon">
         ← {t("backToSettings")}
       </Link>
@@ -98,7 +98,7 @@ export default async function PlanPage({ params }: Props) {
         <h2 id="offers-title" className="text-lg font-bold text-lagoon">
           {t("offers")}
         </h2>
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-3 md:grid md:grid-cols-2 xl:grid-cols-4">
           {PLANS.map((p) => {
             const limits = PLAN_LIMITS[p];
             return (

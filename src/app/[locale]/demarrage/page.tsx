@@ -41,12 +41,17 @@ function Shell({ controls, children }: { controls: ReactNode; children: ReactNod
     <div className="flex min-h-dvh flex-col">
       <header className="on-dark bg-lagoon pt-safe text-white">
         {/* Langue et déconnexion : possibles avant la fin de l'accueil (mauvais compte, langue). */}
-        <div className="px-safe mx-auto flex h-14 w-full max-w-md items-center justify-between gap-2">
+        <div className="px-safe mx-auto flex h-14 w-full max-w-md items-center justify-between gap-2 md:max-w-6xl md:px-8">
           <Brand />
           {controls}
         </div>
       </header>
-      <main className="px-safe mx-auto flex w-full max-w-md flex-1 flex-col pt-5">{children}</main>
+      {/* Tablette et ordinateur : carte centrée, pas une colonne de téléphone étirée. */}
+      <main className="px-safe mx-auto flex w-full max-w-md flex-1 flex-col pt-5 md:max-w-xl md:py-12">
+        <div className="flex flex-1 flex-col md:flex-none md:rounded-card md:border md:border-sand/70 md:bg-sand-light md:p-8 md:shadow-card">
+          {children}
+        </div>
+      </main>
     </div>
   );
 }

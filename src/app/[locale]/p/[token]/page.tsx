@@ -73,7 +73,7 @@ async function PublicDocument({ params, searchParams }: Props) {
       madeWith={tDoc("madeWith")}
       bottom={
         canPayOnline ? (
-          <div className="sticky bottom-0 z-10 -mx-4 mt-auto border-t border-sand/70 bg-spray/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
+          <div className="sticky bottom-0 z-10 -mx-4 mt-auto border-t border-sand/70 bg-spray/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur md:-mx-8 md:px-8">
             <a
               href={`/${locale}/p/${token}/${byCard ? "carte" : "payer"}`}
               rel="nofollow noreferrer"
@@ -88,7 +88,7 @@ async function PublicDocument({ params, searchParams }: Props) {
           canAccept && (
           <form
             action={acceptQuotePublic}
-            className="sticky bottom-0 z-10 -mx-4 mt-auto border-t border-sand/70 bg-spray/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur"
+            className="sticky bottom-0 z-10 -mx-4 mt-auto border-t border-sand/70 bg-spray/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur md:-mx-8 md:px-8"
           >
             <input type="hidden" name="locale" value={locale} />
             <input type="hidden" name="token" value={token} />
@@ -277,7 +277,7 @@ async function PublicDocument({ params, searchParams }: Props) {
 
 function Skeleton() {
   return (
-    <div className="px-safe mx-auto flex w-full max-w-md flex-col gap-4 pt-16" aria-busy="true">
+    <div className="px-safe mx-auto flex w-full max-w-md flex-col gap-4 pt-16 md:max-w-2xl md:px-8" aria-busy="true">
       <div className="h-8 w-2/3 animate-pulse rounded-lg bg-sand/60" />
       <div className="h-40 animate-pulse rounded-card bg-sand/40" />
       <div className="h-24 animate-pulse rounded-card bg-sand/40" />

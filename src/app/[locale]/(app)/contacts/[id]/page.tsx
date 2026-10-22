@@ -31,6 +31,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 // Fiche contact : joindre (appel, WhatsApp, e-mail), rappels, opportunités, historique.
+// Ordinateur : deux colonnes (fiche, joindre et rappels à gauche ; opportunités, échanges
+// et historique à droite), dans l'ordre du téléphone : lecture et focus inchangés.
 export default async function ContactPage({ params }: Props) {
   const { locale: rawLocale, id } = await params;
   const locale = rawLocale as Locale;
@@ -53,124 +55,141 @@ export default async function ContactPage({ params }: Props) {
   const quickAction = "flex min-h-16 flex-1 flex-col items-center justify-center gap-1 rounded-xl border border-sand/70 bg-white px-2 text-sm font-semibold text-lagoon hover:border-lagoon";
 
   return (
-    <div className="flex flex-1 flex-col gap-6">
-      <Link href="/contacts" className="inline-flex min-h-11 items-center self-start text-base font-semibold text-lagoon">
-        ← {t("backToList")}
-      </Link>
+    <div className="flex flex-1 flex-col gap-6 lg:grid lg:grid-cols-2 lg:content-start lg:items-start lg:gap-x-10">
+      <div className="flex flex-col gap-6 lg:col-span-2">
+        <Link href="/contacts" className="inline-flex min-h-11 items-center self-start text-base font-semibold text-lagoon">
+          ← {t("backToList")}
+        </Link>
 
-      {contact.archived_at && (
-        <UndoBanner kind="contact" id={contact.id} message={t("archived", { name: contact.name })} undoLabel={t("restore")} back={back} />
-      )}
-
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold break-words text-lagoon">{contact.name}</h1>
-        {contact.company_name && <p className="text-base text-ink-muted">{contact.company_name}</p>}
-        <div className="flex flex-wrap gap-1.5">
-          {contact.kind === "company" && <Badge tone="neutral">{t("kind.company")}</Badge>}
-          {contact.tags.map((tag) => (
-            <Badge key={tag}>{tag}</Badge>
-          ))}
-        </div>
-        {(contact.phone || contact.email) && (
-          <p className="flex flex-col text-base text-ink">
-            {contact.phone && <span>{formatPhone(contact.phone)}</span>}
-            {contact.email && <span className="break-all">{contact.email}</span>}
-          </p>
+        {contact.archived_at && (
+          <UndoBanner kind="contact" id={contact.id} message={t("archived", { name: contact.name })} undoLabel={t("restore")} back={back} />
         )}
       </div>
 
-      <div className="flex gap-2">
-        {contact.phone && (
-          <>
-            <a href={telHref(contact.phone)} className={quickAction}>
-              <PhoneIcon className="size-5" />
-              {t("call")}
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-bold break-words text-lagoon">{contact.name}</h1>
+          {contact.company_name && <p className="text-base text-ink-muted">{contact.company_name}</p>}
+          <div className="flex flex-wrap gap-1.5">
+            {contact.kind === "company" && <Badge tone="neutral">{t("kind.company")}</Badge>}
+            {contact.tags.map((tag) => (
+              <Badge key={tag}>{tag}</Badge>
+            ))}
+          </div>
+          {(contact.phone || contact.email) && (
+            <p className="flex flex-col text-base text-ink">
+              {contact.phone && <span>{formatPhone(contact.phone)}</span>}
+              {contact.email && <span className="break-all">{contact.email}</span>}
+            </p>
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          {contact.phone && (
+            <>
+              <a href={telHref(contact.phone)} className={quickAction}>
+                <PhoneIcon className="size-5" />
+                {t("call")}
+              </a>
+              <a href={whatsappHref(contact.phone)} target="_blank" rel="noopener noreferrer" className={quickAction}>
+                <ChatIcon className="size-5" />
+                {t("whatsapp")}
+              </a>
+            </>
+          )}
+          {contact.email && (
+            <a href={`mailto:${contact.email}`} className={quickAction}>
+              <MailIcon className="size-5" />
+              {t("sendEmail")}
             </a>
-            <a href={whatsappHref(contact.phone)} target="_blank" rel="noopener noreferrer" className={quickAction}>
-              <ChatIcon className="size-5" />
-              {t("whatsapp")}
-            </a>
-          </>
+          )}
+        </div>
+
+        {active && (
+          <Card aria-labelledby="reminders-title" className="flex flex-col gap-4">
+            <h2 id="reminders-title" className="flex items-center gap-2 text-lg font-bold text-lagoon">
+              <BellIcon className="size-5 text-turquoise" />
+              {tAll("Reminders.remindMe")}
+            </h2>
+            {reminders.length > 0 && <ReminderList reminders={reminders} locale={locale} back={back} now={now} />}
+            <ReminderForm
+              about={{ contactId: contact.id }}
+              back={back}
+              defaultTitle={tAll("Reminders.defaultTitle", { name: contact.name })}
+              minDate={toLocalInputValue(now)}
+            />
+          </Card>
         )}
-        {contact.email && (
-          <a href={`mailto:${contact.email}`} className={quickAction}>
-            <MailIcon className="size-5" />
-            {t("sendEmail")}
-          </a>
+      </div>
+
+      <div className="flex flex-col gap-6">
+        <section aria-labelledby="deals-title" className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 id="deals-title" className="text-lg font-bold text-lagoon">
+              {t("deals.title")}
+            </h2>
+            {/* Ordinateur : l'action de la barre du bas (masquée) vient ici. */}
+            {active && (
+              <div className="hidden lg:block">
+                <Link href={`/pipeline/nouveau?contact=${contact.id}`} className={buttonClasses("primary", false, "whitespace-nowrap")}>
+                  <PlusIcon className="size-5" />
+                  {t("deals.new")}
+                </Link>
+              </div>
+            )}
+          </div>
+          {deals.length === 0 ? (
+            <p className="text-base text-ink-muted">{t("deals.empty")}</p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {deals.map((deal) => {
+                const stage = stages.find((s) => s.id === deal.stage_id);
+                return (
+                  <li key={deal.id}>
+                    <DealCard deal={deal} locale={locale} noAmount={tAll("Deals.noAmount")} extra={stage ? stageLabel(tAll, stage.name) : undefined} />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        {active && (
+          <Card aria-labelledby="activity-title" className="flex flex-col gap-4">
+            <h2 id="activity-title" className="text-lg font-bold text-lagoon">
+              {tAll("Activities.title")}
+            </h2>
+            <ActivityForm about={{ contactId: contact.id }} back={back} now={toLocalInputValue(now)} />
+          </Card>
+        )}
+
+        <section aria-labelledby="history-title" className="flex flex-col gap-3">
+          <h2 id="history-title" className="text-lg font-bold text-lagoon">
+            {t("history.title")}
+          </h2>
+          <Timeline activities={activities} total={activityTotal} locale={locale} empty={t("history.empty")} showDeal />
+        </section>
+
+        {active && (
+          <div className="flex flex-col gap-3 border-t border-sand pt-4">
+            <Link href={`/contacts/${contact.id}/modifier`} className={buttonClasses("secondary", true)}>
+              {t("edit")}
+            </Link>
+            <form action={archiveContact} className="flex flex-col gap-1">
+              <input type="hidden" name="locale" value={locale} />
+              <input type="hidden" name="back" value={back} />
+              <input type="hidden" name="id" value={contact.id} />
+              <SubmitButton variant="danger" block>
+                {t("archive")}
+              </SubmitButton>
+              <p className="text-center text-sm text-ink-muted">{t("archiveHint")}</p>
+            </form>
+          </div>
         )}
       </div>
 
       {active && (
-        <Card aria-labelledby="reminders-title" className="flex flex-col gap-4">
-          <h2 id="reminders-title" className="flex items-center gap-2 text-lg font-bold text-lagoon">
-            <BellIcon className="size-5 text-turquoise" />
-            {tAll("Reminders.remindMe")}
-          </h2>
-          {reminders.length > 0 && <ReminderList reminders={reminders} locale={locale} back={back} now={now} />}
-          <ReminderForm
-            about={{ contactId: contact.id }}
-            back={back}
-            defaultTitle={tAll("Reminders.defaultTitle", { name: contact.name })}
-            minDate={toLocalInputValue(now)}
-          />
-        </Card>
-      )}
-
-      <section aria-labelledby="deals-title" className="flex flex-col gap-3">
-        <h2 id="deals-title" className="text-lg font-bold text-lagoon">
-          {t("deals.title")}
-        </h2>
-        {deals.length === 0 ? (
-          <p className="text-base text-ink-muted">{t("deals.empty")}</p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {deals.map((deal) => {
-              const stage = stages.find((s) => s.id === deal.stage_id);
-              return (
-                <li key={deal.id}>
-                  <DealCard deal={deal} locale={locale} noAmount={tAll("Deals.noAmount")} extra={stage ? stageLabel(tAll, stage.name) : undefined} />
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-
-      {active && (
-        <Card aria-labelledby="activity-title" className="flex flex-col gap-4">
-          <h2 id="activity-title" className="text-lg font-bold text-lagoon">
-            {tAll("Activities.title")}
-          </h2>
-          <ActivityForm about={{ contactId: contact.id }} back={back} now={toLocalInputValue(now)} />
-        </Card>
-      )}
-
-      <section aria-labelledby="history-title" className="flex flex-col gap-3">
-        <h2 id="history-title" className="text-lg font-bold text-lagoon">
-          {t("history.title")}
-        </h2>
-        <Timeline activities={activities} total={activityTotal} locale={locale} empty={t("history.empty")} showDeal />
-      </section>
-
-      {active && (
-        <div className="flex flex-col gap-3 border-t border-sand pt-4">
-          <Link href={`/contacts/${contact.id}/modifier`} className={buttonClasses("secondary", true)}>
-            {t("edit")}
-          </Link>
-          <form action={archiveContact} className="flex flex-col gap-1">
-            <input type="hidden" name="locale" value={locale} />
-            <input type="hidden" name="back" value={back} />
-            <input type="hidden" name="id" value={contact.id} />
-            <SubmitButton variant="danger" block>
-              {t("archive")}
-            </SubmitButton>
-            <p className="text-center text-sm text-ink-muted">{t("archiveHint")}</p>
-          </form>
-        </div>
-      )}
-
-      {active && (
-        <BottomBar>
+        <BottomBar className="lg:hidden">
           <Link href={`/pipeline/nouveau?contact=${contact.id}`} className={buttonClasses("primary", true)}>
             <PlusIcon className="size-5" />
             {t("deals.new")}

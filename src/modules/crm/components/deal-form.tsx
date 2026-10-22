@@ -141,7 +141,7 @@ export function DealForm({
       </Field>
 
       <BottomBar>
-        <div aria-live="polite">
+        <div aria-live="polite" className="md:basis-full">
           {state.formError && !pending && <Alert tone="error">{formErrorMessage(tAll, state.formError)}</Alert>}
         </div>
         <SubmitButton pending={pending} disabled={!hydrated} block>

@@ -9,7 +9,7 @@ import { cn } from "@/components/ui/cn";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { localDate } from "@/lib/time";
-import { DocumentCard } from "@/modules/billing/components/document-card";
+import { DocumentCard, documentColumns } from "@/modules/billing/components/document-card";
 import { listInvoices, listQuotes } from "@/modules/billing/queries";
 import { invoiceDisplayStatus, quoteDisplayStatus } from "@/modules/billing/status";
 import { formatDay } from "@/modules/billing/view";
@@ -24,6 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 // Onglet « Factures » : factures et devis, en deux vues (liens, sans JavaScript).
+// Ordinateur : listes en colonnes et action « Nouveau… » en haut à droite.
 export default async function BillingPage({ params, searchParams }: Props) {
   const locale = (await params).locale as Locale;
   const workspace = await requireWorkspace(locale);
@@ -36,12 +37,22 @@ export default async function BillingPage({ params, searchParams }: Props) {
     { key: "invoices", href: "/factures", label: t("tabs.invoices") },
     { key: "quotes", href: "/factures?vue=devis", label: t("tabs.quotes") },
   ] as const;
+  const newHref = view === "quotes" ? "/devis/nouveau" : "/factures/nouvelle";
+  const newLabel = view === "quotes" ? t("newQuote") : t("newInvoice");
 
   return (
     <div className="flex flex-1 flex-col gap-5">
-      <h1 className="text-2xl font-bold text-lagoon">{t("title")}</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold text-lagoon">{t("title")}</h1>
+        <div className="hidden lg:block">
+          <Link href={newHref} className={buttonClasses("primary")}>
+            <PlusIcon className="size-5" />
+            {newLabel}
+          </Link>
+        </div>
+      </div>
       {query.ok === "deleted" && <Alert tone="success">{t("notices.deleted")}</Alert>}
-      <nav aria-label={t("tabs.label")} className="grid grid-cols-2 gap-1 rounded-xl bg-sand-light p-1">
+      <nav aria-label={t("tabs.label")} className="grid grid-cols-2 gap-1 rounded-xl bg-sand-light p-1 md:max-w-sm">
         {tabs.map((tab) => (
           <Link
             key={tab.key}
@@ -59,10 +70,10 @@ export default async function BillingPage({ params, searchParams }: Props) {
 
       {view === "quotes" ? <QuoteList workspaceId={workspace.id} locale={locale} today={today} /> : <InvoiceList workspaceId={workspace.id} locale={locale} today={today} />}
 
-      <BottomBar>
-        <Link href={view === "quotes" ? "/devis/nouveau" : "/factures/nouvelle"} className={buttonClasses("primary", true)}>
+      <BottomBar className="lg:hidden">
+        <Link href={newHref} className={buttonClasses("primary", true)}>
           <PlusIcon className="size-5" />
-          {view === "quotes" ? t("newQuote") : t("newInvoice")}
+          {newLabel}
         </Link>
       </BottomBar>
     </div>
@@ -75,6 +86,7 @@ async function QuoteList({ workspaceId, locale, today }: { workspaceId: string; 
   return (
     <>
       {total > quotes.length && <p className="text-sm text-ink-muted">{t("truncated", { shown: quotes.length, total })}</p>}
+      <ColumnHeaders labels={[t("columns.number"), t("columns.client"), t("columns.amount"), t("columns.validity"), t("columns.status")]} />
       <ul className="flex flex-col gap-2">
         {quotes.map((q) => (
           <li key={q.id}>
@@ -89,6 +101,9 @@ async function QuoteList({ workspaceId, locale, today }: { workspaceId: string; 
               currency={q.currency}
               locale={locale}
               detail={q.valid_until ? t("validUntil", { date: formatDay(q.valid_until, locale) }) : undefined}
+              date={q.valid_until ? formatDay(q.valid_until, locale) : undefined}
+              noDateLabel={t("noValidity")}
+              table
             />
           </li>
         ))}
@@ -103,6 +118,7 @@ async function InvoiceList({ workspaceId, locale, today }: { workspaceId: string
   return (
     <>
       {total > invoices.length && <p className="text-sm text-ink-muted">{t("truncated", { shown: invoices.length, total })}</p>}
+      <ColumnHeaders labels={[t("columns.number"), t("columns.client"), t("columns.amount"), t("columns.due"), t("columns.status")]} />
       <ul className="flex flex-col gap-2">
         {invoices.map((i) => (
           <li key={i.id}>
@@ -116,12 +132,31 @@ async function InvoiceList({ workspaceId, locale, today }: { workspaceId: string
               total={i.total}
               currency={i.currency}
               locale={locale}
-              detail={i.due_on && i.status !== "paid" && i.status !== "cancelled" ? t("dueOn", { date: formatDay(i.due_on, locale) }) : undefined}
+              detail={showDue(i) ? t("dueOn", { date: formatDay(i.due_on, locale) }) : undefined}
+              date={showDue(i) ? formatDay(i.due_on, locale) : undefined}
+              noDateLabel={t("noDue")}
+              table
             />
           </li>
         ))}
       </ul>
     </>
+  );
+}
+
+// Échéance affichée tant que la facture reste à payer.
+function showDue<T extends { due_on: string | null; status: string }>(i: T): i is T & { due_on: string } {
+  return i.due_on !== null && i.status !== "paid" && i.status !== "cancelled";
+}
+
+// Grand écran (xl) : en-têtes des colonnes, visuels seulement (chaque ligne est un lien lu en entier).
+function ColumnHeaders({ labels }: { labels: string[] }) {
+  return (
+    <div aria-hidden="true" className={cn(documentColumns, "-mb-3 hidden px-4 text-xs font-semibold tracking-wide text-ink-muted uppercase xl:grid")}>
+      {labels.map((label) => (
+        <span key={label}>{label}</span>
+      ))}
+    </div>
   );
 }
 

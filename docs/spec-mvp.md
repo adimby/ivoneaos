@@ -11,7 +11,11 @@ Principes :
 - Papi est branché **par freelance** : chacun colle sa propre clé Papi, chiffrée côté serveur. Ivonea OS ne touche jamais l'argent.
 - Montants en entiers `bigint` : ariary pour MGA, centimes pour EUR/USD. Jamais de flottants.
 - PDF généré côté serveur (`@react-pdf/renderer`) et stocké.
-- Interface en français (défaut) ou anglais, mobile d'abord (360 px, une main), séparateur de milliers = espace.
+- Interface en français (défaut) ou anglais, séparateur de milliers = espace. Usage principal sur ordinateur
+  (navigation à gauche, listes en colonnes, pipeline en kanban, fiches en deux colonnes) ; téléphone parfait
+  (360 px, une main, barre d'onglets et action principale en bas) ; tablette entre les deux (contenu élargi,
+  onglets en bas). Mise en page en CSS seulement (Tailwind md / lg / xl, requêtes de conteneur
+  quand un bloc dépend de sa place réelle) ; petit portable (1024 px) : kanban en 3 × 2, listes de devis et factures en cartes.
 - Portfolio, assistant IA, prospection LinkedIn/Facebook, SMS : **V2, hors MVP**.
 
 ## Parcours (deviennent les tests E2E)

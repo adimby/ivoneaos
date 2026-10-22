@@ -50,7 +50,8 @@ export function ProfileForm({
         {state.formError && <Alert tone="error">{formErrorMessage(tErrors, state.formError)}</Alert>}
         {state.status === "saved" && !pending && <Alert tone="success">{t("saved")}</Alert>}
       </div>
-      <SubmitButton pending={pending} disabled={!hydrated} block>
+      {/* Ordinateur : bouton à sa taille, aligné à droite sous les champs. */}
+      <SubmitButton pending={pending} disabled={!hydrated} block className="lg:w-auto lg:self-end">
         {t("save")}
       </SubmitButton>
     </form>
