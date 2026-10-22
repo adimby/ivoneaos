@@ -47,17 +47,21 @@ export function PublicShell({
 }
 
 // Jetons de l'application remplacés par la marque (mêmes règles que le PDF : couleur
-// principale lisible sur fond clair, texte blanc ou noir sur les aplats).
+// principale lisible sur fond clair, texte blanc ou noir sur les aplats). Turquoise : sur
+// cette page, seulement le badge de statut, en couleur principale sur sa teinte pâle.
 function brandStyle(brand: Brand): CSSProperties {
-  const { primary, onPrimary, accent, onAccent, accentEdge } = brandColors(brand);
+  const { primary, onPrimary, primarySoft, accent, onAccent, accentPressed, accentEdge } = brandColors(brand);
   return {
     "--color-lagoon": primary,
     "--color-on-lagoon": onPrimary,
     "--color-chrome": primary,
     "--color-on-chrome": onPrimary,
     "--color-on-chrome-muted": onPrimary,
+    "--color-turquoise": primarySoft,
+    "--color-turquoise-soft": primarySoft,
+    "--color-on-turquoise": primary,
     "--color-terracotta": accent,
-    "--color-terracotta-dark": accent,
+    "--color-terracotta-dark": accentPressed,
     "--color-on-terracotta": onAccent,
     "--color-terracotta-edge": accentEdge ?? "transparent",
     fontFamily: FONT_FAMILIES[brand.font].css,

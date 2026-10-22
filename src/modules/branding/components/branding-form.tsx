@@ -95,7 +95,7 @@ export function BrandingForm({
   const error = (field: string) => (state.fieldErrors?.[field] ? tErrors(state.fieldErrors[field]) : undefined);
   const primaryHex = normalizeHex(primary);
   const accentHex = normalizeHex(accent);
-  // Contrôle immédiat (le serveur revérifie) : couleur principale lisible sur fond blanc.
+  // Contrôle immédiat (le serveur revérifie) : couleur principale lisible sur les fonds clairs.
   const primaryProblem = !primaryHex ? "color_format" : !isReadablePrimary(primaryHex) ? "primary_contrast" : null;
   const shownBanner = bannerPreview ?? (removeBanner ? null : bannerUrl);
 
@@ -280,7 +280,7 @@ export function BrandingForm({
                 <span className="flex flex-col">
                   <span className="text-base font-semibold text-ink">{t(`font.${value}`)}</span>
                   <span className="text-lg text-ink-muted" style={{ fontFamily: FONT_FAMILIES[value].css }}>
-                    {FONT_FAMILIES[value].family} · {t("font.sample", { amount: formatMoney(450000, "MGA", locale) })}
+                    {t("font.sample", { amount: formatMoney(450000, "MGA", locale) })}
                   </span>
                 </span>
               </label>
@@ -426,6 +426,7 @@ export function BrandPreview({
   sampleYear: number;
 }) {
   const t = useTranslations("Branding.preview");
+  const tColumns = useTranslations("Pdf.columns");
   const locale = useLocale();
   const money = (amount: number) => formatMoney(amount, "MGA", locale);
   // Même règle que le PDF : contour à la couleur principale si l'accent est trop pâle.
@@ -463,15 +464,21 @@ export function BrandPreview({
           {t("client")} · Rakoto
         </p>
         <div className="text-sm">
-          <div className="flex justify-between px-2 py-1 font-bold" style={{ backgroundColor: primary, color: readableTextOn(primary) }}>
+          {/* Tableau comme le PDF : en-tête sur la couleur principale, ligne sur fond blanc. */}
+          <div className="flex justify-between px-2 py-1 text-xs font-bold" style={{ backgroundColor: primary, color: readableTextOn(primary) }}>
+            <span>{tColumns("description")}</span>
+            <span>{tColumns("total")}</span>
+          </div>
+          <div className="flex justify-between border-b border-[#c9c5ba] bg-white px-2 py-1.5">
             <span>{t("line")}</span>
             <span>{money(450000)}</span>
           </div>
-          <div className="mt-1 flex justify-between px-2 py-1 font-bold" style={{ backgroundColor: primary, color: readableTextOn(primary) }}>
+          <div className="mt-2 flex justify-between px-2 py-1 font-bold" style={{ backgroundColor: primary, color: readableTextOn(primary) }}>
             <span>{t("total")}</span>
             <span>{money(450000)}</span>
           </div>
-          <div className="mt-1 flex justify-between px-2 py-1 font-bold" 
+          <div
+            className="mt-1 flex justify-between px-2 py-1 font-bold"
             style={{ backgroundColor: accent, color: readableTextOn(accent), boxShadow: accentEdge }}
           >
             <span>{t("due")}</span>

@@ -93,18 +93,52 @@ export function accentContrast(accent: string): number {
   return Math.min(...LIGHT_SURFACES.map((surface) => contrastRatio(accent, surface)));
 }
 
+// Mélange de deux couleurs « #RRGGBB » : weight = part de « target » (0 à 1).
+export function mixHex(color: string, target: string, weight: number): string {
+  const rgb = (hex: string) => [1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16));
+  const [a, b] = [rgb(color), rgb(target)];
+  return `#${a.map((v, i) => Math.round(v + (b[i] - v) * weight).toString(16).padStart(2, "0")).join("")}`.toUpperCase();
+}
+
+// Fond pâle de la couleur principale (badges, encadrés) : la teinte la plus colorée où la
+// couleur principale reste lisible en texte (4,5:1) ; le blanc l'est toujours.
+export function primarySoft(primary: string): string {
+  return [0.88, 0.92, 0.96].map((w) => mixHex(primary, "#FFFFFF", w)).find((soft) => contrastRatio(primary, soft) >= 4.5) ?? "#FFFFFF";
+}
+
+// Survol et appui du bouton à l'accent : 12 % plus foncé ; plus clair si le texte (noir)
+// n'y serait plus lisible. Le texte reste à au moins 4,5:1 sur les deux teintes.
+export function accentPressed(accent: string): string {
+  const text = readableTextOn(accent);
+  const darker = mixHex(accent, "#000000", 0.12);
+  return contrastRatio(darker, text) >= 4.5 ? darker : mixHex(accent, "#FFFFFF", 0.12);
+}
+
 // accentEdge : contour des éléments à l'accent, null s'il se distingue seul du fond (≥ 3:1).
-export type BrandColors = { primary: string; onPrimary: string; accent: string; onAccent: string; accentEdge: string | null };
+// primarySoft, accentPressed : page publique seulement (badge, survol du bouton).
+export type BrandColors = {
+  primary: string;
+  onPrimary: string;
+  primarySoft: string;
+  accent: string;
+  onAccent: string;
+  accentPressed: string;
+  accentEdge: string | null;
+};
 
 export function brandColors(brand: Pick<Brand, "primary" | "accent">): BrandColors {
   // Copie figée ancienne ou modifiée à la main : une couleur illisible revient au défaut.
   const primary = isReadablePrimary(brand.primary) ? brand.primary : DEFAULT_BRAND.primary;
+  const pressed = accentPressed(brand.accent);
   return {
     primary,
     onPrimary: readableTextOn(primary),
+    primarySoft: primarySoft(primary),
     accent: brand.accent,
     onAccent: readableTextOn(brand.accent),
-    accentEdge: accentContrast(brand.accent) >= 3 ? null : primary,
+    accentPressed: pressed,
+    // Teinte de survol comprise : le bouton ne perd pas son contour en l'éclaircissant.
+    accentEdge: Math.min(accentContrast(brand.accent), accentContrast(pressed)) >= 3 ? null : primary,
   };
 }
 

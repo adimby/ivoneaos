@@ -119,8 +119,10 @@ describe("PDF d'un document", () => {
     expect(brandColors(view.brand)).toEqual({
       primary: "#5B2B5E",
       onPrimary: "#FFFFFF",
+      primarySoft: "#EBE6EC",
       accent: "#F2C14E",
       onAccent: "#000000",
+      accentPressed: "#D5AA45",
       accentEdge: "#5B2B5E",
     });
     expect(await pdfText(await renderDocumentPdf(view, translator("fr")))).toContain("450 000 Ar");

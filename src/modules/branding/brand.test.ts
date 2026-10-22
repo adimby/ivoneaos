@@ -1,7 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { contrastRatio, readableTextOn } from "@/lib/contrast";
 import { checkBannerBytes, checkBannerFile } from "./banner";
-import { brandColors, COLOR_PRESETS, DEFAULT_BRAND, isReadablePrimary, LIGHT_SURFACES, normalizeHex, parseBrand } from "./brand";
+import {
+  accentPressed,
+  brandColors,
+  COLOR_PRESETS,
+  DEFAULT_BRAND,
+  isReadablePrimary,
+  LIGHT_SURFACES,
+  mixHex,
+  normalizeHex,
+  parseBrand,
+  primarySoft,
+} from "./brand";
 import { brandingSchema } from "./schema";
 
 const valid = {
@@ -21,14 +32,7 @@ describe("contraste", () => {
     expect(contrastRatio("#A45C36", "#FFFFFF")).toBeCloseTo(5.03, 1);
   });
   it("texte blanc ou noir : toujours au moins 4,5:1, quelle que soit la couleur", () => {
-    for (let r = 0; r < 256; r += 51) {
-      for (let g = 0; g < 256; g += 17) {
-        for (let b = 0; b < 256; b += 51) {
-          const hex = `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
-          expect(contrastRatio(hex, readableTextOn(hex)), hex).toBeGreaterThanOrEqual(4.5);
-        }
-      }
-    }
+    for (const hex of colorGrid()) expect(contrastRatio(hex, readableTextOn(hex)), hex).toBeGreaterThanOrEqual(4.5);
   });
 });
 
@@ -84,8 +88,10 @@ describe("image de marque", () => {
     expect(brandColors({ primary: "#FFFF00", accent: "#000000" })).toEqual({
       primary: DEFAULT_BRAND.primary,
       onPrimary: "#FFFFFF",
+      primarySoft: "#E1EAEB",
       accent: "#000000",
       onAccent: "#FFFFFF",
+      accentPressed: "#000000",
       accentEdge: null,
     });
   });
@@ -98,6 +104,56 @@ describe("image de marque", () => {
       const { accent, accentEdge } = brandColors(preset);
       const edge = accentEdge ?? accent;
       for (const surface of LIGHT_SURFACES) expect(contrastRatio(edge, surface)).toBeGreaterThanOrEqual(3);
+    }
+  });
+});
+
+// Échantillon de couleurs, du noir au blanc.
+function* colorGrid() {
+  for (let r = 0; r < 256; r += 51) {
+    for (let g = 0; g < 256; g += 17) {
+      for (let b = 0; b < 256; b += 51) yield `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`.toUpperCase();
+    }
+  }
+}
+
+describe("teintes dérivées de la marque", () => {
+  it("mélange de deux couleurs", () => {
+    expect(mixHex("#000000", "#FFFFFF", 0.5)).toBe("#808080");
+    expect(mixHex("#01515A", "#FFFFFF", 0)).toBe("#01515A");
+    expect(mixHex("#01515A", "#FFFFFF", 1)).toBe("#FFFFFF");
+    expect(mixHex("#A45C36", "#000000", 0.12)).toBe("#905130");
+  });
+
+  it("fond pâle de la couleur principale : teinte pâle, couleur principale et encre lisibles dessus", () => {
+    expect(primarySoft("#5B2B5E")).toBe("#EBE6EC");
+    for (const primary of colorGrid()) {
+      if (!isReadablePrimary(primary)) continue;
+      const soft = primarySoft(primary);
+      expect(contrastRatio(primary, soft), primary).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio("#0B2A2E", soft), primary).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("survol du bouton : 12 % plus foncé, texte lisible sur les deux teintes", () => {
+    expect(accentPressed("#A45C36")).toBe("#905130");
+    expect(accentPressed("#D4A24C")).toBe("#BB8F43");
+    for (const accent of colorGrid()) {
+      const text = readableTextOn(accent);
+      const pressed = accentPressed(accent);
+      expect(contrastRatio(pressed, text), accent).toBeGreaterThanOrEqual(4.5);
+      if (accent !== "#000000") expect(pressed, accent).not.toBe(accent);
+    }
+  });
+
+  it("le contour d'un accent pâle tient aussi sur sa teinte de survol", () => {
+    for (const accent of colorGrid()) {
+      const { accentEdge, accentPressed: pressed } = brandColors({ primary: "#01515A", accent });
+      if (accentEdge) continue;
+      for (const surface of LIGHT_SURFACES) {
+        expect(contrastRatio(accent, surface), accent).toBeGreaterThanOrEqual(3);
+        expect(contrastRatio(pressed, surface), accent).toBeGreaterThanOrEqual(3);
+      }
     }
   });
 });
