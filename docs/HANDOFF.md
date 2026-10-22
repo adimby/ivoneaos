@@ -237,6 +237,37 @@ Email OTP Length 6, limites de débit (calcul dans le README, « Mise en product
 Source : catalogue du document « Ivonea OS : cadrage produit » (vagues validées par Ivonea le 14/10),
 complété par les décisions prises ensuite. Statut au 22/10.
 
+### Les jalons définis
+
+Plan en 4 étapes validé le 14/10 (fil « Help me work out a plan for a project ») :
+
+| Jalon | Contenu | État |
+| --- | --- | --- |
+| 1. Cadrer | Vision, cible, catalogue des fonctionnalités par vague, cycle B, deux circuits de paiement, offres | Fait (document « cadrage produit ») |
+| 2. Concevoir | Parcours P1 à P5, écrans, modèle de données, architecture, intégrations Papi et Whop | Fait (document « conception », validé le 14/10) |
+| 3. Construire le premier jalon (MVP) | Comptes, CRM et pipeline, rappels, devis et factures PDF, Papi, Whop, tableau de bord, limites Découverte | Fait et en ligne (PR #1 à #8, puis retours d'Ivonea PR #9 à #14) |
+| 4. Tester avec 5 à 10 freelances, puis étendre | Essai réel avec des testeurs (à recruter par Ivonea), puis V2 et V3 du catalogue ci-dessous | **Prochaine étape**, après les essais sur la vraie infrastructure (§ 6) |
+
+Ordre de construction du jalon 3 (document de conception) : dépôt et déploiement, migrations et RLS,
+comptes et accueil guidé (P1), CRM, pipeline et rappels (P3, P4), devis, factures et PDF, Papi (P2,
+P5), Whop, tableau de bord, puis essai avec les testeurs.
+
+Décisions de la conception qui fixent la suite :
+- Connexion par e-mail au premier jalon ; **connexion par SMS en V2** via Mapi (le moins cher, 48 à
+  96 Ar le SMS), par un hook d'envoi de SMS de Supabase Auth.
+- Langues : français et anglais, pas de malgache.
+- Tables prévues plus tard, accrochées à `workspace_id` : `subscriptions` et `billing_events`
+  (abonnements d'Ivonea OS), `portfolio_items` et `reviews` (niveau Lancer complet),
+  `prospecting_sequences` et `social_accounts` (V2), `projects` et `tasks` (gestion client).
+- Prospection automatisée (V2) : pas dans Vercel (durée des fonctions limitée) mais dans un service
+  de tâches séparé qui lit une file en base et applique quotas, délais aléatoires et heures ouvrées.
+- Nouveaux moyens de paiement (Payoneer…) : un adaptateur de plus derrière l'interface
+  `PaymentProvider` (`src/modules/payments/provider.ts`), sans toucher à la facturation.
+- Accès aux modules par niveau : une seule fonction `canUse(workspace, feature)`, que les abonnements
+  viendront alimenter.
+- Connexion lente : application installable (PWA) qui garde le tableau de bord en cache, prévue par
+  la conception mais **pas encore faite** (aucun manifeste ni service worker dans le code).
+
 ### Catalogue par vague
 
 | Module | Fonctionnalité | Vague | Statut |
@@ -262,7 +293,7 @@ complété par les décisions prises ensuite. Statut au 22/10.
 | Portefeuille | Solde consolidé par source, historique, rapprochement avec les factures | V2 | À faire |
 | Portefeuille | Encaissement international (Whop, Payoneer, crypto) | V2 | Whop fait (désactivé) ; Payoneer et crypto à faire |
 | Pilotage | Tableau de bord : CA, pipeline, taux de conversion, objectifs | MVP | Fait (encaissé, en attente, pipeline, rappels ; taux de conversion et objectifs à ajouter) |
-| Plateforme | Comptes, abonnement à l'outil, mobile d'abord, français et malgache | MVP | Comptes et offres faits (plan changé à la main) ; **malgache à faire** |
+| Plateforme | Comptes, abonnement à l'outil, mobile d'abord, langues | MVP | Comptes et offres faits (plan changé à la main). Malgache prévu au cadrage mais **écarté à la conception** : français et anglais seulement |
 
 Ajouts décidés pendant le développement, tous faits : NIF/STAT à la première facture, liste de tous
 les pays, version ordinateur et tablette, apparence de l'app, image de marque des documents,
