@@ -40,14 +40,19 @@ graphistes, développeurs, rédacteurs, community managers…).
 | --- | --- | --- |
 | Découverte (`decouverte`, défaut) | Gratuit | 20 contacts actifs, 3 devis + factures envoyés par mois, sans coaching |
 | Lancement (`lancement`) | 50 000 Ar/mois | Illimité. Coaching niveau 1 en option (1,5 M Ar/mois, groupe hebdo, sans garantie) |
-| Premier Client (`premier_client`, offre phare) | 2 M Ar/mois | + coaching groupe et individuel, relecture des devis, **5 rendez-vous qualifiés garantis en 90 jours** |
+| Premier Client (`premier_client`, offre phare) | 2 M Ar/mois | + messages de prospection par IA, calendrier de posts, coaching groupe hebdo et individuel tous les 15 jours, relecture des devis, **au moins 1 rendez-vous qualifié garanti en 90 jours** (le cadrage a été corrigé : ce n'est plus 5) |
 | Contrat Signé (`contrat_signe`) | 3 M Ar/mois | Tout, done-for-you, **premier contrat garanti en 90 jours**, sur candidature (entretien + évaluation), places limitées |
 
 - Pas de paiement d'abonnement dans l'app au MVP : le plan se change **à la main en base** (rôle
   serveur). Réglages > Offre affiche l'adresse `IVONEA_CONTACT_EMAIL` pour demander un changement.
-- Garanties : aucune ne rembourse en argent ; si la freelance a fait sa part (profil et portfolio en
-  2 semaines, 20 prospects/semaine dès le mois 2, 10 séances sur 12, conseils appliqués), coaching et
-  outil continuent gratuitement jusqu'à l'objectif. Le modèle de données permet de mesurer ces
+- Prix mensuels, pas de forfait 90 jours : les 90 jours sont l'objectif et la durée de la garantie.
+  Encaissement des offres : USD/EUR sur Whop si possible, sinon lien de paiement en Ariary.
+- Garanties : aucune ne rembourse en argent. Rendez-vous qualifié = prospect conforme au client idéal
+  défini avec le coach qui accepte un appel de découverte ; contrat signé = devis accepté d'un montant
+  minimum à fixer. Si la freelance a fait sa part (profil et portfolio validés avant la fin de la
+  semaine 2, 20 nouveaux prospects/semaine dès la semaine 5, 10 séances sur 12, 5 devis envoyés pour
+  Contrat Signé, recommandations du coach appliquées), coaching et outil continuent gratuitement
+  jusqu'à l'objectif, puis l'abonnement reprend. Le modèle de données permet de mesurer ces
   indicateurs (vues `guarantee_workspaces`, `guarantee_weekly`), sans module de coaching.
 
 ### Documents de conception (artifacts claude.ai, privés à Ivonea)
@@ -227,22 +232,78 @@ Email OTP Length 6, limites de débit (calcul dans le README, « Mise en product
 
 ---
 
-## 7. Feuille de route après le MVP
+## 7. Toutes les fonctionnalités validées (MVP et hors MVP)
 
-Hors MVP par décision (spec) : SMS (Mapi), avoirs, abonnements payants dans l'app, portfolio,
-prospection, projets/tâches, saisie hors ligne.
+Source : catalogue du document « Ivonea OS : cadrage produit » (vagues validées par Ivonea le 14/10),
+complété par les décisions prises ensuite. Statut au 22/10.
 
-Catalogue V2/V3 du cadrage (priorités à revalider avec Ivonea) :
-- **V2** : prospection LinkedIn/Facebook façon Walaxy/Lyncha avec garde-fous anti-blocage (quotas,
-  délais aléatoires, horaires ouvrés), messages par IA, calendrier et planification de posts
-  (livraison avancée, acceptée par Ivonea), assistant offre et client idéal, projets/tâches/temps,
-  import CSV et LinkedIn, relances automatiques d'impayés, portefeuille consolidé (Whop, Payoneer, crypto).
-- **V3** : recherche de missions, bibliothèque de contenus, portail client.
-- Idées non placées : réseau Ivonea (délégation, entraide), personal branding, portfolio public et
-  badges, avis clients et profil vérifié, contrats types, comparateur de voies de rapatriement,
-  PWA hors ligne, intégration WhatsApp, parrainage, mode équipe/agence.
-- Sécurité après MVP : CSP avec nonce à la place de `'unsafe-inline'` ; captcha Turnstile si abus de
-  connexion ; contrôle d'authenticité de la carte fiscale (mots « CARTE FISCALE », échantillon manuel).
+### Catalogue par vague
+
+| Module | Fonctionnalité | Vague | Statut |
+| --- | --- | --- | --- |
+| CRM et pipeline | Fiches contacts et entreprises, notes, historique des échanges | MVP | Fait |
+| CRM et pipeline | Pipeline en colonnes (prospect, contacté, appel, devis, gagné, perdu) | MVP | Fait (glisser-déposer en cours) |
+| CRM et pipeline | Rappels et tâches de relance | MVP | Fait |
+| CRM et pipeline | Import CSV et depuis LinkedIn (extension navigateur) | V2 | Import de contacts du téléphone fait ; CSV et LinkedIn à faire |
+| Prospection | Séquences LinkedIn façon Walaxy/Lyncha : visite, invitation, message, relances | V2 | À faire |
+| Prospection | Garde-fous anti-blocage : quotas par jour, délais aléatoires, horaires ouvrés, pause auto | V2 | À faire |
+| Prospection | Séquences e-mail avec relances et suivi d'ouverture | V2 | À faire |
+| Prospection | Messages personnalisés par IA à partir du profil du prospect | V2 (avancée, vendue dans Premier Client) | À faire |
+| Publication | Calendrier éditorial, planification de posts LinkedIn, Facebook, Instagram | V2 (avancée, vendue dans Premier Client) | À faire |
+| Publication | Bibliothèque de contenus et idées de posts par IA | V3 | À faire |
+| Recherche de missions | Agrégation d'offres (Upwork, Malt, groupes Facebook, sites locaux) avec alertes | V3 | À faire |
+| Recherche de missions | Candidature suivie dans le pipeline | V3 | À faire |
+| Fondations | Assistant offre et client idéal (IA), catalogue de services et tarifs | V2 | À faire |
+| Gestion client | Projets, tâches, suivi du temps | V2 | À faire |
+| Gestion client | Portail client : livrables, validation, paiement | V3 | À faire |
+| Facturation | Devis → factures, PDF, numérotation, Ariary et devises | MVP | Fait |
+| Facturation | Lien de paiement sur la facture (Papi) | MVP | Fait |
+| Facturation | Relances automatiques des impayés | V2 | À faire |
+| Portefeuille | Solde consolidé par source, historique, rapprochement avec les factures | V2 | À faire |
+| Portefeuille | Encaissement international (Whop, Payoneer, crypto) | V2 | Whop fait (désactivé) ; Payoneer et crypto à faire |
+| Pilotage | Tableau de bord : CA, pipeline, taux de conversion, objectifs | MVP | Fait (encaissé, en attente, pipeline, rappels ; taux de conversion et objectifs à ajouter) |
+| Plateforme | Comptes, abonnement à l'outil, mobile d'abord, français et malgache | MVP | Comptes et offres faits (plan changé à la main) ; **malgache à faire** |
+
+Ajouts décidés pendant le développement, tous faits : NIF/STAT à la première facture, liste de tous
+les pays, version ordinateur et tablette, apparence de l'app, image de marque des documents,
+vérification fiscale par OCR avec page admin, démarrage en 3 étapes.
+
+### Promesse élargie du cadrage (validée comme direction, vague non fixée)
+
+Issues de la section « Vision » du cadrage (« Trouve, décroche, livre, encaisse, grandis ») :
+- **Réseau Ivonea** : communauté, délégation et sous-traitance entre freelances, demande d'aide.
+- **Personal branding** : coach de marque, profil optimisé, idées de posts.
+- **Débutants** : missions d'entrée, portfolio public, badges de compétences vérifiés.
+- **Crédibilité** : portfolio public, avis clients, profil vérifié.
+- **Formation intégrée** : guides courts à chaque étape (fixer son prix, objections, rédiger un devis).
+- **Contrats types** : contrat de prestation et conditions de paiement (offre Lancement : « modèles de
+  messages et de contrats »).
+- **Rapatriement** : comparateur de voies de retrait (Whop, Payoneer, crypto, mobile money) avec frais
+  et délais.
+- **Mini-agences** (2 à 5 freelances) : niveau « Grandir ».
+- Le profil et le **portfolio** figurent dans l'offre Découverte et dans les conditions de garantie,
+  mais le portfolio n'est pas construit (exclu du MVP par la spec) : à prioriser avec Ivonea.
+
+### Idées proposées, jamais validées par Ivonea
+
+Suggérées par l'agent le 14/10, restées sans réponse : PWA hors ligne, intégration WhatsApp
+(au-delà du lien de partage déjà fait), KYC et protection anti-fraude, conformité fiscale et export
+comptable, suivi des taux de change, propositions et signature électronique avec acompte, parrainage,
+notifications push/WhatsApp, mode équipe/agence, statistiques d'efficacité, marketplace de
+freelances, séquestre, données de tarifs du marché. Ne pas les construire sans son accord.
+
+### Hors MVP confirmé par la spec
+
+SMS (Mapi), avoirs, paiement des abonnements dans l'app, portfolio, prospection, projets/tâches,
+saisie hors ligne. Sécurité après MVP : CSP avec nonce à la place de `'unsafe-inline'` ; captcha
+Turnstile si abus de connexion ; contrôle d'authenticité de la carte fiscale.
+
+### Côté Ivonea (hors code)
+
+Immatriculer l'entreprise (NIF, STAT) pour ouvrir les comptes marchands des abonnements ; trouver
+5 à 10 freelances testeurs ; créer dans Whop les produits Découverte, Lancement, Coaching niveau 1 et
+Premier Client (Contrat Signé : candidature par WhatsApp) ; mettre à jour la page
+https://ivonea.whop.site/ avec le dernier prompt (palette Océan).
 
 ---
 
