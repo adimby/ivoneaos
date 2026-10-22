@@ -71,34 +71,45 @@ test("Accessibilité des écrans principaux (fr) et de la page publique", async 
 // Palettes de l'application (src/modules/appearance/themes.ts), en clair et en sombre.
 const PALETTES = ["ocean", "foret", "prune", "corail", "ardoise", "sable"];
 
-// Une étape du démarrage : axe complet (WCAG 2.1 A et AA) en Océan clair, puis contraste
-// dans chaque palette, en clair et en sombre (attributs posés comme le fait le script de
-// tête), sans débordement à 360 px.
+// Une étape du démarrage, à 360 px puis à 1280 px (deux panneaux : la promesse à gauche) :
+// axe complet (WCAG 2.1 A et AA) en Océan clair, puis contraste dans chaque palette, en
+// clair et en sombre (attributs posés comme le fait le script de tête), sans débordement.
+// Mouvement réduit (voir le test) : les couleurs changent sans transition avant chaque
+// analyse.
 async function onboardingViolations(page: Page, step: string): Promise<string[]> {
   const tags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
-  const format = (label: string, violations: { id: string; impact?: string | null; help: string; nodes: { target: unknown[] }[] }[]) =>
-    violations.map((v) => `${step} ${label} ${v.id} (${v.impact}) : ${v.help} → ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`);
+  const found: string[] = [];
   const theme = (mode: string, palette: string) =>
     page.evaluate(([m, p]) => {
       document.documentElement.setAttribute("data-mode", m);
       document.documentElement.setAttribute("data-palette", p);
     }, [mode, palette]);
-  await theme("light", "ocean");
-  const found = format("ocean.light", (await new AxeBuilder({ page }).withTags(tags).analyze()).violations);
-  for (const palette of PALETTES) {
-    for (const mode of ["light", "dark"]) {
-      await theme(mode, palette);
-      found.push(...format(`${palette}.${mode}`, (await new AxeBuilder({ page }).withRules(["color-contrast"]).analyze()).violations));
+  for (const width of [360, 1280]) {
+    await page.setViewportSize({ width, height: width === 360 ? 780 : 800 });
+    const at = `${step} ${width} px`;
+    const format = (label: string, violations: { id: string; impact?: string | null; help: string; nodes: { target: unknown[] }[] }[]) =>
+      violations.map((v) => `${at} ${label} ${v.id} (${v.impact}) : ${v.help} → ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`);
+    if (width === 1280) await expect(page.getByTestId("onboarding-promise")).toBeVisible();
+    await theme("light", "ocean");
+    found.push(...format("ocean.light", (await new AxeBuilder({ page }).withTags(tags).analyze()).violations));
+    for (const palette of PALETTES) {
+      for (const mode of ["light", "dark"]) {
+        await theme(mode, palette);
+        found.push(...format(`${palette}.${mode}`, (await new AxeBuilder({ page }).withRules(["color-contrast"]).analyze()).violations));
+      }
     }
+    await theme("light", "ocean");
+    const scroll = await page.evaluate(() => document.documentElement.scrollWidth);
+    if (scroll > width) found.push(`${at} déborde : ${scroll} px de large`);
   }
-  await theme("light", "ocean");
-  const width = await page.evaluate(() => document.documentElement.scrollWidth);
-  if (width > 360) found.push(`${step} déborde : ${width} px de large`);
+  await page.setViewportSize({ width: 360, height: 780 });
   return found;
 }
 
-test("Accessibilité du démarrage : chaque étape, erreurs comprises, en clair, en sombre et dans les 6 palettes", async ({ page }) => {
-  test.setTimeout(180_000);
+test("Accessibilité du démarrage : chaque étape, erreurs comprises, à 360 et 1280 px, en clair, en sombre et dans les 6 palettes", async ({ page }) => {
+  test.setTimeout(300_000);
+  // Changements de palette sans transition : axe lit les couleurs finales.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   const stamp = Date.now();
   await page.goto("/fr/connexion");
   await signIn(page, `a11y-demarrage-${stamp}@example.test`);

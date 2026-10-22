@@ -9,8 +9,13 @@ import { cn } from "@/components/ui/cn";
 import { RequiredMark } from "@/components/ui/required-mark";
 import { SubmitButton } from "@/components/ui/submit-button";
 import type { FieldErrors } from "@/lib/forms";
+import { useHydrated } from "@/lib/use-hydrated";
 import { formErrorMessage } from "@/modules/workspace/components/profile-form";
+import type { StepState } from "../actions";
 import { ONBOARDING_STEPS, type OnboardingStep } from "../steps";
+
+// État de départ des étapes 1 et 2 (comparé par identité : rien encore envoyé).
+export const INITIAL_STATE: StepState = {};
 
 export const STEP_KEYS = { 1: "activity", 2: "profile", 3: "admin" } as const;
 const STEP_ICONS = { 1: WalletIcon, 2: InvoiceIcon, 3: ShieldIcon } as const;
@@ -71,41 +76,52 @@ export function Stepper({ step }: { step: OnboardingStep }) {
             <li key={n} aria-current={n === step ? "step" : undefined} className="flex-1">
               <span aria-hidden="true" className={cn("block h-1.5 rounded-full", n <= step ? "bg-lagoon" : "bg-sand")} />
               <span className="sr-only">
-                {t("stepLabel", { n })} : {name(n)}
+                {t("stepItem", { n, name: name(n) })}
                 {n < step && ` (${t("stepDone")})`}
               </span>
             </li>
           ))}
         </ol>
       </div>
-      <ol className="hidden items-center gap-3 md:flex">
+      {/* Grille : chaque étape à la largeur de son texte, les deux liaisons se partagent
+          le reste à parts égales (sous-grille : la liaison appartient à son étape). */}
+      <ol className="hidden items-center gap-3 md:grid md:grid-cols-[auto_minmax(1rem,1fr)_auto_minmax(1rem,1fr)_auto]">
         {ONBOARDING_STEPS.map((n) => {
           const Icon = STEP_ICONS[n];
           const done = n < step;
           const current = n === step;
           return (
-            <li key={n} aria-current={current ? "step" : undefined} className="flex items-center gap-3 not-last:flex-1">
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "flex size-11 shrink-0 items-center justify-center rounded-xl",
-                  current && "bg-lagoon text-on-lagoon shadow-sm",
-                  done && "bg-turquoise-soft text-lagoon",
-                  !current && !done && "border border-sand-strong bg-surface text-ink-muted",
-                )}
-              >
-                {done ? <CheckIcon className="size-5" /> : <Icon className="size-5" />}
-              </span>
-              <span className="flex min-w-0 flex-col">
-                <span className={cn("text-xs font-semibold tracking-wider uppercase", current ? "text-lagoon" : "text-ink-muted")}>
-                  {t("stepLabel", { n })}
+            <li
+              key={n}
+              aria-current={current ? "step" : undefined}
+              className={cn("grid grid-cols-subgrid items-center", n < 3 ? "col-span-2" : "col-span-1")}
+            >
+              <span className="flex items-center gap-3">
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "flex size-11 shrink-0 items-center justify-center rounded-xl",
+                    current && "bg-lagoon text-on-lagoon shadow-sm",
+                    done && "bg-turquoise-soft text-lagoon",
+                    !current && !done && "border border-sand-strong bg-surface text-ink-muted",
+                  )}
+                >
+                  {done ? <CheckIcon className="size-5" /> : <Icon className="size-5" />}
                 </span>
-                <span className={cn("text-sm leading-tight font-semibold lg:text-base", current || done ? "text-ink" : "text-ink-muted")}>
-                  {name(n)}
-                  {done && <span className="sr-only"> ({t("stepDone")})</span>}
+                <span className="flex min-w-0 flex-col">
+                  <span className={cn("text-xs font-semibold tracking-wider uppercase", current ? "text-lagoon" : "text-ink-muted")}>
+                    {t("stepLabel", { n })}
+                  </span>
+                  <span
+                    data-step-name
+                    className={cn("text-sm leading-tight font-semibold lg:text-base", current || done ? "text-ink" : "text-ink-muted")}
+                  >
+                    {name(n)}
+                    {done && <span className="sr-only"> ({t("stepDone")})</span>}
+                  </span>
                 </span>
               </span>
-              {n < 3 && <span aria-hidden="true" className={cn("h-0.5 min-w-4 flex-1 rounded-full", done ? "bg-lagoon" : "bg-sand")} />}
+              {n < 3 && <span aria-hidden="true" data-connector className={cn("h-0.5 rounded-full", done ? "bg-lagoon" : "bg-sand")} />}
             </li>
           );
         })}
@@ -115,39 +131,44 @@ export function Stepper({ step }: { step: OnboardingStep }) {
 }
 
 // Légende des astérisques (téléphone : sous les champs ; tablette et ordinateur : dans le pied).
-export function RequiredLegend({ className }: { className?: string }) {
+// text : légende propre à l'étape (étape 3, facultative : « Obligatoires pour terminer »).
+export function RequiredLegend({ className, text }: { className?: string; text?: string }) {
   const t = useTranslations("Onboarding");
   return (
     <p className={cn("text-sm text-ink-muted", className)}>
       <span aria-hidden="true" className="text-danger">
         *
       </span>{" "}
-      {t("requiredLegend")}
+      {text ?? t("requiredLegend")}
     </p>
   );
 }
 
 // Pied d'une étape : « Précédent » à gauche, légende et bouton principal à droite. Téléphone :
-// barre collée en bas, à portée du pouce (« Précédent » réduit à sa flèche).
+// barre collée en bas, à portée du pouce (« Précédent » réduit à sa flèche). « Précédent »
+// attend le JavaScript ; le bouton principal aussi si submitNeedsJs (étape 3 : photos
+// envoyées depuis le navigateur), sinon le formulaire part même avant son chargement.
 export function StepFooter({
   formError,
   pending,
-  hydrated,
+  submitNeedsJs = false,
   onBack,
   extra,
   submitLabel,
-  legend = true,
+  legend,
 }: {
   formError?: string;
   pending: boolean;
-  hydrated: boolean;
+  submitNeedsJs?: boolean;
   onBack?: () => void;
   extra?: ReactNode;
   submitLabel: string;
-  legend?: boolean;
+  // Texte de la légende des astérisques (par défaut « Champs obligatoires »).
+  legend?: string;
 }) {
   const t = useTranslations("Onboarding");
   const tAll = useTranslations();
+  const hydrated = useHydrated();
   return (
     <div className="sticky bottom-0 z-10 -mx-4 mt-8 flex flex-col gap-3 border-t border-sand/70 bg-spray/95 px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur md:static md:mx-0 md:bg-transparent md:px-0 md:pt-6 md:pb-0 md:backdrop-blur-none">
       <div aria-live="polite" className="empty:hidden">
@@ -162,10 +183,10 @@ export function StepFooter({
             <span className="sr-only md:not-sr-only">{t("previous")}</span>
           </Button>
         )}
-        {legend && <RequiredLegend className="ml-auto hidden md:block" />}
-        <div className={cn("flex flex-1 gap-3 md:flex-none", !legend && "md:ml-auto")}>
+        <RequiredLegend className="ml-auto hidden md:block" text={legend} />
+        <div className="flex flex-1 gap-3 md:flex-none">
           {extra}
-          <SubmitButton pending={pending} disabled={!hydrated} className="flex-1 md:flex-none">
+          <SubmitButton pending={pending} disabled={submitNeedsJs && !hydrated} className="flex-1 md:flex-none">
             {submitLabel}
             {!pending && <ArrowRightIcon className="size-5" />}
           </SubmitButton>

@@ -1,5 +1,5 @@
-import { expect, test } from "@playwright/test";
-import { adminRest, authAttemptKey, openMore, signIn } from "./helpers";
+import { expect, test, type Page } from "@playwright/test";
+import { adminRest, authAttemptKey, openMore, pageBeforeJavaScript, signIn } from "./helpers";
 
 // Petit PNG valide (1 × 1) pour le logo.
 const PNG = Buffer.from(
@@ -139,17 +139,58 @@ test("P1 : s'inscrire, diagnostic, profil pro, tableau de bord", async ({ page, 
   await page.getByRole("button", { name: "Précédent" }).click();
   await expect(page.getByLabel("Nom commercial")).toHaveValue("Studio Hery");
   await expect(page.getByLabel("Couleur principale", { exact: true })).toHaveValue("#5B2B5E");
+  await expect(page.getByLabel("Couleur d'accent", { exact: true })).toHaveValue("#D4A24C");
+  await expect(page.getByTestId("brand-font-montserrat").filter({ visible: true }).locator("input")).toBeChecked();
+  await expect(page.getByTestId("brand-preview").filter({ visible: true })).toHaveCSS("font-family", /Montserrat/);
   await expect(page.getByTestId("file-drop-logo").filter({ visible: true })).toContainText("Image actuelle");
   await page.getByRole("button", { name: "Suivant" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Administratif" })).toBeFocused();
+  // Étape facultative : légende propre, « Plus tard » toujours possible.
+  await expect(page.getByText("Obligatoires pour terminer. Sinon : Plus tard.").filter({ visible: true })).toBeVisible();
 
-  // Terminer sans NIF : erreurs sur les champs obligatoires. « Plus tard » ne bloque pas.
+  // Onglets restés ouverts sur le démarrage (comme une page gardée en cache par le bouton
+  // Retour), l'un sur l'étape 1, l'autre sur l'étape 2.
+  const stale: Page[] = [];
+  for (const back of [2, 1]) {
+    const tab = await page.context().newPage();
+    await tab.goto("/fr/demarrage?next=%2Ffactures");
+    await expect(tab.getByRole("heading", { level: 1, name: "Administratif" })).toBeVisible();
+    for (let i = 0; i < back; i++) await tab.getByRole("button", { name: "Précédent" }).click();
+    stale.push(tab);
+  }
+  await expect(stale[0].getByRole("heading", { level: 1, name: "Ton activité" })).toBeFocused();
+  await expect(stale[1].getByRole("heading", { level: 1, name: "Ton profil et ta marque" })).toBeFocused();
+
+  // Terminer sans NIF : erreurs sur les champs obligatoires. « Plus tard » ne bloque pas et
+  // garde les numéros déjà bien saisis (ici le NIF ; le STAT, incomplet, est laissé de côté).
   await page.getByRole("button", { name: "Terminer" }).click();
   await expect(page.getByLabel("NIF", { exact: false })).toBeFocused();
+  await page.getByLabel("NIF", { exact: false }).fill("300 012 3456");
+  await page.getByLabel("STAT", { exact: false }).fill("7411");
   await page.getByRole("button", { name: "Plus tard" }).click();
 
   // Retour à la page demandée avant la connexion.
   await expect(page).toHaveURL(/\/fr\/factures$/);
+  const [ws] = (await (
+    await adminRest(`workspaces?select=id,name,nif,stat&name=eq.${encodeURIComponent("Studio Hery")}&order=created_at.desc&limit=1`)
+  ).json()) as { id: string; name: string; nif: string | null; stat: string | null }[];
+  expect(ws).toMatchObject({ nif: "3000123456", stat: null });
+  const completedAt = async () =>
+    ((await (await adminRest(`onboarding_answers?select=completed_at&workspace_id=eq.${ws.id}`)).json()) as { completed_at: string | null }[])[0]
+      .completed_at;
+  expect(await completedAt()).not.toBeNull();
+
+  // Démarrage terminé : un envoi depuis un onglet resté ouvert n'écrit rien (ni activité,
+  // ni profil, ni fin du démarrage remise à zéro) et mène à la page demandée.
+  await stale[0].getByLabel("Ton métier").fill("Pirate");
+  await stale[0].getByRole("button", { name: "Suivant" }).click();
+  await expect(stale[0]).toHaveURL(/\/fr\/factures$/);
+  await stale[1].getByLabel("Nom commercial").fill("Studio Pirate");
+  await stale[1].getByRole("button", { name: "Suivant" }).click();
+  await expect(stale[1]).toHaveURL(/\/fr\/factures$/);
+  for (const tab of stale) await tab.close();
+  expect((await (await adminRest(`workspaces?select=name,trade&id=eq.${ws.id}`)).json())[0]).toEqual({ name: "Studio Hery", trade: "Graphiste" });
+  expect(await completedAt()).not.toBeNull();
 
   // Tableau de bord : liste de démarrage du niveau Lancer, rien encore fait.
   const nav = page.getByRole("navigation", { name: "Navigation principale" });
@@ -178,8 +219,10 @@ test("P1 : s'inscrire, diagnostic, profil pro, tableau de bord", async ({ page, 
   await openMore(page, "Plus");
   await page.getByRole("link", { name: "Réglages" }).click();
   await expect(page).toHaveURL(/\/fr\/reglages$/);
-  // Données fiscales facultatives ici (nécessaires pour facturer) : encore vides.
-  await expect(page.getByLabel("NIF", { exact: true })).toHaveValue("");
+  // Données fiscales facultatives ici (nécessaires pour facturer) : le NIF gardé par
+  // « Plus tard », le STAT encore vide.
+  await expect(page.getByLabel("NIF", { exact: true })).toHaveValue("3000123456");
+  await expect(page.getByLabel("STAT", { exact: true })).toHaveValue("");
   await expect(page.getByText("Facultatives pour l'instant, obligatoires pour émettre une facture", { exact: false })).toBeVisible();
   await expect(page.getByText("Découverte")).toBeVisible();
   const logo = page.getByRole("img", { name: "Logo de Studio Hery" });
@@ -255,4 +298,61 @@ test("Connexion : au-delà des essais permis, message clair (limites par e-mail)
   await page.getByRole("button", { name: "Renvoyer un code" }).click();
   await expect(page.getByText("Trop de tentatives. Pour protéger ton compte, attends un quart d'heure")).toBeVisible();
   await expect(page.getByText("Nouveau code envoyé.")).toHaveCount(0);
+});
+
+test("Démarrage avant le chargement du JavaScript : étapes 1 et 2 en envoi classique, « Plus tard » garde les numéros", async ({ page }) => {
+  const stamp = Date.now();
+  const business = `Studio sans-js ${stamp}`;
+  await page.goto("/fr/connexion");
+  await signIn(page, `p1-sans-js-${stamp}@example.test`);
+  await expect(page).toHaveURL(/\/fr\/demarrage$/);
+
+  // Fichiers JS de l'application bloqués : chaque étape part en POST classique, puis la
+  // page se recharge à l'étape calculée par le serveur.
+  const { plain, context } = await pageBeforeJavaScript(page);
+  await plain.goto("/fr/demarrage");
+  await expect(plain.getByRole("heading", { level: 1, name: "Ton activité" })).toBeVisible();
+  await plain.getByLabel("Ton métier").fill("Traductrice");
+  await plain.getByLabel("Depuis combien de temps es-tu freelance ?").selectOption("lt1");
+  await plain.getByLabel("Combien de clients as-tu en ce moment ?").fill("0");
+  await plain.getByLabel("Ton objectif de revenu mensuel").fill("800 000");
+  await plain.getByRole("button", { name: "Suivant" }).click();
+  await expect(plain).toHaveURL(/\/fr\/demarrage$/);
+
+  // Étape 2 : champs obligatoires contrôlés par le navigateur (rien n'est envoyé) ; une
+  // erreur du serveur (faux logo) est montrée après le rechargement, puis enregistrement.
+  await expect(plain.getByRole("heading", { level: 1, name: "Ton profil et ta marque" })).toBeVisible();
+  await expect(plain.getByRole("textbox", { name: /^Métier \(obligatoire\)/ })).toHaveValue("Traductrice");
+  await plain.getByRole("button", { name: "Suivant" }).click();
+  expect(await plain.getByLabel("Nom commercial").evaluate((input: HTMLInputElement) => input.validity.valueMissing)).toBe(true);
+  await expect(plain.getByRole("heading", { level: 1, name: "Ton profil et ta marque" })).toBeVisible();
+  await plain.getByLabel("Nom commercial").fill(business);
+  await plain.getByRole("textbox", { name: "Adresse (obligatoire)" }).fill("Lot II A 12, Antananarivo");
+  await plain.getByLabel("Logo (facultatif)").setInputFiles({ name: "faux.png", mimeType: "image/png", buffer: Buffer.from("pas une image") });
+  await plain.getByRole("button", { name: "Suivant" }).click();
+  await expect(plain).toHaveURL(/\/fr\/demarrage\?erreur=check_answers$/);
+  await expect(plain.getByText("Une réponse n'a pas pu être enregistrée. Vérifie cette étape et réessaie.")).toBeVisible();
+  await plain.getByLabel("Nom commercial").fill(business);
+  await plain.getByRole("textbox", { name: "Adresse (obligatoire)" }).fill("Lot II A 12, Antananarivo");
+  await plain.getByRole("button", { name: "Suivant" }).click();
+
+  // Étape 3 : « Plus tard » enregistre le NIF et le régime saisis, puis le tableau de bord.
+  await expect(plain.getByRole("heading", { level: 1, name: "Administratif" })).toBeVisible();
+  await plain.getByLabel("NIF", { exact: false }).fill("3000123456");
+  await plain.getByLabel("Régime fiscal", { exact: false }).selectOption("tva");
+  await plain.getByRole("button", { name: "Plus tard" }).click();
+  await expect(plain).toHaveURL(/\/fr\/tableau-de-bord$/);
+  await context.close();
+
+  const [ws] = (await (
+    await adminRest(`workspaces?select=id,trade,level,address,nif,stat,tax_regime,onboarded_at&name=eq.${encodeURIComponent(business)}`)
+  ).json()) as { id: string; onboarded_at: string | null }[];
+  expect(ws).toMatchObject({ trade: "Traductrice", level: "lancer", address: "Lot II A 12, Antananarivo", nif: "3000123456", stat: null, tax_regime: "tva" });
+  expect(ws.onboarded_at).not.toBeNull();
+  const [answers] = (await (await adminRest(`onboarding_answers?select=answers,completed_at&workspace_id=eq.${ws.id}`)).json()) as {
+    answers: Record<string, unknown>;
+    completed_at: string | null;
+  }[];
+  expect(answers.answers).toMatchObject({ trade: "Traductrice", current_clients: 0, monthly_income_goal: 800000 });
+  expect(answers.completed_at).not.toBeNull();
 });

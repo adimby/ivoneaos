@@ -40,8 +40,11 @@ Principes :
    verso de la carte fiscale, avec le même service que Réglages (dépôt direct, lecture automatique, états ; voir
    « Vérification fiscale »). Une phrase explique le plafond : « Tu peux envoyer jusqu'à 3 factures avant que ta carte
    soit vérifiée ». Les photos sont facultatives à cette étape (« Terminer » sans photo enregistre les numéros). Ces
-   infos **ne bloquent pas le démarrage** : « Plus tard » mène au tableau de bord. La fin du démarrage (« Terminer » ou
-   « Plus tard ») est notée dans `onboarding_answers.completed_at`.
+   infos **ne bloquent pas le démarrage** : « Plus tard » mène au tableau de bord en gardant les numéros déjà saisis au
+   bon format (un champ vide ou mal saisi est laissé de côté). La fin du démarrage (« Terminer » ou « Plus tard ») est
+   notée dans `onboarding_answers.completed_at` ; ensuite, un envoi depuis une page restée en cache (bouton Retour)
+   n'écrit plus rien et mène au tableau de bord. Les étapes 1 et 2 marchent aussi avant le chargement du JavaScript
+   (envoi classique, la page revient à l'étape calculée par le serveur).
    Si elles manquent, NIF, STAT et régime fiscal sont demandés **avant la première facture**, par un bloc « Avant ta
    première facture » affiché là où la facture se prépare (nouvelle facture, devis accepté à transformer, brouillon à
    envoyer). Ses trois champs s'enregistrent dans le profil sans perdre le brouillon, puis l'envoi redevient possible. La

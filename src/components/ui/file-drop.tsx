@@ -85,7 +85,7 @@ export function FileDrop<T>({
 
   async function choose(next: File | undefined, dropped?: FileList) {
     if (!next || disabled || busy) return;
-    if (!types.includes(next.type)) return fail(t("errors.type"));
+    if (!types.includes(next.type)) return fail(t("errors.type", { formats: formatList(types) }));
     if (!prepare && next.size > maxBytes) return fail(t("errors.too_large", { size: sizeLabel }));
     const current = ++attempt.current;
     setFile(next);
@@ -107,7 +107,7 @@ export function FileDrop<T>({
     const ready = prepare ? await prepare(next).catch(() => next) : next;
     if (current !== attempt.current) return;
     if (ready.size > maxBytes) return fail(t("errors.too_large", { size: sizeLabel }));
-    if (!types.includes(ready.type)) return fail(t("errors.type"));
+    if (!types.includes(ready.type)) return fail(t("errors.type", { formats: formatList(types) }));
     setPreview(ready.type.startsWith("image/") ? URL.createObjectURL(ready) : null);
     onFile?.(ready);
     let result: UploadResult<T>;

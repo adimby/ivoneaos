@@ -13,12 +13,14 @@ import { Stepper } from "./wizard-parts";
 
 // Démarrage en 3 étapes. Chaque étape est son propre formulaire POST (action serveur),
 // tous restent dans la page : revenir en arrière garde les réponses. Le titre de l'étape
-// reçoit le focus à chaque changement (annoncé par les lecteurs d'écran). Les étapes
-// demandent JavaScript : boutons inactifs tant qu'il n'est pas chargé.
+// reçoit le focus à chaque changement (annoncé par les lecteurs d'écran). Avant le
+// chargement du JavaScript, les étapes 1 et 2 s'envoient comme des formulaires classiques :
+// la page revient à l'étape calculée par le serveur (src/modules/onboarding/steps.ts).
 export function OnboardingWizard({
   locale,
   next,
   initialStep,
+  initialError,
   workspaceId: initialWorkspaceId,
   activity,
   profile,
@@ -26,11 +28,13 @@ export function OnboardingWizard({
   brand,
   fiscal,
   fiscalStatus,
+  fiscalRejectionReason,
   sampleYear,
 }: {
   locale: string;
   next: string | null;
   initialStep: OnboardingStep;
+  initialError?: string;
   workspaceId: string | null;
   activity: DiagnosticDefaults & { trade: string };
   profile: ProfileStepDefaults;
@@ -38,6 +42,7 @@ export function OnboardingWizard({
   brand: { primary: string; accent: string; font: BrandFont };
   fiscal: { nif: string; stat: string; tax_regime: string };
   fiscalStatus: string;
+  fiscalRejectionReason: string | null;
   sampleYear: number;
 }) {
   const t = useTranslations("Onboarding");
@@ -49,7 +54,12 @@ export function OnboardingWizard({
 
   function goTo(target: OnboardingStep) {
     setStep(target);
-    requestAnimationFrame(() => titleRef.current?.focus());
+    // Haut de page d'abord : sur téléphone, l'indicateur d'étapes (au-dessus du titre)
+    // reste visible ; le focus ne fait pas défiler.
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0 });
+      titleRef.current?.focus({ preventScroll: true });
+    });
   }
 
   return (
@@ -63,7 +73,9 @@ export function OnboardingWizard({
             </h1>
             <p className="text-base text-ink-muted">{t(`step${step}.intro`)}</p>
           </div>
+          {/* Redondante avec l'indicateur d'étapes (lu, lui) : masquée aux lecteurs d'écran. */}
           <span
+            aria-hidden="true"
             className="hidden shrink-0 rounded-full border border-sand-strong bg-surface px-3 py-1 text-sm font-semibold text-ink-muted md:inline-flex"
             data-testid="onboarding-step-pill"
           >
@@ -75,6 +87,8 @@ export function OnboardingWizard({
       <ActivityStep
         hidden={step !== 1}
         locale={locale}
+        next={next}
+        initialError={initialStep === 1 ? initialError : undefined}
         defaults={activity}
         trade={trade}
         onTradeChange={setTrade}
@@ -86,6 +100,8 @@ export function OnboardingWizard({
       <ProfileStep
         hidden={step !== 2}
         locale={locale}
+        next={next}
+        initialError={initialStep === 2 ? initialError : undefined}
         defaults={profile}
         trade={trade}
         onTradeChange={setTrade}
@@ -102,14 +118,17 @@ export function OnboardingWizard({
         <AdminStep
           hidden={step !== 3}
           locale={locale}
+          next={next}
           workspaceId={workspaceId}
           defaults={fiscal}
           fiscalStatus={fiscalStatus}
+          fiscalRejectionReason={fiscalRejectionReason}
           onBack={() => goTo(2)}
         />
       )}
 
-      {/* Fin du démarrage (« Plus tard », « Terminer » sans carte, « Accéder à mon espace »). */}
+      {/* Fin du démarrage (« Terminer » sans carte, « Accéder à mon espace »). « Plus tard »
+          envoie le formulaire de l'étape 3 à la même action (numéros déjà saisis gardés). */}
       <form id={FINISH_FORM_ID} action={finishOnboarding} hidden>
         <input type="hidden" name="locale" value={locale} />
         {next && <input type="hidden" name="next" value={next} />}

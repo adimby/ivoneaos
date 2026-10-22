@@ -373,6 +373,18 @@ test.describe("démarrage (360, 820 et 1280 px)", () => {
           await expect(promise).toBeHidden();
         }
         if (viewport.width < 768) await expect(page.getByText(`Étape ${step} / 3`).filter({ visible: true })).toBeVisible();
+        else {
+          // Indicateur complet : chaque nom d'étape sur une ligne, liaisons de même largeur.
+          const layout = await stepper.evaluate((nav) => ({
+            lines: [...nav.querySelectorAll<HTMLElement>("[data-step-name]")].map(
+              (el) => el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight),
+            ),
+            connectors: [...nav.querySelectorAll<HTMLElement>("[data-connector]")].map((el) => el.getBoundingClientRect().width),
+          }));
+          if (layout.lines.some((lines) => lines > 1.5)) report.push(`${at} : nom d'étape sur plusieurs lignes`);
+          const [a, b] = layout.connectors;
+          if (!(a >= 16 && Math.abs(a - b) <= 1)) report.push(`${at} : liaisons inégales (${layout.connectors.join(", ")} px)`);
+        }
         const extra = await overflow(page);
         if (extra > 0) report.push(`${at} déborde de ${extra} px`);
         if (viewport.width === 1280) {

@@ -55,10 +55,11 @@
     "stepsLabel": "Getting started steps",
     "stepOf": "Step {current} / {total}",
     "stepLabel": "Step {n}",
+    "stepItem": "Step {n}: {name}",
     "stepDone": "done",
     "steps": {
       "activity": "Your business",
-      "profile": "Your profile and brand",
+      "profile": "Profile and brand",
       "admin": "Paperwork"
     },
     "required": "required",
@@ -106,7 +107,8 @@
       "later": "Later",
       "verified": "Your tax card is verified: you can send all your invoices.",
       "pending": "Your tax card is being verified. You will get an email as soon as it is done; meanwhile you can send up to 3 invoices.",
-      "goToApp": "Go to my workspace"
+      "goToApp": "Go to my workspace",
+      "requiredLegend": "Required to finish. Otherwise: Later."
     },
     "trade": {
       "label": "Your trade",
@@ -229,6 +231,7 @@
     "logo_type": "The logo must be a PNG, JPEG or WebP image.",
     "logo_upload": "The logo could not be uploaded. Try again.",
     "fix_errors": "Fix the highlighted fields.",
+    "check_answers": "An answer could not be saved. Check this step and try again.",
     "phone_format": "Invalid number. Example: 034 12 345 67, or +33 6 12 34 56 78 abroad.",
     "email_format": "Invalid email address (example: name@gmail.com).",
     "reachable_required": "Enter a phone number or an email so you can reach this contact.",
@@ -1302,8 +1305,8 @@
     "uploaded": "Photo uploaded.",
     "size": "{size} MB",
     "errors": {
-      "too_large": "This file is larger than {size}. Choose a lighter photo.",
-      "type": "This format is not accepted. Choose a JPG, PNG or WEBP photo.",
+      "too_large": "This file is larger than {size}. Choose a smaller file.",
+      "type": "This format is not accepted. Choose a {formats} image.",
       "upload": "The upload failed. Check your connection and try again."
     }
   },
@@ -1312,7 +1315,7 @@
     "intro": "Take a photo of the front and the back of your tax card. We check that your NIF and STAT appear on it, then the photos are deleted.",
     "front": "Front of the tax card",
     "back": "Back of the tax card",
-    "fileHint": "Sharp photo, JPG, PNG or WEBP. A large photo is reduced before upload.",
+    "fileHint": "Sharp photo. A large photo is reduced before upload.",
     "submit": "Send for verification",
     "checkingShort": "Verifying…",
     "checking": "Verifying…",

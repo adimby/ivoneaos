@@ -36,7 +36,7 @@ export default async function OnboardingPage({ params, searchParams }: Props) {
   return (
     <Suspense
       fallback={
-        <Shell controls={null} promise={null}>
+        <Shell controls={null} promise={<PromisePanelPlaceholder />}>
           <PageSkeleton />
         </Shell>
       }
@@ -70,15 +70,31 @@ function Shell({ controls, promise, children }: { controls: ReactNode; promise: 
   );
 }
 
+// Attente : panneau gauche vide, au même fond que la promesse (pas de saut sur ordinateur).
+function PromisePanelPlaceholder() {
+  return <aside aria-hidden="true" className="hidden border-r border-sand/70 bg-sand-light lg:block" />;
+}
+
 async function readNext(searchParams: Props["searchParams"]) {
   const raw = (await searchParams).next;
   return safeNextPath(typeof raw === "string" ? raw : null);
+}
+
+// Erreur d'un envoi classique (avant le JavaScript, src/modules/onboarding/actions.ts) :
+// une clé connue seulement (FormErrors.check_answers ou errors.db.*).
+async function readError(searchParams: Props["searchParams"], locale: Locale) {
+  const raw = (await searchParams).erreur;
+  if (raw === "check_answers") return raw;
+  if (typeof raw !== "string" || !/^[a-z_]+$/.test(raw)) return undefined;
+  const t = await getTranslations({ locale, namespace: "errors.db" });
+  return t.has(raw) ? raw : undefined;
 }
 
 async function Onboarding({ locale, searchParams }: { locale: Locale; searchParams: Props["searchParams"] }) {
   await requireUserId(locale);
   // Page demandée avant la connexion : on y va une fois le démarrage terminé.
   const next = await readNext(searchParams);
+  const initialError = await readError(searchParams, locale);
   const workspace = await getCurrentWorkspace();
   const answers = workspace ? await getOnboardingAnswers(workspace.id) : null;
   const step = resumeStep(workspace, answers);
@@ -95,6 +111,7 @@ async function Onboarding({ locale, searchParams }: { locale: Locale; searchPara
         locale={locale}
         next={next}
         initialStep={step}
+        initialError={initialError}
         workspaceId={workspace?.id ?? null}
         activity={{ trade: workspace?.trade ?? "", ...(answers?.diagnostic ?? EMPTY_DIAGNOSTIC) }}
         profile={{
@@ -107,6 +124,7 @@ async function Onboarding({ locale, searchParams }: { locale: Locale; searchPara
         brand={{ primary: brand.primary, accent: brand.accent, font: brand.font }}
         fiscal={workspace ? fiscalDefaults(workspace) : { nif: "", stat: "", tax_regime: "" }}
         fiscalStatus={workspace?.fiscal_status ?? "unverified"}
+        fiscalRejectionReason={workspace?.fiscal_rejection_reason ?? null}
         sampleYear={new Date().getFullYear()}
       />
     </Shell>

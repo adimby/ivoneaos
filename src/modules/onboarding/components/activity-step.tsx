@@ -11,13 +11,15 @@ import { useHydrated } from "@/lib/use-hydrated";
 import { saveActivity, type StepState } from "../actions";
 import { EXPERIENCES, type DiagnosticDefaults } from "../diagnostic-fields";
 import { levelFromClients } from "../level";
-import { checkRequired, focusFirstInvalid, RequiredLegend, StepFooter, useRequiredLabel } from "./wizard-parts";
+import { checkRequired, INITIAL_STATE, focusFirstInvalid, RequiredLegend, StepFooter, useRequiredLabel } from "./wizard-parts";
 
 // Étape 1 « Ton activité » : métier et diagnostic, avec l'aperçu du niveau (Lancer ou
 // Remplir son agenda). Enregistrée dès « Suivant » (reprise après un rechargement).
 export function ActivityStep({
   hidden,
   locale,
+  next,
+  initialError,
   defaults,
   trade,
   onTradeChange,
@@ -25,6 +27,9 @@ export function ActivityStep({
 }: {
   hidden: boolean;
   locale: string;
+  next: string | null;
+  // Erreur d'un envoi classique (avant le JavaScript), montrée jusqu'au prochain envoi.
+  initialError?: string;
   defaults: DiagnosticDefaults;
   trade: string;
   onTradeChange: (value: string) => void;
@@ -32,10 +37,11 @@ export function ActivityStep({
 }) {
   const t = useTranslations("Onboarding");
   const tAll = useTranslations();
-  const hydrated = useHydrated();
   const required = useRequiredLabel();
+  // Avant le JavaScript : contrôle du navigateur (required, pattern) ; ensuite, le nôtre.
+  const hydrated = useHydrated();
   const formRef = useRef<HTMLFormElement>(null);
-  const [state, formAction, pending] = useActionState<StepState, FormData>(saveActivity, {});
+  const [state, formAction, pending] = useActionState<StepState, FormData>(saveActivity, INITIAL_STATE);
   const [localErrors, setLocalErrors] = useState<FieldErrors>({});
   const [clients, setClients] = useState(defaults.current_clients);
 
@@ -55,7 +61,7 @@ export function ActivityStep({
     <form
       ref={formRef}
       action={formAction}
-      noValidate
+      noValidate={hydrated}
       hidden={hidden}
       className="flex flex-1 flex-col"
       aria-labelledby="onboarding-title"
@@ -67,10 +73,12 @@ export function ActivityStep({
         setLocalErrors(found);
         if (Object.keys(found).length > 0) return focusFirstInvalid(formRef.current);
         const data = new FormData(event.currentTarget);
+        data.set("js", "1");
         startTransition(() => formAction(data));
       }}
     >
       <input type="hidden" name="locale" value={locale} />
+      {next && <input type="hidden" name="next" value={next} />}
       <div className="grid gap-5 md:grid-cols-2 md:gap-x-6">
         <div className="md:col-span-2">
           <Field id="diag-trade" label={required(t("trade.label"))} hint={t("trade.hint")} error={error("trade")}>
@@ -79,6 +87,7 @@ export function ActivityStep({
                 {...c}
                 name="trade"
                 data-required
+                required
                 value={trade}
                 onChange={(e) => onTradeChange(e.target.value)}
                 maxLength={200}
@@ -91,7 +100,7 @@ export function ActivityStep({
         <div className="md:col-span-2">
           <Field id="experience" label={required(t("experience.label"))} error={error("experience")}>
             {(c) => (
-              <Select {...c} name="experience" data-required defaultValue={defaults.experience}>
+              <Select {...c} name="experience" data-required required defaultValue={defaults.experience}>
                 <option value="" disabled>
                   {tAll("Profile.choose")}
                 </option>
@@ -112,6 +121,7 @@ export function ActivityStep({
               inputMode="numeric"
               pattern="[0-9 ]*"
               data-required
+              required
               value={clients}
               onChange={(e) => setClients(e.target.value)}
               maxLength={7}
@@ -127,6 +137,7 @@ export function ActivityStep({
                 inputMode="numeric"
                 pattern="[0-9 ]*"
                 data-required
+                required
                 maxLength={17}
                 defaultValue={defaults.monthly_income_goal}
                 className="pr-12"
@@ -151,7 +162,7 @@ export function ActivityStep({
         </div>
       </div>
       <RequiredLegend className="mt-5 md:hidden" />
-      <StepFooter formError={state.formError} pending={pending} hydrated={hydrated} submitLabel={t("next")} />
+      <StepFooter formError={state === INITIAL_STATE ? initialError : state.formError} pending={pending} submitLabel={t("next")} />
     </form>
   );
 }

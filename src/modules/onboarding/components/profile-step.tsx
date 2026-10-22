@@ -7,13 +7,13 @@ import { FileDrop } from "@/components/ui/file-drop";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import type { FieldErrors } from "@/lib/forms";
-import { CURRENCIES } from "@/lib/money";
 import { useHydrated } from "@/lib/use-hydrated";
+import { CURRENCIES } from "@/lib/money";
 import type { BrandFont } from "@/modules/branding/brand";
 import { BrandEssentials } from "@/modules/branding/components/brand-essentials";
 import { LOGO_ACCEPT, LOGO_MAX_BYTES } from "@/modules/workspace/logo";
 import { saveProfileStep, type StepState } from "../actions";
-import { checkRequired, focusFirstInvalid, RequiredLegend, StepFooter, useRequiredLabel } from "./wizard-parts";
+import { checkRequired, INITIAL_STATE, focusFirstInvalid, RequiredLegend, StepFooter, useRequiredLabel } from "./wizard-parts";
 
 export type ProfileStepDefaults = { name: string; address: string; default_currency: string };
 
@@ -23,6 +23,8 @@ export type ProfileStepDefaults = { name: string; address: string; default_curre
 export function ProfileStep({
   hidden,
   locale,
+  next,
+  initialError,
   defaults,
   trade,
   onTradeChange,
@@ -34,6 +36,9 @@ export function ProfileStep({
 }: {
   hidden: boolean;
   locale: string;
+  next: string | null;
+  // Erreur d'un envoi classique (avant le JavaScript), montrée jusqu'au prochain envoi.
+  initialError?: string;
   defaults: ProfileStepDefaults;
   trade: string;
   onTradeChange: (value: string) => void;
@@ -46,10 +51,11 @@ export function ProfileStep({
   const t = useTranslations("Onboarding");
   const tProfile = useTranslations("Profile");
   const tAll = useTranslations();
-  const hydrated = useHydrated();
   const required = useRequiredLabel();
+  // Avant le JavaScript : contrôle du navigateur (required, pattern) ; ensuite, le nôtre.
+  const hydrated = useHydrated();
   const formRef = useRef<HTMLFormElement>(null);
-  const [state, formAction, pending] = useActionState<StepState, FormData>(saveProfileStep, {});
+  const [state, formAction, pending] = useActionState<StepState, FormData>(saveProfileStep, INITIAL_STATE);
   const [localErrors, setLocalErrors] = useState<FieldErrors>({});
   const [name, setName] = useState(defaults.name);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -75,7 +81,7 @@ export function ProfileStep({
     <form
       ref={formRef}
       action={formAction}
-      noValidate
+      noValidate={hydrated}
       hidden={hidden}
       className="flex flex-1 flex-col"
       aria-labelledby="onboarding-title"
@@ -86,22 +92,24 @@ export function ProfileStep({
         setLocalErrors(found);
         if (Object.keys(found).length > 0) return focusFirstInvalid(formRef.current);
         const data = new FormData(event.currentTarget);
+        data.set("js", "1");
         startTransition(() => formAction(data));
       }}
     >
       <input type="hidden" name="locale" value={locale} />
+      {next && <input type="hidden" name="next" value={next} />}
       <div className="grid gap-5 md:grid-cols-2 md:gap-x-6">
         <Field id="name" label={required(tProfile("businessName.label"))} hint={tProfile("businessName.hint")} error={error("name")}>
           {(c) => (
-            <Input {...c} name="name" data-required autoComplete="organization" value={name} onChange={(e) => setName(e.target.value)} maxLength={200} />
+            <Input {...c} name="name" data-required required autoComplete="organization" value={name} onChange={(e) => setName(e.target.value)} maxLength={200} />
           )}
         </Field>
         <Field id="trade" label={required(tProfile("trade.label"))} error={error("trade")}>
-          {(c) => <Input {...c} name="trade" data-required value={trade} onChange={(e) => onTradeChange(e.target.value)} maxLength={200} />}
+          {(c) => <Input {...c} name="trade" data-required required value={trade} onChange={(e) => onTradeChange(e.target.value)} maxLength={200} />}
         </Field>
         <div className="md:col-span-2">
           <Field id="address" label={required(tProfile("address.label"))} hint={tProfile("address.hint")} error={error("address")}>
-            {(c) => <Input {...c} name="address" data-required autoComplete="street-address" defaultValue={defaults.address} maxLength={500} />}
+            {(c) => <Input {...c} name="address" data-required required autoComplete="street-address" defaultValue={defaults.address} maxLength={500} />}
           </Field>
         </div>
         <Field id="default_currency" label={tProfile("currency.label")} hint={tProfile("currency.hint")} error={error("default_currency")}>
@@ -148,7 +156,7 @@ export function ProfileStep({
         />
       </section>
       <RequiredLegend className="mt-5 md:hidden" />
-      <StepFooter formError={state.formError} pending={pending} hydrated={hydrated} onBack={onBack} submitLabel={t("next")} />
+      <StepFooter formError={state === INITIAL_STATE ? initialError : state.formError} pending={pending} onBack={onBack} submitLabel={t("next")} />
     </form>
   );
 }

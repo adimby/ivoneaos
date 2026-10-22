@@ -66,5 +66,6 @@ export function ProfileForm({
 }
 
 export function formErrorMessage(t: ReturnType<typeof useTranslations>, key: string): string {
-  return key === "fix_errors" ? t("FormErrors.fix_errors") : t(`errors.db.${key}`);
+  // check_answers : erreur d'un envoi classique du démarrage (champs non signalés).
+  return key === "fix_errors" || key === "check_answers" ? t(`FormErrors.${key}`) : t(`errors.db.${key}`);
 }

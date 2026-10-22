@@ -50,7 +50,8 @@ export const fiscalSchema = z.object({
 });
 
 // Réglages : chaque donnée fiscale est facultative (vide = null), mais au bon format.
-const optionalFiscal = z.object({
+// Aussi « Plus tard » au démarrage (chaque champ à part).
+export const optionalFiscalSchema = z.object({
   nif: z
     .string()
     .trim()
@@ -82,7 +83,7 @@ export const onboardingProfileSchema = z.object({
 });
 
 // Réglages : le même profil, avec les données fiscales facultatives.
-export const profileSchema = onboardingProfileSchema.extend(optionalFiscal.shape);
+export const profileSchema = onboardingProfileSchema.extend(optionalFiscalSchema.shape);
 // Réglages une fois les données fiscales complètes : corrigeables, plus effaçables (la
 // facture suivante serait sinon bloquée de nouveau).
 export const profileWithFiscalSchema = onboardingProfileSchema.extend(fiscalSchema.shape);
