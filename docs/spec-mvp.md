@@ -66,6 +66,13 @@ Principes :
 1. Contact en 3 champs minimum : nom, téléphone ou e-mail, entreprise facultative.
 2. Opportunité liée au contact : titre, montant estimé, étape.
 3. 6 étapes : prospect, contacté, appel, devis, gagné, perdu. Sur mobile, bouton « Étape suivante » au lieu du glisser-déposer.
+   Tablette et ordinateur (colonnes côte à côte, à partir de 768 px) : glisser une carte vers une autre colonne change son étape.
+   Souris : le glisser part après 5 px (un simple clic ouvre toujours l'opportunité) ; tactile : appui long de 250 ms, un
+   glissement rapide fait défiler. Un fantôme de la carte suit le pointeur, la colonne survolée est mise en évidence ;
+   déposée hors d'une colonne, rien ne change. Mise à jour immédiate (carte, nombres et totaux d'étape), puis même action
+   serveur que le bouton ; gagné et perdu demandent la même confirmation. En cas d'échec (réseau, refus du serveur), la
+   carte revient à sa place avec un message. Déplacements annoncés aux lecteurs d'écran ; « Étape suivante » et le choix
+   d'une étape sur l'opportunité restent l'alternative au clavier et au téléphone (une étape par écran, pas de glisser).
 4. Note / échange (appel, WhatsApp, e-mail, rendez-vous) dans l'historique du contact.
 
 ### P4. Programmer un rappel

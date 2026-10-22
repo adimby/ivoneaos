@@ -16,6 +16,7 @@
     "themes:css": "UPDATE_THEMES_CSS=1 vitest run src/modules/appearance/themes.test.ts"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
     "@react-pdf/renderer": "^4.9.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.3",
