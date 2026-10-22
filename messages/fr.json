@@ -208,7 +208,8 @@
     "dashboard": "Tableau de bord",
     "billing": "Devis et factures",
     "skip": "Aller au contenu principal",
-    "moreInSidebar": "Sur grand écran, tout est dans le menu à gauche : contacts, réglages, langue et déconnexion."
+    "moreInSidebar": "Sur grand écran, tout est dans le menu à gauche : contacts, réglages, langue et déconnexion.",
+    "admin": "Admin"
   },
   "Dashboard": {
     "metaTitle": "Accueil",
@@ -450,7 +451,16 @@
       "payment_date_before_invoice": "La date du paiement est antérieure à l'envoi de la facture. Indique le jour où tu as reçu l'argent.",
       "too_many_lines": "Un document compte 50 lignes au plus. Regroupe certaines prestations.",
       "unknown": "Une erreur est survenue. Réessaie dans un instant.",
-      "provider_reference_required": "Référence de paiement manquante."
+      "provider_reference_required": "Référence de paiement manquante.",
+      "fiscal_verification_required": "Tu as atteint la limite de 3 factures sans carte vérifiée. Pour envoyer les suivantes, ta carte fiscale doit être vérifiée : dépose une photo du recto et du verso.",
+      "fiscal_verification_pending": "Tu as atteint la limite de 3 factures sans carte vérifiée. Ta carte fiscale est en cours de vérification : tu pourras envoyer cette facture dès qu'elle sera validée.",
+      "fiscal_info_locked": "Ton NIF, ton STAT et ton régime fiscal se corrigent mais ne s'effacent plus.",
+      "fiscal_already_verified": "Ta carte fiscale est déjà vérifiée.",
+      "fiscal_already_pending": "Ta carte fiscale est déjà en cours de vérification.",
+      "fiscal_documents_missing": "Les photos de ta carte fiscale sont introuvables. Dépose-les de nouveau.",
+      "fiscal_request_not_pending": "Cette demande a déjà été traitée.",
+      "fiscal_reason_required": "Indique le motif du refus (500 caractères au plus).",
+      "not_platform_admin": "Action réservée aux admins de la plateforme."
     }
   },
   "pipeline": {
@@ -1229,5 +1239,107 @@
     },
     "save": "Enregistrer l'image de marque",
     "saved": "Image de marque enregistrée. Elle s'applique à tes prochains envois."
+  },
+  "FileDrop": {
+    "browse": "Parcourir",
+    "replace": "Remplacer",
+    "remove": "Retirer",
+    "dropHere": "Dépose le fichier ici, ou",
+    "uploading": "Envoi en cours…",
+    "uploaded": "Photo envoyée.",
+    "size": "{size} Mo",
+    "errors": {
+      "too_large": "Ce fichier dépasse {size}. Choisis une photo plus légère.",
+      "type": "Ce format n'est pas accepté. Choisis une photo JPG, PNG ou WEBP.",
+      "upload": "L'envoi a échoué. Vérifie ta connexion et réessaie."
+    }
+  },
+  "Verification": {
+    "title": "Vérification de ta carte fiscale",
+    "intro": "Prends en photo le recto et le verso de ta carte fiscale. On vérifie que ton NIF et ton STAT y figurent, puis les photos sont supprimées.",
+    "front": "Recto de la carte fiscale",
+    "back": "Verso de la carte fiscale",
+    "fileHint": "Photo nette, JPG, PNG ou WEBP, 10 Mo au plus.",
+    "submit": "Envoyer pour vérification",
+    "checkingShort": "Vérification en cours…",
+    "checking": "Vérification en cours…",
+    "checkingHint": "La lecture de ta carte prend quelques secondes. Garde cette page ouverte.",
+    "needBoth": "Ajoute la photo du recto et celle du verso.",
+    "status": {
+      "unverified": "Non vérifiée",
+      "pending": "En cours de vérification",
+      "verified": "Vérifiée",
+      "rejected": "Refusée"
+    },
+    "left": "{count, plural, one {Encore # facture avant la vérification.} other {Encore # factures avant la vérification.}}",
+    "blocked": "Tu as atteint la limite de 3 factures sans carte vérifiée. Pour envoyer les suivantes, ta carte fiscale doit être vérifiée.",
+    "blockedPending": "Tu as atteint la limite de 3 factures sans carte vérifiée. Ta carte est en cours de vérification : tu pourras envoyer les suivantes dès qu'elle sera validée.",
+    "pendingBody": "Nous vérifions tes photos à la main. Tu recevras un e-mail dès que c'est fait.",
+    "verifiedBody": "Ta carte fiscale a été vérifiée le {date}.",
+    "justVerified": "Ta carte fiscale est vérifiée : tu peux envoyer toutes tes factures.",
+    "rejectedBody": "Ta carte fiscale n'a pas pu être vérifiée. Motif : {reason}",
+    "rejectedNext": "Dépose de nouvelles photos ci-dessous.",
+    "numbersFirst": "Renseigne d'abord ton NIF et ton STAT, puis dépose les photos de ta carte fiscale.",
+    "errors": {
+      "unavailable": "La vérification est indisponible pour le moment. Réessaie un peu plus tard.",
+      "files_invalid": "Une des photos n'a pas pu être lue. Dépose-les de nouveau (JPG, PNG ou WEBP, 10 Mo au plus).",
+      "workspace_tax_info_missing": "Renseigne ton NIF et ton STAT avant de déposer ta carte fiscale.",
+      "fiscal_already_verified": "Ta carte fiscale est déjà vérifiée.",
+      "fiscal_already_pending": "Ta carte fiscale est déjà en cours de vérification.",
+      "fiscal_documents_missing": "Les photos sont introuvables. Dépose-les de nouveau.",
+      "not_authenticated": "Ta session a expiré. Reconnecte-toi puis recommence.",
+      "network": "La connexion a été coupée. Vérifie ton réseau et réessaie.",
+      "upload": "L'envoi de la photo a échoué. Vérifie ta connexion et réessaie.",
+      "unknown": "Une erreur est survenue. Réessaie dans un instant."
+    },
+    "goUpload": "Déposer ma carte fiscale",
+    "pendingShort": "Ta carte fiscale est en cours de vérification."
+  },
+  "VerificationEmail": {
+    "adminSubject": "Carte fiscale à vérifier : {name}",
+    "adminIntro": "{name} a déposé sa carte fiscale. La lecture automatique n'a pas retrouvé son NIF et son STAT : vérifie les photos et décide.",
+    "adminCta": "Ouvrir la demande",
+    "verifiedSubject": "Ta carte fiscale est vérifiée",
+    "verifiedBody": "Bonne nouvelle : ta carte fiscale est vérifiée. Tu peux envoyer toutes tes factures. Les photos ont été supprimées.",
+    "rejectedSubject": "Ta carte fiscale n'a pas pu être vérifiée",
+    "rejectedBody": "Nous n'avons pas pu vérifier ta carte fiscale. Motif : {reason}",
+    "rejectedNext": "Dépose de nouvelles photos depuis tes réglages. Les précédentes ont été supprimées.",
+    "cta": "Ouvrir mes réglages",
+    "footer": "Ivonea OS, le bureau du freelance malgache."
+  },
+  "Admin": {
+    "metaTitle": "Vérifications fiscales",
+    "detailMetaTitle": "Demande de vérification",
+    "title": "Vérifications fiscales",
+    "intro": "Cartes fiscales que la lecture automatique n'a pas pu valider. Compare les numéros saisis aux photos, puis valide ou refuse.",
+    "queueTitle": "{count, plural, =0 {En attente} one {En attente (#)} other {En attente (#)}}",
+    "queueEmpty": "Aucune demande en attente.",
+    "nif": "NIF",
+    "stat": "STAT",
+    "submittedAt": "Déposée le {date}",
+    "historyTitle": "Dernières décisions",
+    "historyEmpty": "Aucune décision pour l'instant.",
+    "verified": "Validée",
+    "rejected": "Refusée",
+    "byAutomatic": "Lecture automatique, le {date}",
+    "byAdmin": "Par {email}, le {date}",
+    "reasonShown": "Motif : {reason}",
+    "ok": {
+      "verified": "Demande validée, photos supprimées.",
+      "rejected": "Demande refusée, photos supprimées.",
+      "emailSent": "Le freelance a été prévenu par e-mail.",
+      "emailNotSent": "L'e-mail au freelance n'est pas parti (envoi non configuré ou adresse absente) : préviens-le toi-même."
+    },
+    "backToList": "Toutes les demandes",
+    "compare": "Vérifie que ces numéros figurent sur la carte :",
+    "front": "Recto",
+    "back": "Verso",
+    "photoAlt": "{side} de la carte fiscale de {name}",
+    "photoMissing": "Photo indisponible.",
+    "decideTitle": "Décision",
+    "approve": "Valider la carte",
+    "reject": "Refuser",
+    "reason": "Motif du refus",
+    "reasonHint": "Le freelance le verra et pourra déposer de nouvelles photos."
   }
 }

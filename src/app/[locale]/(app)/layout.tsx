@@ -8,6 +8,7 @@ import { Brand } from "@/components/brand";
 import type { Locale } from "@/i18n/routing";
 import { AppearanceFromCookie } from "@/modules/appearance/components/appearance-from-cookie";
 import { AppearanceNoScript, AppearanceSync } from "@/modules/appearance/components/appearance-sync";
+import { isPlatformAdmin } from "@/modules/verification/queries";
 import { requireWorkspace } from "@/modules/workspace/queries";
 
 // En-tête statique affiché tout de suite. La navigation et le contenu attendent la
@@ -80,19 +81,19 @@ function ShellFallback() {
 }
 
 async function OnboardedGate({ locale, children }: { locale: Locale; children: ReactNode }) {
-  await requireWorkspace(locale);
+  const [, isAdmin] = await Promise.all([requireWorkspace(locale), isPlatformAdmin()]);
   return (
     <>
       <Suspense fallback={null}>
         <AppearanceSync />
       </Suspense>
-      <SideNav locale={locale} />
+      <SideNav locale={locale} isAdmin={isAdmin} />
       <div className={contentClass}>
         <main id={MAIN_ID} tabIndex={-1} className={mainClass}>
           {children}
         </main>
       </div>
-      <BottomNav locale={locale} />
+      <BottomNav locale={locale} isAdmin={isAdmin} />
     </>
   );
 }

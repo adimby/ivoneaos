@@ -10,8 +10,9 @@
 --   5. Admins de la plateforme (platform_admins), remplie à la main par le rôle serveur.
 --   6. Plafond : tant que la carte n'est pas vérifiée, 3 factures émises au plus, contrôlé
 --      sous le verrou du workspace (next_document_number), avant la limite Découverte.
---   7. Bucket privé « fiscal-documents » : un membre dépose dans son dossier, seul le
---      serveur lit, liste et supprime.
+--   7. Bucket privé « fiscal-documents » : un membre dépose dans son dossier, seulement
+--      tant que la carte est à déposer (non vérifiée ou refusée) ; seul le serveur lit,
+--      liste et supprime.
 -- Codes d'erreur (55000, message-clé traduit dans errors.db.*) : fiscal_info_locked,
 -- fiscal_verification_required, fiscal_already_verified, fiscal_already_pending,
 -- fiscal_documents_missing, fiscal_request_not_pending, fiscal_reason_required.
@@ -60,8 +61,10 @@ alter table public.workspaces
 -- ---------------------------------------------------------------------------
 -- nif, stat : numéros saisis au dépôt (la lecture automatique et l'admin comparent à eux).
 -- front_path, back_path : photos dans « fiscal-documents », remises à null dès qu'elles
--- sont supprimées (décision prise). status : pending (en attente), verified, rejected,
--- cancelled (NIF ou STAT changé pendant l'attente).
+-- sont supprimées (décision prise, ou demande annulée puis nettoyée). status : pending (en
+-- attente), verified, rejected, cancelled (NIF ou STAT changé pendant l'attente).
+-- admins_notified_at : avis « demande à vérifier » envoyé aux admins (le rattrapage
+-- quotidien prévient pour les demandes restées en attente sans avis).
 create table public.fiscal_verifications (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces (id) on delete cascade,
@@ -74,6 +77,7 @@ create table public.fiscal_verifications (
   decided_by uuid references auth.users (id) on delete set null,
   decided_at timestamptz,
   rejection_reason text check (char_length(rejection_reason) <= 500),
+  admins_notified_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   check ((status in ('verified', 'rejected')) = (method is not null and decided_at is not null)),
@@ -169,8 +173,10 @@ create trigger t15_fiscal_guard before update of nif, stat, tax_regime on public
 
 -- ---------------------------------------------------------------------------
 -- Dépôt : les deux photos sont déjà dans le dossier du workspace (envoi direct du
--- navigateur). Crée la demande et passe le workspace « en cours ». Appelée par le serveur
--- avec le client de la personne connectée (membre du workspace).
+-- navigateur). Crée la demande et passe le workspace « en cours ». Serveur seulement (rôle
+-- secret), par la route /api/fiscal/verification : elle a lu le workspace avec le client de
+-- la personne connectée (RLS : membre seulement) et contrôlé le contenu réel des photos ;
+-- elle lance ensuite la lecture automatique et prévient les admins.
 -- ---------------------------------------------------------------------------
 create function public.submit_fiscal_verification(p_workspace_id uuid, p_front_path text, p_back_path text)
 returns uuid
@@ -184,15 +190,14 @@ declare
   folder constant text := p_workspace_id::text || '/';
   request_id uuid;
 begin
-  if not public.is_member(p_workspace_id) then
-    raise exception 'not_authenticated' using errcode = '42501';
-  end if;
-
   select w.nif, w.stat, w.fiscal_status into ws
   from public.workspaces w
   where w.id = p_workspace_id
   for no key update;
 
+  if not found then
+    raise exception 'not_authenticated' using errcode = '42501';
+  end if;
   if ws.nif is null or ws.stat is null then
     raise exception 'workspace_tax_info_missing' using errcode = '55000';
   end if;
@@ -219,8 +224,8 @@ begin
   return request_id;
 end;
 $$;
-revoke execute on function public.submit_fiscal_verification(uuid, text, text) from public, anon;
-grant execute on function public.submit_fiscal_verification(uuid, text, text) to authenticated;
+revoke execute on function public.submit_fiscal_verification(uuid, text, text) from public, anon, authenticated;
+grant execute on function public.submit_fiscal_verification(uuid, text, text) to service_role;
 
 -- ---------------------------------------------------------------------------
 -- Décision (lecture automatique concordante, ou admin). Renvoie les chemins des photos à
@@ -462,15 +467,34 @@ revoke execute on function public.next_document_number(uuid, public.doc_type) fr
 
 -- ---------------------------------------------------------------------------
 -- 7. Photos de la carte fiscale : bucket privé, 10 Mo, JPG / PNG / WEBP.
--- Un membre dépose dans le dossier de son workspace ; aucune politique de lecture, de
--- mise à jour ni de suppression : seul le serveur (clé secrète) lit, liste et supprime.
+-- Un membre dépose dans le dossier de son workspace, seulement quand la carte est à
+-- déposer (non vérifiée ou refusée : rien après la vérification ni pendant l'attente) ;
+-- aucune politique de lecture, de mise à jour ni de suppression : seul le serveur (clé
+-- secrète) lit, liste et supprime. Dépôts jamais soumis : supprimés par le serveur au
+-- dépôt suivant et par le rattrapage quotidien.
 -- ---------------------------------------------------------------------------
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('fiscal-documents', 'fiscal-documents', false, 10 * 1024 * 1024, array['image/jpeg', 'image/png', 'image/webp'])
 on conflict (id) do nothing;
 
+-- Workspaces de la personne connectée dont la carte est à déposer.
+create function public.fiscal_upload_workspace_ids()
+returns setof uuid
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select w.id
+  from public.workspaces w
+  where w.id in (select public.my_workspace_ids())
+    and w.fiscal_status in ('unverified', 'rejected');
+$$;
+revoke execute on function public.fiscal_upload_workspace_ids() from public, anon;
+grant execute on function public.fiscal_upload_workspace_ids() to authenticated;
+
 create policy "fiscal_documents_insert" on storage.objects for insert to authenticated
   with check (
     bucket_id = 'fiscal-documents'
-    and (storage.foldername(name))[1] in (select w::text from public.my_workspace_ids() w)
+    and (storage.foldername(name))[1] in (select w::text from public.fiscal_upload_workspace_ids() w)
   );

@@ -69,7 +69,7 @@ select is((select profile_completed_at from public.workspaces where id = :'ws'),
   'profil incomplet : pas de date');
 select throws_ok(format($$ update public.workspaces set profile_completed_at = now() where id = %L $$, :'ws'),
   '42501', null, 'profile_completed_at ne se saisit pas');
-update public.workspaces set nif = '1234567890', stat = '12345 11 2026 0 00001' where id = :'ws';
+update public.workspaces set nif = '1234567890', stat = '12345112026000001' where id = :'ws';
 select is((select profile_completed_at from public.workspaces where id = :'ws'), null,
   'sans régime fiscal : toujours pas de date');
 update public.workspaces set tax_regime = 'tva', trade = '  ' where id = :'ws';
@@ -79,7 +79,7 @@ update public.workspaces set trade = 'Graphiste' where id = :'ws';
 select isnt((select profile_completed_at from public.workspaces where id = :'ws'), null,
   'nom, métier, NIF, STAT et régime remplis : date posée');
 select profile_completed_at as completed from public.workspaces where id = :'ws' \gset
-update public.workspaces set nif = null where id = :'ws';
+update public.workspaces set nif = '1999999999' where id = :'ws';
 select is((select profile_completed_at from public.workspaces where id = :'ws'), :'completed'::timestamptz,
   'la date n''est jamais effacée ni déplacée');
 reset role;

@@ -13,7 +13,7 @@ select tests.authenticate_as(:'alice');
 select public.create_workspace('Studio Alice') as wa \gset
 select extract(year from now() at time zone 'Indian/Antananarivo')::int as y \gset
 reset role;
-update public.workspaces set nif = '1234567890', stat = '12345 11 2026 0 00001', tax_regime = 'tva' where id = :'wa';
+update public.workspaces set nif = '1234567890', stat = '12345112026000001', tax_regime = 'tva' where id = :'wa';
 select tests.authenticate_as(:'alice');
 
 select is((select plan::text from public.workspaces where id = :'wa'), 'decouverte', 'offre par défaut : Découverte');

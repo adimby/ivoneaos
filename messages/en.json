@@ -208,7 +208,8 @@
     "dashboard": "Dashboard",
     "billing": "Quotes and invoices",
     "skip": "Skip to main content",
-    "moreInSidebar": "On a wide screen, everything is in the menu on the left: contacts, settings, language and sign out."
+    "moreInSidebar": "On a wide screen, everything is in the menu on the left: contacts, settings, language and sign out.",
+    "admin": "Admin"
   },
   "Dashboard": {
     "metaTitle": "Home",
@@ -450,7 +451,16 @@
       "payment_date_before_invoice": "The payment date is before the invoice was sent. Enter the day you received the money.",
       "too_many_lines": "A document can have at most 50 lines. Group some items together.",
       "unknown": "Something went wrong. Try again in a moment.",
-      "provider_reference_required": "Missing payment reference."
+      "provider_reference_required": "Missing payment reference.",
+      "fiscal_verification_required": "You have reached the limit of 3 invoices without a verified card. To send more, your tax card must be verified: upload a photo of the front and the back.",
+      "fiscal_verification_pending": "You have reached the limit of 3 invoices without a verified card. Your tax card is being verified: you can send this invoice as soon as it is approved.",
+      "fiscal_info_locked": "Your NIF, STAT and tax regime can be corrected but no longer erased.",
+      "fiscal_already_verified": "Your tax card is already verified.",
+      "fiscal_already_pending": "Your tax card is already being verified.",
+      "fiscal_documents_missing": "The photos of your tax card could not be found. Please upload them again.",
+      "fiscal_request_not_pending": "This request has already been handled.",
+      "fiscal_reason_required": "Give the reason for the refusal (500 characters at most).",
+      "not_platform_admin": "Only platform admins can do this."
     }
   },
   "pipeline": {
@@ -1229,5 +1239,107 @@
     },
     "save": "Save branding",
     "saved": "Branding saved. It applies to your next documents."
+  },
+  "FileDrop": {
+    "browse": "Browse",
+    "replace": "Replace",
+    "remove": "Remove",
+    "dropHere": "Drop the file here, or",
+    "uploading": "Uploading…",
+    "uploaded": "Photo uploaded.",
+    "size": "{size} MB",
+    "errors": {
+      "too_large": "This file is larger than {size}. Choose a lighter photo.",
+      "type": "This format is not accepted. Choose a JPG, PNG or WEBP photo.",
+      "upload": "The upload failed. Check your connection and try again."
+    }
+  },
+  "Verification": {
+    "title": "Tax card verification",
+    "intro": "Take a photo of the front and the back of your tax card. We check that your NIF and STAT appear on it, then the photos are deleted.",
+    "front": "Front of the tax card",
+    "back": "Back of the tax card",
+    "fileHint": "Sharp photo, JPG, PNG or WEBP, 10 MB at most.",
+    "submit": "Send for verification",
+    "checkingShort": "Verifying…",
+    "checking": "Verifying…",
+    "checkingHint": "Reading your card takes a few seconds. Keep this page open.",
+    "needBoth": "Add the photo of the front and the one of the back.",
+    "status": {
+      "unverified": "Not verified",
+      "pending": "Being verified",
+      "verified": "Verified",
+      "rejected": "Refused"
+    },
+    "left": "{count, plural, one {# more invoice before verification.} other {# more invoices before verification.}}",
+    "blocked": "You have reached the limit of 3 invoices without a verified card. To send more, your tax card must be verified.",
+    "blockedPending": "You have reached the limit of 3 invoices without a verified card. Your card is being verified: you can send more as soon as it is approved.",
+    "pendingBody": "We are checking your photos by hand. You will receive an email as soon as it is done.",
+    "verifiedBody": "Your tax card was verified on {date}.",
+    "justVerified": "Your tax card is verified: you can send all your invoices.",
+    "rejectedBody": "Your tax card could not be verified. Reason: {reason}",
+    "rejectedNext": "Upload new photos below.",
+    "numbersFirst": "First fill in your NIF and STAT, then upload the photos of your tax card.",
+    "errors": {
+      "unavailable": "Verification is unavailable right now. Try again a little later.",
+      "files_invalid": "One of the photos could not be read. Upload them again (JPG, PNG or WEBP, 10 MB at most).",
+      "workspace_tax_info_missing": "Fill in your NIF and STAT before uploading your tax card.",
+      "fiscal_already_verified": "Your tax card is already verified.",
+      "fiscal_already_pending": "Your tax card is already being verified.",
+      "fiscal_documents_missing": "The photos could not be found. Upload them again.",
+      "not_authenticated": "Your session has expired. Sign in again and start over.",
+      "network": "The connection was lost. Check your network and try again.",
+      "upload": "The photo upload failed. Check your connection and try again.",
+      "unknown": "Something went wrong. Try again in a moment."
+    },
+    "goUpload": "Upload my tax card",
+    "pendingShort": "Your tax card is being verified."
+  },
+  "VerificationEmail": {
+    "adminSubject": "Tax card to verify: {name}",
+    "adminIntro": "{name} uploaded their tax card. Automatic reading could not find their NIF and STAT: check the photos and decide.",
+    "adminCta": "Open the request",
+    "verifiedSubject": "Your tax card is verified",
+    "verifiedBody": "Good news: your tax card is verified. You can send all your invoices. The photos have been deleted.",
+    "rejectedSubject": "Your tax card could not be verified",
+    "rejectedBody": "We could not verify your tax card. Reason: {reason}",
+    "rejectedNext": "Upload new photos from your settings. The previous ones have been deleted.",
+    "cta": "Open my settings",
+    "footer": "Ivonea OS, the Malagasy freelancer's office."
+  },
+  "Admin": {
+    "metaTitle": "Tax verifications",
+    "detailMetaTitle": "Verification request",
+    "title": "Tax verifications",
+    "intro": "Tax cards that automatic reading could not validate. Compare the numbers entered with the photos, then approve or refuse.",
+    "queueTitle": "{count, plural, =0 {Pending} one {Pending (#)} other {Pending (#)}}",
+    "queueEmpty": "No pending requests.",
+    "nif": "NIF",
+    "stat": "STAT",
+    "submittedAt": "Uploaded on {date}",
+    "historyTitle": "Latest decisions",
+    "historyEmpty": "No decisions yet.",
+    "verified": "Approved",
+    "rejected": "Refused",
+    "byAutomatic": "Automatic reading, on {date}",
+    "byAdmin": "By {email}, on {date}",
+    "reasonShown": "Reason: {reason}",
+    "ok": {
+      "verified": "Request approved, photos deleted.",
+      "rejected": "Request refused, photos deleted.",
+      "emailSent": "The freelancer was notified by email.",
+      "emailNotSent": "The email to the freelancer was not sent (sending not configured or no address): let them know yourself."
+    },
+    "backToList": "All requests",
+    "compare": "Check that these numbers appear on the card:",
+    "front": "Front",
+    "back": "Back",
+    "photoAlt": "{side} of {name}'s tax card",
+    "photoMissing": "Photo unavailable.",
+    "decideTitle": "Decision",
+    "approve": "Approve the card",
+    "reject": "Refuse",
+    "reason": "Reason for refusal",
+    "reasonHint": "The freelancer will see it and can upload new photos."
   }
 }

@@ -185,6 +185,32 @@ isOneToOne: false
       referencedColumns: ["workspace_id","id"]
     }
                   ]
+                },"fiscal_verifications": {
+                  Row: {
+                    "admins_notified_at": string | null,"back_path": string | null,"created_at": string,"decided_at": string | null,"decided_by": string | null,"front_path": string | null,"id": string,"method": Database["public"]['Enums']["fiscal_method"] | null,"nif": string,"rejection_reason": string | null,"stat": string,"status": string,"updated_at": string,"workspace_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "admins_notified_at"?: string | null,"back_path"?: string | null,"created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"front_path"?: string | null,"id"?: string,"method"?: Database["public"]['Enums']["fiscal_method"] | null,"nif": string,"rejection_reason"?: string | null,"stat": string,"status"?: string,"updated_at"?: string,"workspace_id": string
+                  }
+                  Update: {
+                    "admins_notified_at"?: string | null,"back_path"?: string | null,"created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"front_path"?: string | null,"id"?: string,"method"?: Database["public"]['Enums']["fiscal_method"] | null,"nif"?: string,"rejection_reason"?: string | null,"stat"?: string,"status"?: string,"updated_at"?: string,"workspace_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fiscal_verifications_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "guarantee_workspaces"
+      referencedColumns: ["workspace_id"]
+    },{
+      foreignKeyName: "fiscal_verifications_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "workspaces"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"invoices": {
                   Row: {
                     "amount_paid": number,"contact_id": string,"created_at": string,"currency": Database["public"]['Enums']["currency"],"discount": number,"due_on": string | null,"exchange_rate": number,"id": string,"issued_on": string | null,"language": Database["public"]['Enums']["locale"],"number": string | null,"paid_at": string | null,"pdf_path": string | null,"public_token": string,"quote_id": string | null,"sent_at": string | null,"snapshot": Json | null,"status": Database["public"]['Enums']["invoice_status"],"subtotal": number,"total": number,"updated_at": string,"workspace_id": string
@@ -403,6 +429,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"platform_admins": {
+                  Row: {
+                    "created_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"profiles": {
                   Row: {
                     "created_at": string,"full_name": string | null,"locale": Database["public"]['Enums']["locale"],"phone": string | null,"theme_mode": string,"theme_palette": string,"updated_at": string,"user_id": string
@@ -535,14 +575,14 @@ isOneToOne: false
                   ]
                 },"workspaces": {
                   Row: {
-                    "address": string | null,"brand_accent_color": string,"brand_banner_path": string | null,"brand_font": string,"brand_logo_position": string,"brand_logo_size": string,"brand_primary_color": string,"brand_show_logo": boolean,"created_at": string,"default_currency": Database["public"]['Enums']["currency"],"id": string,"invoice_footer": string | null,"level": Database["public"]['Enums']["workspace_level"],"logo_path": string | null,"name": string,"nif": string | null,"onboarded_at": string | null,"plan": Database["public"]['Enums']["plan"],"profile_completed_at": string | null,"stat": string | null,"tax_regime": Database["public"]['Enums']["tax_regime"] | null,"trade": string | null,"updated_at": string
+                    "address": string | null,"brand_accent_color": string,"brand_banner_path": string | null,"brand_font": string,"brand_logo_position": string,"brand_logo_size": string,"brand_primary_color": string,"brand_show_logo": boolean,"created_at": string,"default_currency": Database["public"]['Enums']["currency"],"fiscal_rejection_reason": string | null,"fiscal_status": Database["public"]['Enums']["fiscal_status"],"fiscal_status_at": string | null,"id": string,"invoice_footer": string | null,"level": Database["public"]['Enums']["workspace_level"],"logo_path": string | null,"name": string,"nif": string | null,"onboarded_at": string | null,"plan": Database["public"]['Enums']["plan"],"profile_completed_at": string | null,"stat": string | null,"tax_regime": Database["public"]['Enums']["tax_regime"] | null,"trade": string | null,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "address"?: string | null,"brand_accent_color"?: string,"brand_banner_path"?: string | null,"brand_font"?: string,"brand_logo_position"?: string,"brand_logo_size"?: string,"brand_primary_color"?: string,"brand_show_logo"?: boolean,"created_at"?: string,"default_currency"?: Database["public"]['Enums']["currency"],"id"?: string,"invoice_footer"?: string | null,"level"?: Database["public"]['Enums']["workspace_level"],"logo_path"?: string | null,"name": string,"nif"?: string | null,"onboarded_at"?: string | null,"plan"?: Database["public"]['Enums']["plan"],"profile_completed_at"?: string | null,"stat"?: string | null,"tax_regime"?: Database["public"]['Enums']["tax_regime"] | null,"trade"?: string | null,"updated_at"?: string
+                    "address"?: string | null,"brand_accent_color"?: string,"brand_banner_path"?: string | null,"brand_font"?: string,"brand_logo_position"?: string,"brand_logo_size"?: string,"brand_primary_color"?: string,"brand_show_logo"?: boolean,"created_at"?: string,"default_currency"?: Database["public"]['Enums']["currency"],"fiscal_rejection_reason"?: string | null,"fiscal_status"?: Database["public"]['Enums']["fiscal_status"],"fiscal_status_at"?: string | null,"id"?: string,"invoice_footer"?: string | null,"level"?: Database["public"]['Enums']["workspace_level"],"logo_path"?: string | null,"name": string,"nif"?: string | null,"onboarded_at"?: string | null,"plan"?: Database["public"]['Enums']["plan"],"profile_completed_at"?: string | null,"stat"?: string | null,"tax_regime"?: Database["public"]['Enums']["tax_regime"] | null,"trade"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "address"?: string | null,"brand_accent_color"?: string,"brand_banner_path"?: string | null,"brand_font"?: string,"brand_logo_position"?: string,"brand_logo_size"?: string,"brand_primary_color"?: string,"brand_show_logo"?: boolean,"created_at"?: string,"default_currency"?: Database["public"]['Enums']["currency"],"id"?: string,"invoice_footer"?: string | null,"level"?: Database["public"]['Enums']["workspace_level"],"logo_path"?: string | null,"name"?: string,"nif"?: string | null,"onboarded_at"?: string | null,"plan"?: Database["public"]['Enums']["plan"],"profile_completed_at"?: string | null,"stat"?: string | null,"tax_regime"?: Database["public"]['Enums']["tax_regime"] | null,"trade"?: string | null,"updated_at"?: string
+                    "address"?: string | null,"brand_accent_color"?: string,"brand_banner_path"?: string | null,"brand_font"?: string,"brand_logo_position"?: string,"brand_logo_size"?: string,"brand_primary_color"?: string,"brand_show_logo"?: boolean,"created_at"?: string,"default_currency"?: Database["public"]['Enums']["currency"],"fiscal_rejection_reason"?: string | null,"fiscal_status"?: Database["public"]['Enums']["fiscal_status"],"fiscal_status_at"?: string | null,"id"?: string,"invoice_footer"?: string | null,"level"?: Database["public"]['Enums']["workspace_level"],"logo_path"?: string | null,"name"?: string,"nif"?: string | null,"onboarded_at"?: string | null,"plan"?: Database["public"]['Enums']["plan"],"profile_completed_at"?: string | null,"stat"?: string | null,"tax_regime"?: Database["public"]['Enums']["tax_regime"] | null,"trade"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -575,6 +615,21 @@ isOneToOne: false
 "accept_quote":
 { Args: { "token": string,"version": string }; Returns: string
                            },
+"admin_decide_fiscal_verification":
+{ Args: { "p_reason"?: string,"p_request_id": string,"p_verified": boolean }; Returns: {
+              "back_path": string,"front_path": string,"owner_email": string,"owner_locale": string,"workspace_id": string,"workspace_name": string
+            }[]
+                           },
+"admin_fiscal_history":
+{ Args: { "p_limit"?: number }; Returns: {
+              "decided_at": string,"decided_by_email": string,"id": string,"method": Database["public"]['Enums']["fiscal_method"],"rejection_reason": string,"status": string,"workspace_name": string
+            }[]
+                           },
+"admin_fiscal_queue":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "back_path": string,"created_at": string,"front_path": string,"id": string,"nif": string,"stat": string,"workspace_id": string,"workspace_name": string
+            }[]
+                           },
 "auth_rate_limit":
 { Args: { "p_key": string,"p_max": number,"p_window_seconds": number }; Returns: boolean
                            },
@@ -605,11 +660,19 @@ isOneToOne: false
               "amount": number,"currency": Database["public"]['Enums']["currency"],"exchange_rate": number,"item_count": number,"kind": string,"overdue": boolean
             }[]
                            },
+"decide_fiscal_verification":
+{ Args: { "p_admin"?: string,"p_method": Database["public"]['Enums']["fiscal_method"],"p_reason"?: string,"p_request_id": string,"p_verified": boolean }; Returns: {
+              "back_path": string,"front_path": string,"owner_email": string,"owner_locale": string,"workspace_id": string,"workspace_name": string
+            }[]
+                           },
 "document_public_lines":
 { Args: { "p_invoice_id": string,"p_quote_id": string }; Returns: Json
                            },
 "document_snapshot":
 { Args: { "p_contact_id": string,"p_workspace_id": string }; Returns: Json
+                           },
+"fiscal_upload_workspace_ids":
+{ Args: Record<PropertyKey, never>; Returns: string[]
                            },
 "flag_whop_link":
 { Args: { "p_checkout_id": string,"p_error": string,"p_merchant_reference": string }; Returns: boolean
@@ -625,6 +688,9 @@ isOneToOne: false
                            },
 "is_member":
 { Args: { "workspace_id": string }; Returns: boolean
+                           },
+"is_platform_admin":
+{ Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "is_public_logo":
 { Args: { "object_name": string }; Returns: boolean
@@ -648,6 +714,9 @@ isOneToOne: false
               "active_contacts": number,"documents_this_month": number
             }[]
                            },
+"platform_admin_emails":
+{ Args: Record<PropertyKey, never>; Returns: string[]
+                           },
 "public_document_exists":
 { Args: { "token": string }; Returns: boolean
                            },
@@ -666,6 +735,9 @@ isOneToOne: false
 "release_reminders":
 { Args: { "p_claimed_at": string,"p_failed": boolean,"p_ids": (string)[] }; Returns: string[]
                            },
+"require_platform_admin":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "save_invoice":
 { Args: { "p_contact_id": string,"p_currency": Database["public"]['Enums']["currency"],"p_discount": number,"p_due_on": string,"p_exchange_rate": number,"p_id"?: string,"p_language": Database["public"]['Enums']["locale"],"p_lines": Json,"p_workspace_id": string }; Returns: string
                            },
@@ -677,10 +749,13 @@ isOneToOne: false
                            },
 "stage_document_lines":
 { Args: { "p_invoice_id": string,"p_lines": Json,"p_quote_id": string,"p_workspace_id": string }; Returns: (string)[]
+                           },
+"submit_fiscal_verification":
+{ Args: { "p_back_path": string,"p_front_path": string,"p_workspace_id": string }; Returns: string
                            }
           }
           Enums: {
-            "activity_kind": "note"|"call"|"whatsapp"|"email"|"meeting","contact_kind": "person"|"company","currency": "MGA"|"EUR"|"USD","doc_type": "quote"|"invoice","invoice_status": "draft"|"sent"|"paid"|"overdue"|"cancelled","locale": "fr"|"en","member_role": "owner"|"member","payment_account_status": "pending"|"connected"|"error"|"disabled","payment_link_status": "active"|"paid"|"expired"|"failed"|"cancelled","payment_method": "MVOLA"|"ORANGE_MONEY"|"AIRTEL_MONEY"|"CARD"|"manual","payment_provider": "papi"|"whop"|"manual","plan": "decouverte"|"lancement"|"premier_client"|"contrat_signe","quote_status": "draft"|"sent"|"accepted"|"declined"|"expired","stage_kind": "open"|"won"|"lost","tax_regime": "tva"|"impot_synthetique","workspace_level": "lancer"|"remplir"|"grandir"
+            "activity_kind": "note"|"call"|"whatsapp"|"email"|"meeting","contact_kind": "person"|"company","currency": "MGA"|"EUR"|"USD","doc_type": "quote"|"invoice","fiscal_method": "automatic"|"manual","fiscal_status": "unverified"|"pending"|"verified"|"rejected","invoice_status": "draft"|"sent"|"paid"|"overdue"|"cancelled","locale": "fr"|"en","member_role": "owner"|"member","payment_account_status": "pending"|"connected"|"error"|"disabled","payment_link_status": "active"|"paid"|"expired"|"failed"|"cancelled","payment_method": "MVOLA"|"ORANGE_MONEY"|"AIRTEL_MONEY"|"CARD"|"manual","payment_provider": "papi"|"whop"|"manual","plan": "decouverte"|"lancement"|"premier_client"|"contrat_signe","quote_status": "draft"|"sent"|"accepted"|"declined"|"expired","stage_kind": "open"|"won"|"lost","tax_regime": "tva"|"impot_synthetique","workspace_level": "lancer"|"remplir"|"grandir"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -796,7 +871,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "activity_kind": ["note", "call", "whatsapp", "email", "meeting"],"contact_kind": ["person", "company"],"currency": ["MGA", "EUR", "USD"],"doc_type": ["quote", "invoice"],"invoice_status": ["draft", "sent", "paid", "overdue", "cancelled"],"locale": ["fr", "en"],"member_role": ["owner", "member"],"payment_account_status": ["pending", "connected", "error", "disabled"],"payment_link_status": ["active", "paid", "expired", "failed", "cancelled"],"payment_method": ["MVOLA", "ORANGE_MONEY", "AIRTEL_MONEY", "CARD", "manual"],"payment_provider": ["papi", "whop", "manual"],"plan": ["decouverte", "lancement", "premier_client", "contrat_signe"],"quote_status": ["draft", "sent", "accepted", "declined", "expired"],"stage_kind": ["open", "won", "lost"],"tax_regime": ["tva", "impot_synthetique"],"workspace_level": ["lancer", "remplir", "grandir"]
+            "activity_kind": ["note", "call", "whatsapp", "email", "meeting"],"contact_kind": ["person", "company"],"currency": ["MGA", "EUR", "USD"],"doc_type": ["quote", "invoice"],"fiscal_method": ["automatic", "manual"],"fiscal_status": ["unverified", "pending", "verified", "rejected"],"invoice_status": ["draft", "sent", "paid", "overdue", "cancelled"],"locale": ["fr", "en"],"member_role": ["owner", "member"],"payment_account_status": ["pending", "connected", "error", "disabled"],"payment_link_status": ["active", "paid", "expired", "failed", "cancelled"],"payment_method": ["MVOLA", "ORANGE_MONEY", "AIRTEL_MONEY", "CARD", "manual"],"payment_provider": ["papi", "whop", "manual"],"plan": ["decouverte", "lancement", "premier_client", "contrat_signe"],"quote_status": ["draft", "sent", "accepted", "declined", "expired"],"stage_kind": ["open", "won", "lost"],"tax_regime": ["tva", "impot_synthetique"],"workspace_level": ["lancer", "remplir", "grandir"]
           }
         }
 } as const

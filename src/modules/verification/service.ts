@@ -1,21 +1,19 @@
 import "server-only";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { dbErrorKey } from "@/lib/db-errors";
-import { sendEmail } from "@/lib/email";
-import { createAdminClient, type AdminClient } from "@/lib/supabase/admin";
-import type { Database } from "@/lib/supabase/database.types";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { checkFiscalBytes, FISCAL_BUCKET, isFiscalFilePath } from "./documents";
-import { adminRequestEmail, decisionEmail } from "./emails";
+import { notifyAdmins, removeFiles, sweepFolder } from "./files";
 import { matchFiscalNumbers } from "./match";
 import { readCardTexts } from "./ocr";
 
 // Vérification de la carte fiscale (docs/spec-mvp.md, « Vérification fiscale »).
-// Les photos sont déjà dans le bucket privé (envoi direct du navigateur) ; le serveur les
-// relit avec la clé secrète (seul à pouvoir lire, lister et supprimer), crée la demande
-// au nom de la personne connectée (submit_fiscal_verification, RLS), lit le texte, puis :
-// concordance → vérifiée tout de suite et photos supprimées ; sinon → en attente d'un
-// admin, prévenu par e-mail. La demande existe avant la lecture : une fonction arrêtée en
-// cours de route laisse une demande « en attente » visible dans la file des admins.
+// Les photos sont déjà dans le bucket privé (envoi direct du navigateur) ; le serveur (clé
+// secrète, seul à pouvoir lire, lister et supprimer) les relit, crée la demande
+// (submit_fiscal_verification, réservée au serveur ; l'appelant a vérifié que la personne
+// est membre du workspace), lit le texte, puis : concordance → vérifiée tout de suite et
+// photos supprimées ; sinon → en attente d'un admin, prévenu par e-mail. La demande existe
+// avant la lecture : une fonction arrêtée en cours de route laisse une demande « en
+// attente », signalée aux admins par le rattrapage quotidien (files.ts).
 
 // Temps laissé à la lecture automatique : sous le maxDuration de la route (60 s).
 export const OCR_TIMEOUT_MS = 40_000;
@@ -31,7 +29,6 @@ export type SubmitError =
 export type SubmitResult = { status: "verified" | "pending" } | { error: SubmitError };
 
 type Workspace = { id: string; name: string };
-type DecisionRow = Database["public"]["Functions"]["decide_fiscal_verification"]["Returns"][number];
 
 const SUBMIT_ERRORS = new Set<string>([
   "workspace_tax_info_missing",
@@ -40,8 +37,8 @@ const SUBMIT_ERRORS = new Set<string>([
   "fiscal_documents_missing",
 ]);
 
+// workspace : lu avec le client de la personne connectée (RLS : elle en est membre).
 export async function submitFiscalDocuments(
-  supabase: SupabaseClient<Database>,
   workspace: Workspace,
   files: { front: unknown; back: unknown },
   origin: string,
@@ -68,7 +65,7 @@ export async function submitFiscalDocuments(
     images.push(bytes);
   }
 
-  const { data: requestId, error } = await supabase.rpc("submit_fiscal_verification", {
+  const { data: requestId, error } = await admin.rpc("submit_fiscal_verification", {
     p_workspace_id: workspace.id,
     p_front_path: front,
     p_back_path: back,
@@ -77,15 +74,15 @@ export async function submitFiscalDocuments(
     const key = dbErrorKey(error);
     return { error: SUBMIT_ERRORS.has(key) ? (key as SubmitError) : "unknown" };
   }
-  // Envois précédents jamais soumis, ou d'une demande annulée : supprimés.
-  await cleanupFiscalFolder(admin, workspace.id, [front, back]);
+  // Envois anciens jamais soumis : supprimés (pas ceux d'il y a quelques minutes).
+  await sweepFolder(admin, workspace.id, [front, back]);
 
   const { data: request } = await admin
     .from("fiscal_verifications")
     .select("nif, stat")
     .eq("id", requestId)
     .single();
-  const texts = request ? await readCardTexts(images, OCR_TIMEOUT_MS) : null;
+  const texts = request ? await readCardTexts(images, OCR_TIMEOUT_MS, (read) => matchFiscalNumbers(read, request).verified) : null;
   if (request && texts && matchFiscalNumbers(texts, request).verified) {
     const decided = await admin.rpc("decide_fiscal_verification", {
       p_request_id: requestId,
@@ -100,70 +97,6 @@ export async function submitFiscalDocuments(
     console.error("[verification] décision automatique refusée", decided.error.message);
   }
 
-  await notifyAdmins(admin, workspace.name, requestId, origin);
+  await notifyAdmins(admin, { id: requestId, workspaceName: workspace.name }, origin);
   return { status: "pending" };
-}
-
-// Supprime du dossier du workspace toute photo qui n'est pas dans `keep` (dépôts
-// abandonnés, demande annulée). Sans effet sur le résultat en cas d'échec.
-export async function cleanupFiscalFolder(admin: AdminClient, workspaceId: string, keep: string[] = []) {
-  try {
-    const { data } = await admin.storage.from(FISCAL_BUCKET).list(workspaceId, { limit: 100 });
-    const stale = (data ?? []).map((f) => `${workspaceId}/${f.name}`).filter((path) => !keep.includes(path));
-    if (stale.length) await admin.storage.from(FISCAL_BUCKET).remove(stale);
-  } catch (error) {
-    console.error("[verification] nettoyage du dossier impossible", error instanceof Error ? error.message : "");
-  }
-}
-
-// Photos d'une demande décidée : supprimées (la décision les a déjà retirées de la demande).
-async function removeFiles(admin: AdminClient, row: Pick<DecisionRow, "front_path" | "back_path"> | undefined) {
-  const paths = [row?.front_path, row?.back_path].filter((p): p is string => Boolean(p));
-  if (!paths.length) return;
-  const { error } = await admin.storage.from(FISCAL_BUCKET).remove(paths);
-  if (error) console.error("[verification] photos non supprimées", error.message);
-}
-
-async function notifyAdmins(admin: AdminClient, workspaceName: string, requestId: string, origin: string) {
-  const { data: emails, error } = await admin.rpc("platform_admin_emails");
-  if (error) {
-    console.error("[verification] admins introuvables", error.message);
-    return;
-  }
-  if (!emails?.length) {
-    console.warn("[verification] aucune admin enregistrée (platform_admins) : demande en attente sans e-mail.");
-    return;
-  }
-  const link = `${origin}/fr/admin/verifications/${requestId}`;
-  await Promise.all(emails.map((to) => sendEmail(adminRequestEmail(to, workspaceName, link))));
-}
-
-// Après une décision d'admin : photos supprimées, freelance prévenue (Resend si configuré).
-export async function completeDecision(row: DecisionRow | undefined, decision: { verified: boolean; reason?: string | null }, origin: string) {
-  const admin = createAdminClient();
-  if (!row) return;
-  if (admin) {
-    await removeFiles(admin, row);
-    await cleanupFiscalFolder(admin, row.workspace_id);
-  } else {
-    console.error("[verification] SUPABASE_SECRET_KEY absente : photos non supprimées.");
-  }
-  if (row.owner_email) {
-    const locale = row.owner_locale === "en" ? "en" : "fr";
-    await sendEmail(decisionEmail(row.owner_email, locale, decision, `${origin}/${locale}/reglages#verification-fiscale`));
-  }
-}
-
-// URL signées courtes (5 min) des photos d'une demande, pour la page admin (appelée après
-// le contrôle admin fait par la base).
-export async function signedPhotoUrls(paths: (string | null)[]): Promise<(string | null)[]> {
-  const admin = createAdminClient();
-  if (!admin) return paths.map(() => null);
-  return Promise.all(
-    paths.map(async (path) => {
-      if (!path) return null;
-      const { data } = await admin.storage.from(FISCAL_BUCKET).createSignedUrl(path, 300);
-      return data?.signedUrl ?? null;
-    }),
-  );
 }

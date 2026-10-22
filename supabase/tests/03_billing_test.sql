@@ -223,7 +223,11 @@ select throws_ok(format($$ update public.invoices set quote_id = %L where id = %
   '55000', 'quote_not_accepted', 'le devis lié reste un devis accepté');
 select throws_ok(format($$ update public.invoices set status = 'sent' where id = %L $$, :'i1'),
   '55000', 'workspace_tax_info_missing', 'pas de facture émise sans NIF, STAT et régime fiscal');
-update public.workspaces set nif = '1234567890', stat = '12345 11 2026 0 00001', tax_regime = 'tva' where id = :'wa';
+update public.workspaces set nif = '1234567890', stat = '12345112026000001', tax_regime = 'tva' where id = :'wa';
+-- Carte fiscale vérifiée (rôle serveur) : le plafond de 3 factures est testé dans 15_fiscal_verification_test.
+reset role;
+update public.workspaces set fiscal_status = 'verified' where id = :'wa';
+select tests.authenticate_as(:'alice');
 select lives_ok(format($$ update public.workspaces set default_currency = 'EUR' where id = %L $$, :'wa'),
   'devise par défaut modifiable tant qu''aucune facture n''est émise');
 update public.workspaces set default_currency = 'MGA' where id = :'wa';

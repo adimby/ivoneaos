@@ -66,6 +66,16 @@ export default async function proxy(request: NextRequest) {
     }
   }
 
+  // Pages admin : introuvables (404, même page qu'une adresse inconnue) pour quiconque n'est
+  // pas admin de la plateforme, connecté ou non : leur existence ne se devine pas. La page
+  // revérifie, et la base refuse les fonctions admin à un non-admin.
+  if (section === "admin") {
+    const { data: admin } = signedIn ? await supabase.rpc("is_platform_admin") : { data: false };
+    if (admin !== true) {
+      return keepingCookies(NextResponse.rewrite(new URL(`/${locale}/introuvable`, request.url)), response);
+    }
+  }
+
   if (!signedIn && PROTECTED.has(section)) {
     const target = new URL(`/${locale}/connexion`, request.url);
     target.searchParams.set("next", request.nextUrl.pathname + request.nextUrl.search);

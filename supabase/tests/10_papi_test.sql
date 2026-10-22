@@ -12,7 +12,8 @@ select tests.authenticate_as(:'alice');
 select public.create_workspace('Studio Alice') as wa \gset
 reset role;
 
-update public.workspaces set nif = '1234567890', stat = '12345 11 2026 0 00001', tax_regime = 'tva', plan = 'lancement'
+update public.workspaces set nif = '1234567890', stat = '12345112026000001', tax_regime = 'tva', plan = 'lancement',
+  fiscal_status = 'verified'
 where id = :'wa';
 insert into public.contacts (workspace_id, name, phone) values (:'wa', 'Rakoto', '+261340000000') returning id as ca \gset
 select tests.new_invoice(:'wa', :'ca', 450000) as inv \gset

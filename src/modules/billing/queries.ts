@@ -24,6 +24,19 @@ export async function hasQuote(workspaceId: string): Promise<boolean> {
   return (count ?? 0) > 0;
 }
 
+// Exposé au module de vérification fiscale : factures émises (sorties du brouillon,
+// annulées comprises), comptées par le plafond tant que la carte n'est pas vérifiée.
+export const countIssuedInvoices = cache(async (workspaceId: string): Promise<number> => {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("invoices")
+    .select("id", { count: "exact", head: true })
+    .eq("workspace_id", workspaceId)
+    .not("sent_at", "is", null);
+  if (error) throw error;
+  return count ?? 0;
+});
+
 async function withClients<T extends { contact_id: string }>(workspaceId: string, rows: T[]) {
   const names = await getContactNames(workspaceId, rows.map((r) => r.contact_id));
   return rows.map((row) => ({ ...row, client: names.get(row.contact_id) ?? null }));

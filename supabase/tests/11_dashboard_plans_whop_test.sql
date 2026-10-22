@@ -13,7 +13,7 @@ select tests.authenticate_as(:'alice');
 select public.create_workspace('Studio Alice') as wa \gset
 reset role;
 
-update public.workspaces set nif = '1234567890', stat = '12345 11 2026 0 00001', tax_regime = 'tva', plan = 'lancement'
+update public.workspaces set nif = '1234567890', stat = '12345112026000001', tax_regime = 'tva', plan = 'lancement'
 where id = :'wa';
 insert into public.contacts (workspace_id, name, phone) values (:'wa', 'Rakoto', '+261340000000') returning id as ca \gset
 insert into public.contacts (workspace_id, name, email) values (:'wa', 'Rabe', 'rabe@example.test');
@@ -189,7 +189,7 @@ select throws_ok(format($$ update public.workspaces set default_currency = 'USD'
 
 -- Devise par défaut changée avant toute émission : le taux d'un brouillon en autre devise
 -- (exprimé vers l'ancienne devise) est remis à 1 et doit être ressaisi avant l'émission.
-update public.workspaces set nif = '2234567890', stat = '22345 11 2026 0 00001', tax_regime = 'tva' where id = :'wb';
+update public.workspaces set nif = '2234567890', stat = '22345112026000001', tax_regime = 'tva' where id = :'wb';
 insert into public.contacts (workspace_id, name, phone) values (:'wb', 'Rasoa', '+261340000001') returning id as cb \gset
 select tests.new_invoice(:'wb', :'cb', 9900) as bob_usd \gset
 update public.invoices set currency = 'USD', exchange_rate = 4500 where id = :'bob_usd';

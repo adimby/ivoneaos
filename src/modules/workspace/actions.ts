@@ -1,6 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
 import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
@@ -10,6 +11,7 @@ import { readLogoUpload } from "./logo";
 import { FISCAL_FIELDS, fiscalSchema, PROFILE_FIELDS, settingsProfileSchema } from "./profile-schema";
 import { removeLogo, saveFiscalInfo, saveProfile, uploadLogo } from "./save-profile";
 import { safeNextPath } from "@/modules/auth/next-path";
+import { discardFiscalFiles } from "@/modules/verification/files";
 
 export type ProfileFormState = {
   status?: "saved";
@@ -31,7 +33,7 @@ export async function updateProfile(_prev: ProfileFormState, formData: FormData)
 
   const { data: workspace, error } = await supabase
     .from("workspaces")
-    .select("id, logo_path, nif, stat, tax_regime")
+    .select("id, logo_path, nif, stat, tax_regime, fiscal_status")
     .order("created_at")
     .limit(1)
     .maybeSingle();
@@ -58,6 +60,7 @@ export async function updateProfile(_prev: ProfileFormState, formData: FormData)
     return { formError: dbError };
   }
   if (logoPath) await removeLogo(supabase, workspace.logo_path);
+  discardCancelledFiscalFiles(workspace, parsed.data);
 
   refresh();
   return { status: "saved", savedAt: Date.now() };
@@ -80,7 +83,7 @@ export async function saveFiscal(_prev: ProfileFormState, formData: FormData): P
 
   const { data: workspace, error } = await supabase
     .from("workspaces")
-    .select("id")
+    .select("id, nif, stat, fiscal_status")
     .order("created_at")
     .limit(1)
     .maybeSingle();
@@ -89,6 +92,18 @@ export async function saveFiscal(_prev: ProfileFormState, formData: FormData): P
 
   const dbError = await saveFiscalInfo(supabase, workspace.id, parsed.data);
   if (dbError) return { formError: dbError };
+  discardCancelledFiscalFiles(workspace, parsed.data);
   refresh();
   return { status: "saved", savedAt: Date.now() };
+}
+
+// NIF ou STAT changé pendant une vérification en cours : la base annule la demande (retour
+// à « non vérifiée ») ; ses photos sont supprimées après la réponse.
+function discardCancelledFiscalFiles(
+  before: { id: string; nif: string | null; stat: string | null; fiscal_status: string },
+  next: { nif: string | null; stat: string | null },
+) {
+  if (before.fiscal_status === "pending" && (before.nif !== next.nif || before.stat !== next.stat)) {
+    after(() => discardFiscalFiles(before.id));
+  }
 }

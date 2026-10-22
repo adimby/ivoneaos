@@ -29,7 +29,8 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' blob: data: ${supabaseOrigin}`.trim(),
   "font-src 'self'",
-  "connect-src 'self'",
+  // Photos de la carte fiscale : envoyées directement du navigateur au Storage Supabase.
+  `connect-src 'self' ${supabaseOrigin}`.trim(),
   "object-src 'none'",
   "base-uri 'self'",
   // Formulaires (actions serveur) vers le site, plus Whop : un balisage injecté ne peut pas
@@ -58,7 +59,20 @@ const nextConfig: NextConfig = {
   // serveur (pages publiques, aperçus, action « Envoyer la facture » qui archive le PDF).
   outputFileTracingIncludes: {
     "/*": ["src/modules/billing/fonts/*.ttf"],
+    // Lecture de la carte fiscale (tesseract.js, hors bundle) : script du worker lancé par
+    // chemin (worker_threads), moteur WebAssembly LSTM et modèle anglais lus sur le disque.
+    "/api/fiscal/verification": [
+      "node_modules/tesseract.js/package.json",
+      "node_modules/tesseract.js/src/**/*.js",
+      "node_modules/tesseract.js-core/package.json",
+      "node_modules/tesseract.js-core/tesseract-core*.wasm",
+      "node_modules/tesseract.js-core/tesseract-core{,-simd,-relaxedsimd}{,-lstm}.js",
+      "node_modules/@tesseract.js-data/eng/4.0.0_best_int/eng.traineddata.gz",
+      "node_modules/{bmp-js,idb-keyval,is-url,regenerator-runtime,wasm-feature-detect,zlibjs}/**/*",
+    ],
   },
+  // Chemins relatifs à son dossier (worker, moteur) : chargé par require, jamais empaqueté.
+  serverExternalPackages: ["tesseract.js"],
   async headers() {
     return [
       { source: "/:path*", headers: SECURITY_HEADERS },

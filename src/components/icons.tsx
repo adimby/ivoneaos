@@ -129,3 +129,9 @@ export const BrushIcon = (p: ComponentProps<"svg">) => (
     <path d="M6 13c-2 0-3 1.5-3 3.5V20h3.5C8.5 20 10 19 10 17" />
   </Icon>
 );
+export const ShieldIcon = (p: ComponentProps<"svg">) => (
+  <Icon {...p}>
+    <path d="M12 3 5 6v5.5c0 4.2 2.9 7.9 7 9.5 4.1-1.6 7-5.3 7-9.5V6Z" />
+    <path d="m9 12 2 2 4-4" />
+  </Icon>
+);

@@ -29,6 +29,8 @@ import { formatDay } from "@/modules/billing/view";
 import { getContact } from "@/modules/crm/queries";
 import { PAPI_MIN_AMOUNT } from "@/modules/payments/papi/adapter";
 import { getInvoicePaymentLinks, getOnlinePayments, getPapiAccount } from "@/modules/payments/queries";
+import { FiscalVerificationPanel } from "@/modules/verification/components/fiscal-verification-panel";
+import { getFiscalState } from "@/modules/verification/queries";
 import { FiscalInfoBlock } from "@/modules/workspace/components/fiscal-info-block";
 import { fiscalDefaults, hasFiscalInfo } from "@/modules/workspace/profile-schema";
 import { getCurrentWorkspace, getManualPayment, requireWorkspace } from "@/modules/workspace/queries";
@@ -64,7 +66,7 @@ export default async function InvoicePage({ params, searchParams }: Props) {
   const status = invoiceDisplayStatus(invoice.status, invoice.due_on, today);
 
   const open = invoice.status === "sent" || invoice.status === "overdue";
-  const [contact, quoteNumber, onlinePayments, papiAccount, paymentLinks, manual, t, tShare] = await Promise.all([
+  const [contact, quoteNumber, onlinePayments, papiAccount, paymentLinks, manual, t, tShare, tVerification] = await Promise.all([
     getContact(workspace.id, invoice.contact_id),
     invoice.quote_id ? getQuoteNumber(workspace.id, invoice.quote_id) : null,
     invoice.status === "paid" || invoice.status === "cancelled" ? getOnlinePayments(workspace.id, invoice.id) : null,
@@ -73,6 +75,7 @@ export default async function InvoicePage({ params, searchParams }: Props) {
     typeof query.papi === "string" ? getManualPayment(workspace.id) : null,
     getTranslations({ locale, namespace: "Billing" }),
     getTranslations({ locale: invoice.language, namespace: "Share" }),
+    getTranslations({ locale, namespace: "Verification" }),
   ]);
   const fields = { locale, id: invoice.id, back: `/factures/${invoice.id}` };
   const hidden = Object.entries(fields).map(([name, value]) => <input key={name} type="hidden" name={name} value={value} />);
@@ -111,8 +114,12 @@ export default async function InvoicePage({ params, searchParams }: Props) {
   // Brouillon sans NIF, STAT ou régime fiscal : la base refuserait l'envoi. Le bloc « Avant
   // ta première facture » prend la place du bouton d'envoi, qui revient une fois enregistré.
   const fiscalMissing = invoice.status === "draft" && !hasFiscalInfo(workspace);
+  // Carte fiscale pas encore vérifiée : 3 factures au plus. Plafond atteint : le dépôt des
+  // photos (ou l'attente de la vérification) prend la place du bouton d'envoi.
+  const fiscal = invoice.status === "draft" && !fiscalMissing ? await getFiscalState(workspace) : null;
+  const sendBlocked = fiscal?.left === 0;
   let main = null;
-  if (invoice.status === "draft" && !fiscalMissing) {
+  if (invoice.status === "draft" && !fiscalMissing && !sendBlocked) {
     main = (
       <form action={sendInvoice} className="flex flex-col gap-2">
         {hidden}
@@ -122,6 +129,13 @@ export default async function InvoicePage({ params, searchParams }: Props) {
           <ArrowRightIcon className="size-5" />
         </SubmitButton>
       </form>
+    );
+  } else if (fiscal && sendBlocked && (fiscal.status === "unverified" || fiscal.status === "rejected")) {
+    // Plafond atteint : l'action principale (sous le pouce) mène au dépôt des photos.
+    main = (
+      <a href="#verification-fiscale" className={buttonClasses("primary", true)} data-testid="fiscal-goto-upload">
+        {tVerification("goUpload")}
+      </a>
     );
   } else if ((invoice.status === "sent" || invoice.status === "overdue") && due > 0) {
     main = (
@@ -157,9 +171,15 @@ export default async function InvoicePage({ params, searchParams }: Props) {
         <Link href="/factures" className="inline-flex min-h-11 items-center self-start text-base font-semibold text-lagoon">
           ← {t("backToList")}
         </Link>
-        {/* Refus « infos fiscales manquantes » périmé une fois le bloc enregistré (l'URL le garde). */}
+        {/* Refus « infos fiscales manquantes » ou « carte à vérifier » périmé une fois le bloc
+            enregistré ou la carte vérifiée (l'URL le garde). */}
         <Notices
-          query={!fiscalMissing && query.erreur === "workspace_tax_info_missing" ? { ...query, erreur: undefined } : query}
+          query={
+            (!fiscalMissing && query.erreur === "workspace_tax_info_missing") ||
+            (!sendBlocked && typeof query.erreur === "string" && query.erreur.startsWith("fiscal_verification_"))
+              ? { ...query, erreur: undefined }
+              : query
+          }
           manualPayment={manual ? Boolean(manual.mvola || manual.rib || manual.other) : undefined} />
         {invoice.status === "paid" && invoice.number && (
           <Alert tone="success">
@@ -235,6 +255,9 @@ export default async function InvoicePage({ params, searchParams }: Props) {
 
         {invoice.status === "draft" && (
           <FiscalInfoBlock locale={locale} back={`/factures/${invoice.id}`} missing={fiscalMissing} defaults={fiscalDefaults(workspace)} primary />
+        )}
+        {fiscal && (
+          <FiscalVerificationPanel workspaceId={workspace.id} state={fiscal} hasNumbers locale={locale} context="invoice" />
         )}
 
         {/* Pas juste après un échec de création du lien : la notice d'échec dit déjà quoi faire. */}
