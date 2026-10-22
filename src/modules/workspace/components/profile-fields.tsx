@@ -44,6 +44,7 @@ export function ProfileFields({
   trade,
   fiscal = false,
   fiscalRequired = false,
+  fiscalStatus,
 }: {
   defaults: ProfileDefaults;
   errors?: FieldErrors;
@@ -54,6 +55,8 @@ export function ProfileFields({
   fiscal?: boolean;
   // Données fiscales déjà complètes : corrigeables, plus effaçables.
   fiscalRequired?: boolean;
+  // État de la vérification de la carte fiscale (avertissement avant de changer NIF ou STAT).
+  fiscalStatus?: string;
 }) {
   const t = useTranslations("Profile");
   const tErrors = useTranslations("FormErrors");
@@ -92,7 +95,7 @@ export function ProfileFields({
         <fieldset id="infos-fiscales" className="flex scroll-mt-20 flex-col gap-5">
           <legend className="mb-1 text-base font-bold text-lagoon">{t("fiscal.title")}</legend>
           <p className="-mt-2 text-sm text-ink-muted">{t(fiscalRequired ? "fiscal.requiredHint" : "fiscal.optionalHint")}</p>
-          <FiscalFields defaults={defaults} error={error} />
+          <FiscalFields defaults={defaults} error={error} fiscalStatus={fiscalStatus} />
         </fieldset>
       )}
 
@@ -113,21 +116,51 @@ export function ProfileFields({
   );
 }
 
-// NIF, STAT et régime fiscal (Réglages et bloc « Avant ta première facture »).
+// NIF, STAT et régime fiscal (Réglages et bloc « Avant ta première facture »). Carte
+// vérifiée ou en cours de vérification : chaque numéro prévient qu'une modification annule
+// la vérification (déclencheur t15_fiscal_guard).
 export function FiscalFields({
   defaults,
   error,
+  fiscalStatus,
 }: {
   defaults: Pick<ProfileDefaults, "nif" | "stat" | "tax_regime">;
   error: (field: string) => string | undefined;
+  fiscalStatus?: string;
 }) {
   const t = useTranslations("Profile");
+  const warning =
+    fiscalStatus === "verified" || fiscalStatus === "pending" ? (
+      <span className="mt-1 block font-semibold text-ink" data-testid="fiscal-reset-warning">
+        {t(`fiscal.resetWarning.${fiscalStatus}`)}
+      </span>
+    ) : null;
   return (
     <>
-      <Field id="nif" label={t("nif.label")} hint={t("nif.hint")} error={error("nif")}>
+      <Field
+        id="nif"
+        label={t("nif.label")}
+        hint={
+          <>
+            {t("nif.hint")}
+            {warning}
+          </>
+        }
+        error={error("nif")}
+      >
         {(c) => <Input {...c} name="nif" inputMode="numeric" autoComplete="off" defaultValue={defaults.nif} maxLength={20} />}
       </Field>
-      <Field id="stat" label={t("stat.label")} hint={t("stat.hint")} error={error("stat")}>
+      <Field
+        id="stat"
+        label={t("stat.label")}
+        hint={
+          <>
+            {t("stat.hint")}
+            {warning}
+          </>
+        }
+        error={error("stat")}
+      >
         {(c) => <Input {...c} name="stat" inputMode="numeric" autoComplete="off" defaultValue={defaults.stat} maxLength={30} />}
       </Field>
       <Field id="tax_regime" label={t("taxRegime.label")} hint={t("taxRegime.hint")} error={error("tax_regime")}>

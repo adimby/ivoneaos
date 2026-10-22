@@ -14,6 +14,10 @@ export const FISCAL_FILE_TYPES = {
 } as const;
 export type FiscalFileType = keyof typeof FISCAL_FILE_TYPES;
 export const FISCAL_FILE_ACCEPT = Object.keys(FISCAL_FILE_TYPES).join(",");
+// Plus grand côté gardé pour la lecture (serveur) ; le navigateur réduit les photos plus
+// grandes à cette taille avant l'envoi (JPEG, qualité FISCAL_JPEG_QUALITY).
+export const FISCAL_IMAGE_MAX_SIDE = 2000;
+export const FISCAL_JPEG_QUALITY = 0.85;
 
 // Factures émises permises tant que la carte n'est pas vérifiée (même valeur que la base,
 // next_document_number).

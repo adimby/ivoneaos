@@ -162,7 +162,12 @@
     "fiscal": {
       "title": "Infos fiscales",
       "optionalHint": "Facultatives pour l'instant, obligatoires pour émettre une facture : elles figurent sur chacune.",
-      "requiredHint": "Elles figurent sur chacune de tes factures : tu peux les corriger, pas les effacer."
+      "requiredHint": "Elles figurent sur chacune de tes factures : tu peux les corriger, pas les effacer.",
+      "resetWarning": {
+        "verified": "Le modifier annule la vérification de ta carte fiscale : tu devras redéposer les photos.",
+        "pending": "Le modifier annule la vérification en cours de ta carte fiscale : tu devras redéposer les photos."
+      },
+      "resetDone": "Ton NIF ou ton STAT a changé : la vérification de ta carte fiscale est annulée. Dépose de nouveau les photos de ta carte pour la faire vérifier."
     }
   },
   "FormErrors": {
@@ -1259,7 +1264,7 @@
     "intro": "Prends en photo le recto et le verso de ta carte fiscale. On vérifie que ton NIF et ton STAT y figurent, puis les photos sont supprimées.",
     "front": "Recto de la carte fiscale",
     "back": "Verso de la carte fiscale",
-    "fileHint": "Photo nette, JPG, PNG ou WEBP, 10 Mo au plus.",
+    "fileHint": "Photo nette, JPG, PNG ou WEBP. Une grande photo est réduite avant l'envoi.",
     "submit": "Envoyer pour vérification",
     "checkingShort": "Vérification en cours…",
     "checking": "Vérification en cours…",

@@ -4,7 +4,7 @@
 -- bucket privé « fiscal-documents ». Envois simultanés : scripts/test-db-concurrency.sh, cas 6.
 begin;
 \ir helpers.psql
-select plan(68);
+select plan(70);
 
 select tests.create_user('alice@example.test') as alice \gset
 select tests.create_user('bob@example.test') as bob \gset
@@ -13,6 +13,16 @@ select tests.authenticate_as(:'bob');
 select public.create_workspace('Atelier Bob') as wb \gset
 select tests.authenticate_as(:'alice');
 select public.create_workspace('Studio Alice') as wa \gset
+-- Photos : <workspace>/<uuid>.<ext>, seul format accepté par la politique de dépôt.
+select :'wa' || '/' || gen_random_uuid() || '.jpg' as f_recto \gset
+select :'wa' || '/' || gen_random_uuid() || '.jpg' as f_verso \gset
+select :'wa' || '/' || gen_random_uuid() || '.jpg' as f_absent \gset
+select :'wa' || '/' || gen_random_uuid() || '.jpg' as f_encore \gset
+select :'wa' || '/' || gen_random_uuid() || '.jpg' as f_recto2 \gset
+select :'wa' || '/' || gen_random_uuid() || '.jpg' as f_verso2 \gset
+select :'wa' || '/' || gen_random_uuid() || '.jpg' as f_apres \gset
+select :'wa' || '/' || gen_random_uuid() || '.jpg' as f_recto3 \gset
+select :'wa' || '/' || gen_random_uuid() || '.jpg' as f_verso3 \gset
 reset role;
 -- Admin : ajoutée à la main par le rôle serveur.
 insert into public.platform_admins (user_id) values (:'admin');
@@ -64,12 +74,16 @@ select throws_ok($$ select * from public.platform_admin_emails() $$, '42501', nu
 -- ---------------------------------------------------------------------------
 -- Storage : dépôt dans son dossier seulement, jamais relu ni supprimé par la freelance
 -- ---------------------------------------------------------------------------
-select lives_ok(format($$ insert into storage.objects (bucket_id, name) values ('fiscal-documents', %L) $$, :'wa' || '/recto.jpg'),
+select lives_ok(format($$ insert into storage.objects (bucket_id, name) values ('fiscal-documents', %L) $$, :'f_recto'),
   'la freelance dépose le recto dans son dossier');
-select lives_ok(format($$ insert into storage.objects (bucket_id, name) values ('fiscal-documents', %L) $$, :'wa' || '/verso.jpg'),
+select lives_ok(format($$ insert into storage.objects (bucket_id, name) values ('fiscal-documents', %L) $$, :'f_verso'),
   'et le verso');
-select throws_ok(format($$ insert into storage.objects (bucket_id, name) values ('fiscal-documents', %L) $$, :'wb' || '/recto.jpg'),
+select throws_ok(format($$ insert into storage.objects (bucket_id, name) values ('fiscal-documents', %L) $$, :'wb' || '/' || gen_random_uuid() || '.jpg'),
   '42501', null, 'jamais dans le dossier d''un autre workspace');
+select throws_ok(format($$ insert into storage.objects (bucket_id, name) values ('fiscal-documents', %L) $$, :'wa' || '/x/' || gen_random_uuid() || '.jpg'),
+  '42501', null, 'jamais dans un sous-dossier (que le nettoyage ne verrait pas)');
+select throws_ok(format($$ insert into storage.objects (bucket_id, name) values ('fiscal-documents', %L) $$, :'wa' || '/recto.jpg'),
+  '42501', null, 'nom au format <uuid>.<jpg|png|webp> seulement');
 select is((select count(*)::int from storage.objects where bucket_id = 'fiscal-documents'), 0,
   'la freelance ne lit ni ne liste ses propres photos');
 -- Garde-fou de Storage levé pour tester la politique elle-même (comme l'API Storage).
@@ -92,22 +106,22 @@ select is((select count(*)::int from storage.objects where bucket_id = 'fiscal-d
 -- Serveur seulement : la route contrôle la session, le contenu des photos, lance la
 -- lecture et prévient les admins (jamais contournée par un appel direct).
 select tests.authenticate_as(:'alice');
-select throws_ok(format($$ select public.submit_fiscal_verification(%L, %L, %L) $$, :'wa', :'wa' || '/recto.jpg', :'wa' || '/verso.jpg'),
+select throws_ok(format($$ select public.submit_fiscal_verification(%L, %L, %L) $$, :'wa', :'f_recto', :'f_verso'),
   '42501', null, 'dépôt réservé au serveur, même pour un membre');
 select tests.as_service_role();
 select throws_ok(format($$ select public.submit_fiscal_verification(%L, %L, %L) $$, gen_random_uuid(), 'x/recto.jpg', 'x/verso.jpg'),
   '42501', 'not_authenticated', 'workspace inconnu : refusé');
-select throws_ok(format($$ select public.submit_fiscal_verification(%L, %L, %L) $$, :'wa', :'wa' || '/recto.jpg', :'wa' || '/absent.jpg'),
+select throws_ok(format($$ select public.submit_fiscal_verification(%L, %L, %L) $$, :'wa', :'f_recto', :'f_absent'),
   '55000', 'fiscal_documents_missing', 'photo absente du bucket : refusé');
-select throws_ok(format($$ select public.submit_fiscal_verification(%L, %L, %L) $$, :'wa', :'wa' || '/recto.jpg', :'wa' || '/recto.jpg'),
+select throws_ok(format($$ select public.submit_fiscal_verification(%L, %L, %L) $$, :'wa', :'f_recto', :'f_recto'),
   '55000', 'fiscal_documents_missing', 'recto et verso distincts');
-select public.submit_fiscal_verification(:'wa', :'wa' || '/recto.jpg', :'wa' || '/verso.jpg') as req1 \gset
+select public.submit_fiscal_verification(:'wa', :'f_recto', :'f_verso') as req1 \gset
 select is((select fiscal_status::text from public.workspaces where id = :'wa'), 'pending', 'dépôt : en cours de vérification');
 select tests.authenticate_as(:'alice');
-select throws_ok(format($$ insert into storage.objects (bucket_id, name) values ('fiscal-documents', %L) $$, :'wa' || '/encore.jpg'),
+select throws_ok(format($$ insert into storage.objects (bucket_id, name) values ('fiscal-documents', %L) $$, :'f_encore'),
   '42501', null, 'en cours de vérification : plus aucun dépôt');
 select tests.as_service_role();
-select throws_ok(format($$ select public.submit_fiscal_verification(%L, %L, %L) $$, :'wa', :'wa' || '/recto.jpg', :'wa' || '/verso.jpg'),
+select throws_ok(format($$ select public.submit_fiscal_verification(%L, %L, %L) $$, :'wa', :'f_recto', :'f_verso'),
   '55000', 'fiscal_already_pending', 'une seule demande en attente');
 
 -- ---------------------------------------------------------------------------
@@ -139,7 +153,7 @@ select throws_ok(format($$ select * from public.admin_decide_fiscal_verification
   '55000', 'fiscal_reason_required', 'refus sans motif impossible');
 select is(
   (select row(d.owner_email, d.front_path, d.back_path) from public.admin_decide_fiscal_verification(:'req1', false, 'Photo floue') d),
-  row('alice@example.test'::text, (:'wa' || '/recto.jpg')::text, (:'wa' || '/verso.jpg')::text),
+  row('alice@example.test'::text, (:'f_recto')::text, (:'f_verso')::text),
   'refus : e-mail de la freelance et photos à supprimer renvoyés');
 select tests.authenticate_as(:'alice');
 select is((select row(fiscal_status::text, fiscal_rejection_reason) from public.workspaces where id = :'wa'),
@@ -156,18 +170,18 @@ select is((select row(front_path, back_path, method::text) from public.fiscal_ve
 -- Nouveau dépôt après un refus, puis validation : le plafond est levé.
 select tests.authenticate_as(:'alice');
 select lives_ok(format($$ insert into storage.objects (bucket_id, name) values ('fiscal-documents', %L), ('fiscal-documents', %L) $$,
-  :'wa' || '/recto2.jpg', :'wa' || '/verso2.jpg'), 'refusée : nouveau dépôt possible');
+  :'f_recto2', :'f_verso2'), 'refusée : nouveau dépôt possible');
 select tests.as_service_role();
-select public.submit_fiscal_verification(:'wa', :'wa' || '/recto2.jpg', :'wa' || '/verso2.jpg') as req2 \gset
+select public.submit_fiscal_verification(:'wa', :'f_recto2', :'f_verso2') as req2 \gset
 select tests.authenticate_as(:'admin');
 select lives_ok(format($$ select * from public.admin_decide_fiscal_verification(%L, true) $$, :'req2'), 'l''admin valide');
 select tests.authenticate_as(:'alice');
 select is((select fiscal_status::text from public.workspaces where id = :'wa'), 'verified', 'carte vérifiée');
 select lives_ok(format($$ update public.invoices set status = 'sent' where id = %L $$, :'i4'), '4e facture émise après la vérification');
-select throws_ok(format($$ insert into storage.objects (bucket_id, name) values ('fiscal-documents', %L) $$, :'wa' || '/apres.jpg'),
+select throws_ok(format($$ insert into storage.objects (bucket_id, name) values ('fiscal-documents', %L) $$, :'f_apres'),
   '42501', null, 'carte vérifiée : plus aucun fichier déposé');
 select tests.as_service_role();
-select throws_ok(format($$ select public.submit_fiscal_verification(%L, %L, %L) $$, :'wa', :'wa' || '/recto2.jpg', :'wa' || '/verso2.jpg'),
+select throws_ok(format($$ select public.submit_fiscal_verification(%L, %L, %L) $$, :'wa', :'f_recto2', :'f_verso2'),
   '55000', 'fiscal_already_verified', 'carte déjà vérifiée : pas de nouveau dépôt');
 select tests.authenticate_as(:'alice');
 
@@ -184,9 +198,9 @@ select throws_ok(format($$ update public.invoices set status = 'sent' where id =
   '55000', 'fiscal_verification_required', 'plafond de nouveau appliqué (4 factures déjà émises)');
 
 reset role;
-insert into storage.objects (bucket_id, name) values ('fiscal-documents', :'wa' || '/recto3.jpg'), ('fiscal-documents', :'wa' || '/verso3.jpg');
+insert into storage.objects (bucket_id, name) values ('fiscal-documents', :'f_recto3'), ('fiscal-documents', :'f_verso3');
 select tests.as_service_role();
-select public.submit_fiscal_verification(:'wa', :'wa' || '/recto3.jpg', :'wa' || '/verso3.jpg') as req3 \gset
+select public.submit_fiscal_verification(:'wa', :'f_recto3', :'f_verso3') as req3 \gset
 select tests.authenticate_as(:'alice');
 update public.workspaces set stat = '22345112026000001' where id = :'wa';
 reset role;
@@ -197,7 +211,7 @@ select is((select fiscal_status::text from public.workspaces where id = :'wa'), 
 -- Décision automatique (serveur) et ordre des messages avec l'offre Découverte
 -- ---------------------------------------------------------------------------
 select tests.as_service_role();
-select public.submit_fiscal_verification(:'wa', :'wa' || '/recto3.jpg', :'wa' || '/verso3.jpg') as req4 \gset
+select public.submit_fiscal_verification(:'wa', :'f_recto3', :'f_verso3') as req4 \gset
 select lives_ok(format($$ select * from public.decide_fiscal_verification(%L, true, 'automatic') $$, :'req4'),
   'le serveur valide après une lecture concordante');
 select is((select row(status, method::text, decided_by) from public.fiscal_verifications where id = :'req4'),

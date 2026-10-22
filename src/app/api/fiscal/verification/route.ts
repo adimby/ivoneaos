@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   if (!claims) return Response.json({ error: "not_authenticated" }, { status: 401 });
   const { data: workspace, error } = await supabase
     .from("workspaces")
-    .select("id, name, onboarded_at")
+    .select("id, name, onboarded_at, fiscal_status")
     .order("created_at")
     .limit(1)
     .maybeSingle();

@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { expect, type BrowserContext, type Page } from "@playwright/test";
 import { attemptKey, type AttemptScope } from "../src/modules/auth/attempt-key";
 import { createClient } from "@supabase/supabase-js";
@@ -109,14 +110,30 @@ export async function adminRest(path: string, init: RequestInit = {}): Promise<R
   });
 }
 
-// Fichiers d'un dossier de bucket Storage (clé secrète) : vérifier qu'ils ont été supprimés.
-export async function storageFiles(bucket: string, folder: string): Promise<string[]> {
-  const admin = createClient(env("NEXT_PUBLIC_SUPABASE_URL"), env("SUPABASE_SECRET_KEY"), {
+function storageAdmin() {
+  return createClient(env("NEXT_PUBLIC_SUPABASE_URL"), env("SUPABASE_SECRET_KEY"), {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const { data, error } = await admin.storage.from(bucket).list(folder);
+}
+
+// Fichiers d'un dossier de bucket Storage (clé secrète) : vérifier qu'ils ont été supprimés.
+export async function storageFiles(bucket: string, folder: string): Promise<string[]> {
+  const { data, error } = await storageAdmin().storage.from(bucket).list(folder);
   if (error) throw error;
   return data.map((file) => file.name);
+}
+
+// Dépôt direct dans un bucket (clé secrète) : préparation des tests seulement.
+export async function storageUpload(bucket: string, path: string, bytes: Buffer, contentType: string) {
+  const { error } = await storageAdmin().storage.from(bucket).upload(path, bytes, { contentType });
+  if (error) throw error;
+}
+
+// SQL direct sur la base locale (psql, comme scripts/test-db-concurrency.sh) : ce que l'API
+// ne permet pas, par exemple vieillir un fichier de Storage. Tests seulement.
+export function sql(query: string): string {
+  const url = process.env.DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+  return execFileSync("psql", [url, "-X", "-q", "-t", "-A", "-v", "ON_ERROR_STOP=1", "-c", query], { encoding: "utf8" }).trim();
 }
 
 // Même session, avant le chargement du JavaScript (connexion lente) : fichiers JS de

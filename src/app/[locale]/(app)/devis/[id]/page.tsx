@@ -180,7 +180,7 @@ export default async function QuotePage({ params, searchParams }: Props) {
         {quote.status === "accepted" && !invoice && <p className="text-base text-ink-muted">{t("detail.acceptedHint")}</p>}
         {/* Devis accepté : la facture approche, NIF / STAT / régime demandés dès maintenant (la transformation reste possible). */}
         {quote.status === "accepted" && !invoice && (
-          <FiscalInfoBlock locale={locale} back={`/devis/${quote.id}`} missing={!hasFiscalInfo(workspace)} defaults={fiscalDefaults(workspace)} />
+          <FiscalInfoBlock locale={locale} back={`/devis/${quote.id}`} missing={!hasFiscalInfo(workspace)} defaults={fiscalDefaults(workspace)} fiscalStatus={workspace.fiscal_status} />
         )}
         {fiscal && !invoice && <FiscalVerificationPanel workspaceId={workspace.id} state={fiscal} hasNumbers locale={locale} context="invoice" />}
         {needsNewValidity && <p className="text-base text-ink-muted">{t("detail.expiredHint")}</p>}

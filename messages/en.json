@@ -162,7 +162,12 @@
     "fiscal": {
       "title": "Tax details",
       "optionalHint": "Optional for now, required to issue an invoice: they appear on every one.",
-      "requiredHint": "They appear on every invoice: you can correct them, but not erase them."
+      "requiredHint": "They appear on every invoice: you can correct them, but not erase them.",
+      "resetWarning": {
+        "verified": "Changing it cancels your tax card verification: you will need to upload the photos again.",
+        "pending": "Changing it cancels the ongoing verification of your tax card: you will need to upload the photos again."
+      },
+      "resetDone": "Your NIF or STAT changed: your tax card verification has been cancelled. Upload photos of your card again to have it verified."
     }
   },
   "FormErrors": {
@@ -1259,7 +1264,7 @@
     "intro": "Take a photo of the front and the back of your tax card. We check that your NIF and STAT appear on it, then the photos are deleted.",
     "front": "Front of the tax card",
     "back": "Back of the tax card",
-    "fileHint": "Sharp photo, JPG, PNG or WEBP, 10 MB at most.",
+    "fileHint": "Sharp photo, JPG, PNG or WEBP. A large photo is reduced before upload.",
     "submit": "Send for verification",
     "checkingShort": "Verifying…",
     "checking": "Verifying…",

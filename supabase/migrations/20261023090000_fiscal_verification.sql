@@ -254,8 +254,17 @@ set search_path = ''
 as $$
 declare
   req record;
+  ws_id uuid;
   reason text := nullif(btrim(p_reason), '');
 begin
+  -- Verrous dans le même ordre que partout ailleurs (next_document_number,
+  -- submit_fiscal_verification, changement de NIF ou de STAT puis t15_fiscal_guard) :
+  -- d'abord le workspace, puis la demande. L'ordre inverse se bloquait mutuellement avec
+  -- un changement de NIF simultané (interblocage, une des deux transactions annulée).
+  select v.workspace_id into ws_id from public.fiscal_verifications v where v.id = p_request_id;
+  if ws_id is not null then
+    perform 1 from public.workspaces w where w.id = ws_id for no key update;
+  end if;
   select v.* into req
   from public.fiscal_verifications v
   where v.id = p_request_id
@@ -493,8 +502,11 @@ $$;
 revoke execute on function public.fiscal_upload_workspace_ids() from public, anon;
 grant execute on function public.fiscal_upload_workspace_ids() to authenticated;
 
+-- Chemin exact <workspace>/<uuid>.<jpg|png|webp> (même format que fiscalFilePath) : aucun
+-- sous-dossier, que le nettoyage (liste du seul premier niveau) ne verrait jamais.
 create policy "fiscal_documents_insert" on storage.objects for insert to authenticated
   with check (
     bucket_id = 'fiscal-documents'
+    and name ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp)$'
     and (storage.foldername(name))[1] in (select w::text from public.fiscal_upload_workspace_ids() w)
   );

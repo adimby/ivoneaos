@@ -128,6 +128,7 @@ export default async function SettingsPage({ params }: PageProps<"/[locale]/regl
           locale={locale}
           logoUrl={logoUrl}
           fiscalRequired={hasFiscalInfo(workspace)}
+          fiscalStatus={workspace.fiscal_status}
           defaults={{
             name: workspace.name,
             trade: workspace.trade ?? "",

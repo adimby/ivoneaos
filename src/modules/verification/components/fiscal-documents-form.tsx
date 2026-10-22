@@ -7,8 +7,20 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { FileDrop, type UploadResult } from "@/components/ui/file-drop";
 import { useHydrated } from "@/lib/use-hydrated";
+import { downscaleImage } from "@/lib/downscale-image";
 import { createClient } from "@/lib/supabase/client";
-import { FISCAL_BUCKET, FISCAL_FILE_ACCEPT, FISCAL_FILE_MAX_BYTES, fiscalFilePath, isFiscalFileType } from "../documents";
+import {
+  FISCAL_BUCKET,
+  FISCAL_FILE_ACCEPT,
+  FISCAL_FILE_MAX_BYTES,
+  FISCAL_IMAGE_MAX_SIDE,
+  FISCAL_JPEG_QUALITY,
+  fiscalFilePath,
+  isFiscalFileType,
+} from "../documents";
+
+// Grande photo réduite avant l'envoi (taille gardée par le serveur pour la lecture).
+const shrink = (file: File) => downscaleImage(file, FISCAL_IMAGE_MAX_SIDE, FISCAL_JPEG_QUALITY);
 
 const ERRORS = [
   "unavailable",
@@ -23,9 +35,9 @@ const ERRORS = [
 type FormError = (typeof ERRORS)[number] | "unknown";
 // Photos supprimées ou introuvables côté serveur : les zones de dépôt repartent à vide.
 const RESET_ON = new Set<FormError>(["files_invalid", "fiscal_documents_missing"]);
-// État peut-être déjà changé (envoi traité malgré une coupure, autre onglet) : la page se
-// recharge et montre le vrai statut.
-const REFRESH_ON = new Set<FormError>(["fiscal_already_pending", "fiscal_already_verified", "network"]);
+// État peut-être déjà changé (envoi traité malgré une coupure, autre onglet, photos
+// supprimées après une décision) : la page se recharge et montre le vrai statut.
+const REFRESH_ON = new Set<FormError>(["fiscal_already_pending", "fiscal_already_verified", "files_invalid", "fiscal_documents_missing", "network"]);
 
 // Recto et verso de la carte fiscale : chaque photo part directement du navigateur vers le
 // bucket privé (dossier du workspace, nom nouveau), puis le serveur les relit et les
@@ -99,6 +111,7 @@ export function FiscalDocumentsForm({ workspaceId, primary = false }: { workspac
           accept={FISCAL_FILE_ACCEPT}
           maxBytes={FISCAL_FILE_MAX_BYTES}
           upload={upload}
+          prepare={shrink}
           onChange={setFront}
           disabled={checking}
         />
@@ -110,6 +123,7 @@ export function FiscalDocumentsForm({ workspaceId, primary = false }: { workspac
           accept={FISCAL_FILE_ACCEPT}
           maxBytes={FISCAL_FILE_MAX_BYTES}
           upload={upload}
+          prepare={shrink}
           onChange={setBack}
           disabled={checking}
         />

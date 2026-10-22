@@ -1,6 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { adminRest, signUpAndOnboard, storageFiles } from "./helpers";
+import { randomUUID } from "node:crypto";
+import sharp from "sharp";
+import { adminRest, cronSecret, signUpAndOnboard, sql, storageFiles, storageUpload } from "./helpers";
 import { readEmail } from "./mailpit";
 
 // Vérification de la carte fiscale (docs/spec-mvp.md, « Vérification fiscale ») : dépôt
@@ -123,10 +125,17 @@ test("Cas 1 : numéros lus sur la carte → vérifiée automatiquement, photos s
   expect(workspace.fiscal_status).toBe("verified");
   expect(workspace.fiscal_status_at).not.toBeNull();
 
-  // Un changement de NIF remet la vérification à zéro.
+  // Un changement de NIF remet la vérification à zéro : la freelance en est prévenue avant
+  // (aide sous NIF et STAT) et après l'enregistrement.
+  await expect(page.getByTestId("fiscal-reset-warning").filter({ visible: true })).toHaveCount(2);
+  await expect(page.getByTestId("fiscal-reset-warning").filter({ visible: true }).first()).toHaveText(
+    "Le modifier annule la vérification de ta carte fiscale : tu devras redéposer les photos.",
+  );
   await page.getByLabel("NIF", { exact: true }).fill("3000123457");
   await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
+  await expect(page.getByTestId("fiscal-reset-done").filter({ visible: true })).toContainText("la vérification de ta carte fiscale est annulée");
   await expect(page.getByTestId("fiscal-status").filter({ visible: true })).toHaveText("Non vérifiée");
+  await expect(page.getByTestId("fiscal-reset-warning")).toHaveCount(0);
 });
 
 test("Cas 2 : numéros différents → en attente → l'admin valide, photos supprimées, e-mails reçus", async ({ page, browser, baseURL }) => {
@@ -227,6 +236,18 @@ test("Cas 3 : refus avec motif, visible chez le freelance qui peut redéposer", 
   await expect(page.getByTestId("fiscal-submit")).toBeVisible();
   report.push(...(await violationsOf(page, "/fr/reglages")));
   expect(report, report.join("\n")).toEqual([]);
+
+  // Photo de téléphone trop lourde (PNG de plus de 10 Mo, 3000 px) : réduite dans le
+  // navigateur avant l'envoi (JPEG, 2000 px au plus), donc acceptée.
+  const heavy = await sharp({ create: { width: 3000, height: 2400, channels: 3, background: "#888", noise: { type: "gaussian", mean: 128, sigma: 60 } } })
+    .png({ compressionLevel: 0 })
+    .toBuffer();
+  expect(heavy.byteLength).toBeGreaterThan(10 * 1024 * 1024);
+  await page.locator("#fiscal-front").setInputFiles({ name: "photo.png", mimeType: "image/png", buffer: heavy });
+  await expect(page.getByTestId("file-drop-fiscal-front")).toHaveAttribute("data-status", "done", { timeout: 30_000 });
+  const uploaded = await storageFiles(BUCKET, ws);
+  expect(uploaded).toHaveLength(1);
+  expect(uploaded[0]).toMatch(/\.jpg$/);
   await admin.close();
 });
 
@@ -287,6 +308,62 @@ test("Cas 4 : la 4e facture est bloquée tant que la carte n'est pas vérifiée"
   await page.goto(`/fr/factures/${invoices[3].id}`);
   await page.getByRole("button", { name: "Envoyer la facture" }).click();
   await expect(page.getByTestId("document-status").filter({ visible: true })).toHaveText("Envoyée");
+});
+
+test("Rattrapage quotidien (cron) : avis aux admins oublié, photos annulées et dépôts abandonnés supprimés", async ({ page, browser, baseURL, request }) => {
+  test.setTimeout(120_000);
+  const admin = await newAdmin(browser, baseURL!);
+  const { business } = await signUpAndOnboard(page, "p12-cron", { verified: false });
+  const ws = await workspaceOf(business);
+  const photo = await cardImage(page, ["NIF : 1"]);
+  const path = () => `${ws}/${randomUUID()}.png`;
+  const files = { oldOrphan: path(), newOrphan: path(), pendingFront: path(), pendingBack: path(), cancelledFront: path(), cancelledBack: path() };
+  for (const name of Object.values(files)) await storageUpload(BUCKET, name, photo, "image/png");
+  // Déposés il y a 2 h, sauf newOrphan (envoi peut-être en cours : gardé).
+  const aged = Object.entries(files).filter(([key]) => key !== "newOrphan").map(([, name]) => `'${name}'`);
+  sql(`update storage.objects set created_at = now() - interval '2 hours' where bucket_id = '${BUCKET}' and name in (${aged.join(", ")})`);
+  // Demande restée en attente sans avis (route arrêtée pendant la lecture), il y a 10 min ;
+  // demande annulée (NIF changé) dont les photos n'ont pas été supprimées.
+  const pending = await insert<{ id: string }>("fiscal_verifications", {
+    workspace_id: ws,
+    nif: NIF,
+    stat: STAT,
+    front_path: files.pendingFront,
+    back_path: files.pendingBack,
+    created_at: new Date(Date.now() - 10 * 60_000).toISOString(),
+  });
+  const cancelled = await insert<{ id: string }>("fiscal_verifications", {
+    workspace_id: ws,
+    nif: NIF,
+    stat: STAT,
+    status: "cancelled",
+    front_path: files.cancelledFront,
+    back_path: files.cancelledBack,
+  });
+
+  const since = new Date(Date.now() - 2_000);
+  const run = await request.get("/api/cron/reminders", { headers: { Authorization: `Bearer ${cronSecret()}` } });
+  expect(run.status()).toBe(200);
+  expect((await run.json()).fiscal).toMatchObject({ notified: expect.any(Number), folders: expect.any(Number) });
+
+  const notice = await readEmail(admin.email, since, (m) => m.Subject === `Carte fiscale à vérifier : ${business}`);
+  expect(notice.Text).toContain(`/fr/admin/verifications/${pending.id}`);
+  const state = async (id: string) =>
+    ((await (await adminRest(`fiscal_verifications?select=admins_notified_at,front_path,back_path&id=eq.${id}`)).json()) as {
+      admins_notified_at: string | null;
+      front_path: string | null;
+      back_path: string | null;
+    }[])[0];
+  const notified = await state(pending.id);
+  expect(notified.admins_notified_at).not.toBeNull();
+  expect(await state(cancelled.id)).toMatchObject({ front_path: null, back_path: null });
+  const name = (p: string) => p.split("/")[1];
+  expect((await storageFiles(BUCKET, ws)).sort()).toEqual([files.newOrphan, files.pendingFront, files.pendingBack].map(name).sort());
+
+  // Passage suivant : l'avis n'est pas renvoyé.
+  expect((await request.get("/api/cron/reminders", { headers: { Authorization: `Bearer ${cronSecret()}` } })).status()).toBe(200);
+  expect((await state(pending.id)).admins_notified_at).toBe(notified.admins_notified_at);
+  await admin.close();
 });
 
 test("Pages admin introuvables pour une freelance et sans session", async ({ page }) => {

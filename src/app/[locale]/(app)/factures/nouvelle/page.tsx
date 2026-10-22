@@ -49,6 +49,7 @@ export default async function NewInvoicePage({ params, searchParams }: Props) {
         back="/factures/nouvelle"
         missing={!fiscalComplete}
         defaults={fiscalDefaults(workspace)}
+        fiscalStatus={workspace.fiscal_status}
         compact
       />
       {fiscal && <FiscalVerificationPanel workspaceId={workspace.id} state={fiscal} hasNumbers locale={locale} context="invoice" compact />}

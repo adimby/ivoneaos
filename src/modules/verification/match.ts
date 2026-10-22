@@ -4,7 +4,8 @@
 // confusions courantes O→0, I/l/|→1, S→5, B→8 seulement à l'intérieur d'un groupe qui
 // contient au moins autant de vrais chiffres (« NIF », « STAT », « S » seul ne deviennent
 // jamais des chiffres). Le NIF ET le STAT saisis doivent tous deux figurer dans une de ces
-// suites, sur l'une des faces. Le texte lu n'est jamais conservé.
+// suites, sur l'une des faces, le NIF ailleurs qu'à l'intérieur du STAT lu. Le texte lu
+// n'est jamais conservé.
 
 const CONFUSIONS: Record<string, string> = { O: "0", I: "1", l: "1", "|": "1", S: "5", B: "8" };
 // Un groupe : chiffres et lettres confondues collés ; un séparateur : espaces (dont
@@ -45,10 +46,13 @@ export function digitRuns(text: string): string[] {
 export type FiscalMatch = { nif: boolean; stat: boolean; verified: boolean };
 
 // faces : texte lu sur chaque photo (recto, verso).
+// Le NIF est cherché hors des endroits où le STAT a été lu : un NIF saisi qui figure dans le
+// STAT saisi n'est jamais « trouvé » sur une image qui ne porte que le STAT.
 export function matchFiscalNumbers(faces: string[], numbers: { nif: string; stat: string }): FiscalMatch {
   const runs = faces.flatMap(digitRuns);
-  const found = (value: string) => value.length > 0 && runs.some((run) => run.includes(value));
-  const nif = /^\d{10}$/.test(numbers.nif) && found(numbers.nif);
-  const stat = /^\d{17}$/.test(numbers.stat) && found(numbers.stat);
+  const validStat = /^\d{17}$/.test(numbers.stat);
+  const stat = validStat && runs.some((run) => run.includes(numbers.stat));
+  const outsideStat = validStat ? runs.flatMap((run) => run.split(numbers.stat)) : runs;
+  const nif = /^\d{10}$/.test(numbers.nif) && outsideStat.some((run) => run.includes(numbers.nif));
   return { nif, stat, verified: nif && stat };
 }

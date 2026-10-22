@@ -9,7 +9,9 @@ import { cn } from "./cn";
 // clavier), aperçu miniature pour une image, remplacer, retirer, état d'envoi et erreurs
 // claires. Le fichier part dès qu'il est choisi (upload, fourni par l'appelant : envoi
 // direct vers le stockage, par exemple) ; onChange reçoit la valeur renvoyée (chemin) ou
-// null. Utilisé pour la carte fiscale, et prévu pour l'étape « Administratif » du démarrage.
+// null. prepare (facultatif) transforme le fichier avant le contrôle de taille et l'envoi
+// (réduire une grande photo, par exemple). Utilisé pour la carte fiscale, et prévu pour
+// l'étape « Administratif » du démarrage.
 //
 // Accessibilité : le champ natif (masqué visuellement, focalisable) porte le libellé, l'aide
 // et l'erreur ; le bouton visible est son second libellé et montre le focus. L'état d'envoi
@@ -26,6 +28,7 @@ export function FileDrop<T>({
   accept,
   maxBytes,
   upload,
+  prepare,
   onChange,
   disabled = false,
 }: {
@@ -36,6 +39,8 @@ export function FileDrop<T>({
   accept: string;
   maxBytes: number;
   upload: (file: File) => Promise<UploadResult<T>>;
+  // Fichier transformé avant le contrôle de taille et l'envoi (en cas d'échec : l'original).
+  prepare?: (file: File) => Promise<File>;
   onChange: (value: T | null) => void;
   disabled?: boolean;
 }) {
@@ -60,17 +65,22 @@ export function FileDrop<T>({
   async function choose(next: File | undefined) {
     if (!next || disabled || busy) return;
     if (inputRef.current) inputRef.current.value = "";
-    if (next.size > maxBytes) return fail(t("errors.too_large", { size: sizeLabel }));
     if (!types.includes(next.type)) return fail(t("errors.type"));
+    if (!prepare && next.size > maxBytes) return fail(t("errors.too_large", { size: sizeLabel }));
     const current = ++attempt.current;
     setFile(next);
-    setPreview(next.type.startsWith("image/") ? URL.createObjectURL(next) : null);
+    setPreview(null);
     setError(null);
     setStatus("uploading");
     onChange(null);
+    const ready = prepare ? await prepare(next).catch(() => next) : next;
+    if (current !== attempt.current) return;
+    if (ready.size > maxBytes) return fail(t("errors.too_large", { size: sizeLabel }));
+    if (!types.includes(ready.type)) return fail(t("errors.type"));
+    setPreview(ready.type.startsWith("image/") ? URL.createObjectURL(ready) : null);
     let result: UploadResult<T>;
     try {
-      result = await upload(next);
+      result = await upload(ready);
     } catch {
       result = { ok: false, error: t("errors.upload") };
     }

@@ -2,6 +2,7 @@ import "server-only";
 import path from "node:path";
 import sharp from "sharp";
 import { createWorker } from "tesseract.js";
+import { FISCAL_IMAGE_MAX_SIDE } from "./documents";
 
 // Lecture du texte des photos de la carte fiscale, côté serveur seulement (le résultat
 // décide du statut : il doit être de confiance). tesseract.js (Apache 2.0), modèle
@@ -14,14 +15,19 @@ const OEM_LSTM_ONLY = 1;
 
 // Photo de téléphone : redressée selon son EXIF (tous les boutismes, ce que tesseract ne
 // fait pas), réduite (lecture plus rapide, assez nette pour des chiffres) et en gris.
-const MAX_SIDE = 2000;
+const MAX_SIDE = FISCAL_IMAGE_MAX_SIDE;
+// Pixels au plus avant décodage (lus dans l'en-tête) : un PNG uni de 10 Mo peut décrire des
+// centaines de mégapixels, soit des centaines de Mo une fois décodé. Au-delà, l'image est
+// refusée (lecture impossible : vérification manuelle). 50 Mpx couvre une photo de
+// téléphone ; le navigateur réduit d'ailleurs les grandes photos avant l'envoi (≈ 2000 px).
+export const MAX_INPUT_PIXELS = 50_000_000;
 // Si rien ne concorde à l'endroit : photo prise de côté ou à l'envers.
 const RETRY_ANGLES = [90, 180, 270] as const;
 
 type OcrWorker = Awaited<ReturnType<typeof createWorker>>;
 
 export async function normalizeImage(image: Uint8Array): Promise<Buffer> {
-  return sharp(image)
+  return sharp(image, { limitInputPixels: MAX_INPUT_PIXELS })
     .autoOrient()
     .resize({ width: MAX_SIDE, height: MAX_SIDE, fit: "inside", withoutEnlargement: true })
     .grayscale()

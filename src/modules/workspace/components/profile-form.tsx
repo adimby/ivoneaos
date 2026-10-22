@@ -14,11 +14,13 @@ export function ProfileForm({
   defaults,
   logoUrl,
   fiscalRequired,
+  fiscalStatus,
 }: {
   locale: string;
   defaults: ProfileDefaults;
   logoUrl: string | null;
   fiscalRequired: boolean;
+  fiscalStatus: string;
 }) {
   const t = useTranslations("Profile");
   const tErrors = useTranslations();
@@ -45,10 +47,15 @@ export function ProfileForm({
     >
       <input type="hidden" name="locale" value={locale} />
       {/* logoKey : après un enregistrement, le champ logo est vidé (le même fichier n'est pas renvoyé). */}
-      <ProfileFields defaults={defaults} errors={state.fieldErrors} logoUrl={logoUrl} logoKey={state.savedAt} fiscal fiscalRequired={fiscalRequired} />
+      <ProfileFields defaults={defaults} errors={state.fieldErrors} logoUrl={logoUrl} logoKey={state.savedAt} fiscal fiscalRequired={fiscalRequired} fiscalStatus={fiscalStatus} />
       <div aria-live="polite">
         {state.formError && <Alert tone="error">{formErrorMessage(tErrors, state.formError)}</Alert>}
         {state.status === "saved" && !pending && <Alert tone="success">{t("saved")}</Alert>}
+        {state.status === "saved" && state.fiscalReset && !pending && (
+          <Alert tone="info" className="mt-2">
+            <span data-testid="fiscal-reset-done">{t("fiscal.resetDone")}</span>
+          </Alert>
+        )}
       </div>
       {/* Ordinateur : bouton à sa taille, aligné à droite sous les champs. */}
       <SubmitButton pending={pending} disabled={!hydrated} block className="lg:w-auto lg:self-end">

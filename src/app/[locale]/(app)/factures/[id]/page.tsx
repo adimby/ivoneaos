@@ -254,7 +254,7 @@ export default async function InvoicePage({ params, searchParams }: Props) {
         </div>
 
         {invoice.status === "draft" && (
-          <FiscalInfoBlock locale={locale} back={`/factures/${invoice.id}`} missing={fiscalMissing} defaults={fiscalDefaults(workspace)} primary />
+          <FiscalInfoBlock locale={locale} back={`/factures/${invoice.id}`} missing={fiscalMissing} defaults={fiscalDefaults(workspace)} fiscalStatus={workspace.fiscal_status} primary />
         )}
         {fiscal && (
           <FiscalVerificationPanel workspaceId={workspace.id} state={fiscal} hasNumbers locale={locale} context="invoice" />

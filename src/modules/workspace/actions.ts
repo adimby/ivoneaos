@@ -20,6 +20,9 @@ export type ProfileFormState = {
   fieldErrors?: FieldErrors;
   // Clé errors.db.* (erreur de la base) ou FormErrors.fix_errors.
   formError?: string;
+  // NIF ou STAT changé alors que la carte était vérifiée ou en cours de vérification : la
+  // base a annulé la vérification (la freelance doit redéposer ses photos).
+  fiscalReset?: boolean;
 };
 
 const localeSchema = z.enum(routing.locales).catch(routing.defaultLocale);
@@ -63,7 +66,7 @@ export async function updateProfile(_prev: ProfileFormState, formData: FormData)
   discardCancelledFiscalFiles(workspace, parsed.data);
 
   refresh();
-  return { status: "saved", savedAt: Date.now() };
+  return { status: "saved", savedAt: Date.now(), fiscalReset: fiscalReset(workspace, parsed.data) };
 }
 
 // « Avant ta première facture » : NIF, STAT et régime fiscal enregistrés depuis la page
@@ -94,7 +97,16 @@ export async function saveFiscal(_prev: ProfileFormState, formData: FormData): P
   if (dbError) return { formError: dbError };
   discardCancelledFiscalFiles(workspace, parsed.data);
   refresh();
-  return { status: "saved", savedAt: Date.now() };
+  return { status: "saved", savedAt: Date.now(), fiscalReset: fiscalReset(workspace, parsed.data) };
+}
+
+// Vérification annulée par cet enregistrement (déclencheur t15_fiscal_guard) : la carte
+// était vérifiée ou en cours, et le NIF ou le STAT a changé.
+function fiscalReset(
+  before: { nif: string | null; stat: string | null; fiscal_status: string },
+  next: { nif: string | null; stat: string | null },
+): boolean {
+  return (before.fiscal_status === "verified" || before.fiscal_status === "pending") && (before.nif !== next.nif || before.stat !== next.stat);
 }
 
 // NIF ou STAT changé pendant une vérification en cours : la base annule la demande (retour

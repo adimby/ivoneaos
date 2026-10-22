@@ -68,6 +68,14 @@ describe("matchFiscalNumbers", () => {
     expect(matchFiscalNumbers(["", ""], numbers).verified).toBe(false);
   });
 
+  it("NIF saisi contenu dans le STAT saisi, image avec le STAT seul : non vérifié", () => {
+    const inside = { nif: "1112020001", stat: "74111112020001234" };
+    expect(matchFiscalNumbers(["STAT 74111 11 2020 0 01234"], inside)).toEqual({ nif: false, stat: true, verified: false });
+    // Les deux numéros présents, même collés sur une ligne : vérifié.
+    expect(matchFiscalNumbers(["NIF 1112020001", "STAT 74111112020001234"], inside).verified).toBe(true);
+    expect(matchFiscalNumbers(["1112020001 74111112020001234"], inside).verified).toBe(true);
+  });
+
   it("numéros saisis invalides : jamais vérifié", () => {
     expect(matchFiscalNumbers(["123"], { nif: "", stat: "" }).verified).toBe(false);
   });

@@ -234,23 +234,37 @@ Le freelance prouve son NIF et son STAT par une photo de sa carte fiscale ; on n
 - Dépôt (Réglages ; sur une facture brouillon dont l'envoi est bloqué par le plafond, avec le bouton du bas qui y
   mène ; ailleurs sur les écrans de facture, seulement le compteur et un lien vers Réglages) : recto et verso, JPG, PNG
   ou WEBP, 10 Mo chacun, envoyés directement du navigateur dans le bucket privé `fiscal-documents/{workspace_id}/`.
+  Une photo de plus de 2000 px de côté est d'abord réduite dans le navigateur (`createImageBitmap` puis canvas, JPEG
+  qualité 0,85, redressée selon son EXIF) : une photo de 50 ou 108 Mpx passe sous les 10 Mo et part plus vite ; si le
+  navigateur ne sait pas la réduire, le refus « plus de 10 Mo » s'applique comme avant. Chemin imposé par la
+  politique : `{workspace_id}/{uuid}.{jpg|png|webp}`, sans sous-dossier.
   Seul l'ajout est permis au membre, et seulement tant que la carte est à déposer (non vérifiée ou refusée) ; ni
   lecture, ni remplacement, ni suppression. Les fichiers d'une demande décidée ou annulée sont supprimés ; les dépôts
   jamais soumis le sont après une heure (au dépôt suivant et par le passage quotidien du cron). Composant réutilisable
   `FileDrop` (`src/components/ui/file-drop.tsx`).
 - Lecture : la route `POST /api/fiscal/verification` (même origine, session, workspace lu avec le client de la
-  personne) contrôle les fichiers (type réel), crée la demande (`submit_fiscal_verification`, réservée au rôle serveur :
+  personne) refuse d'abord une carte déjà vérifiée ou en attente (sans rien télécharger ni supprimer), puis contrôle
+  les fichiers (type réel ; une photo refusée est supprimée, jamais celles d'une demande en attente), crée la demande (`submit_fiscal_verification`, réservée au rôle serveur :
   pas de contournement par un appel direct), puis lit les deux faces par OCR (tesseract.js, modèle anglais livré avec
   l'application via `@tesseract.js-data/eng`, aucun CDN ; fichiers inclus dans la fonction Vercel par
   `outputFileTracingIncludes`). Chaque photo est d'abord redressée selon son EXIF, réduite à 2000 px et passée en gris
-  (sharp) ; si les numéros ne concordent pas, elle est relue tournée de 90°, 180° et 270° tant que le délai le permet.
+  (sharp, 50 Mpx au plus d'après l'en-tête : au-delà, lecture impossible et vérification manuelle) ; si les numéros ne concordent pas, elle est relue tournée de 90°, 180° et 270° tant que le délai le permet.
   Lecture synchrone (le freelance attend la réponse, 40 s au plus, `maxDuration` 60 s) ; le texte lu n'est ni stocké
   ni journalisé. Règle de concordance pure et testée (`src/modules/verification/match.ts`) :
-  suites de chiffres par ligne, espaces et tirets ignorés, confusions courantes corrigées (O→0, I/l→1, S→5, B→8).
+  suites de chiffres par ligne, espaces et tirets ignorés, confusions courantes corrigées (O→0, I/l→1, S→5, B→8) ;
+  le NIF doit être lu ailleurs qu'à l'intérieur du STAT (un NIF saisi contenu dans le STAT ne suffit pas).
   NIF et STAT retrouvés : vérifiée automatiquement, photos supprimées. Sinon : en attente et e-mail aux admins (Resend,
   ou journal sans Resend), seulement si la demande est toujours en attente ; l'avis est noté
   (`admins_notified_at`). Si la fonction est arrêtée par la plateforme avant l'avis, le passage quotidien du cron
-  (`/api/cron/reminders`) prévient les admins pour les demandes en attente depuis plus de 5 minutes sans avis.
+  (`/api/cron/reminders`, 05:00 UTC) prévient les admins pour les demandes en attente depuis plus de 5 minutes sans
+  avis. Délai accepté pour le MVP : dans ce cas rare, l'avis peut arriver jusqu'à environ 24 h après le dépôt (le
+  freelance voit « en cours de vérification » et peut être bloqué à 3 factures pendant ce temps ; la page admin, elle,
+  liste la demande dès le dépôt). Plus tard, si besoin : un cron plus fréquent (Vercel Pro) limité à ce rattrapage.
+- Ordre des verrous : toujours la ligne du workspace, puis la demande (`next_document_number`,
+  `submit_fiscal_verification`, `decide_fiscal_verification`, changement de NIF ou de STAT) ; une décision prise
+  pendant un changement de NIF attend, puis trouve la demande annulée (`scripts/test-db-concurrency.sh`, cas 7).
+- NIF ou STAT modifiés alors que la carte est vérifiée ou en cours de vérification : l'aide sous chaque champ prévient
+  que la vérification sera annulée, et un message le confirme après l'enregistrement.
 - Limite connue de la lecture automatique : elle accepte toute image où figurent le NIF et le STAT saisis (une image
   de texte fabriquée passe aussi). Elle prouve la cohérence des numéros, pas l'authenticité de la carte. Pistes plus
   tard : exiger des mots de la carte (« CARTE FISCALE », « NIF », « STAT ») ou contrôler à la main un échantillon.

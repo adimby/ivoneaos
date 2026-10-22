@@ -22,6 +22,7 @@ export function FiscalInfoBlock({
   defaults,
   primary = false,
   compact = false,
+  fiscalStatus,
 }: {
   locale: string;
   back: string;
@@ -32,6 +33,8 @@ export function FiscalInfoBlock({
   // Replié (titre seul) : page où l'action principale est un autre formulaire (nouvelle
   // facture, enregistrable en brouillon sans données fiscales). Natif : marche sans JavaScript.
   compact?: boolean;
+  // État de la vérification de la carte fiscale (avertissement avant de changer NIF ou STAT).
+  fiscalStatus?: string;
 }) {
   const t = useTranslations("Fiscal");
   const tAll = useTranslations();
@@ -45,6 +48,11 @@ export function FiscalInfoBlock({
     return state.status === "saved" ? (
       <Alert tone="success">
         <span data-testid="fiscal-saved">{t("saved")}</span>
+        {state.fiscalReset && (
+          <span className="mt-1 block text-ink" data-testid="fiscal-reset-done">
+            {tAll("Profile.fiscal.resetDone")}
+          </span>
+        )}
       </Alert>
     ) : null;
   }
@@ -70,7 +78,7 @@ export function FiscalInfoBlock({
     >
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="back" value={back} />
-      <FiscalFields defaults={defaults} error={error} />
+      <FiscalFields defaults={defaults} error={error} fiscalStatus={fiscalStatus} />
       <div aria-live="polite">
         {state.formError && !pending && <Alert tone="error">{formErrorMessage(tAll, state.formError)}</Alert>}
       </div>

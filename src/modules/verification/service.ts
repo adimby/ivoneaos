@@ -1,6 +1,6 @@
 import "server-only";
 import { dbErrorKey } from "@/lib/db-errors";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, type AdminClient } from "@/lib/supabase/admin";
 import { checkFiscalBytes, FISCAL_BUCKET, isFiscalFilePath } from "./documents";
 import { notifyAdmins, removeFiles, sweepFolder } from "./files";
 import { matchFiscalNumbers } from "./match";
@@ -28,7 +28,7 @@ export type SubmitError =
   | "unknown";
 export type SubmitResult = { status: "verified" | "pending" } | { error: SubmitError };
 
-type Workspace = { id: string; name: string };
+type Workspace = { id: string; name: string; fiscal_status: string };
 
 const SUBMIT_ERRORS = new Set<string>([
   "workspace_tax_info_missing",
@@ -53,13 +53,20 @@ export async function submitFiscalDocuments(
     return { error: "files_invalid" };
   }
 
+  // État d'abord (déjà lu, sans téléchargement) : carte vérifiée ou en attente, rien à
+  // relire ni à supprimer (par exemple un second envoi après une réponse perdue, alors que
+  // les photos ont déjà été supprimées). submit_fiscal_verification le contrôle de nouveau
+  // sous verrou.
+  if (workspace.fiscal_status === "verified") return { error: "fiscal_already_verified" };
+  if (workspace.fiscal_status === "pending") return { error: "fiscal_already_pending" };
+
   // Contenu réel de chaque photo (taille, type reconnu à ses premiers octets).
   const images: Uint8Array[] = [];
   for (const path of [front, back]) {
     const { data, error } = await admin.storage.from(FISCAL_BUCKET).download(path);
     const bytes = data ? new Uint8Array(await data.arrayBuffer()) : null;
     if (error || !bytes || checkFiscalBytes(bytes)) {
-      await admin.storage.from(FISCAL_BUCKET).remove([front, back]);
+      await discardUnsubmitted(admin, workspace.id, [front, back]);
       return { error: "files_invalid" };
     }
     images.push(bytes);
@@ -99,4 +106,19 @@ export async function submitFiscalDocuments(
 
   await notifyAdmins(admin, { id: requestId, workspaceName: workspace.name }, origin);
   return { status: "pending" };
+}
+
+// Photos refusées : supprimées, sauf celles d'une demande en attente (envoi simultané
+// depuis un autre onglet), que l'admin doit pouvoir voir. Doute (lecture impossible) :
+// rien n'est supprimé, le rattrapage quotidien s'en charge.
+async function discardUnsubmitted(admin: AdminClient, workspaceId: string, paths: string[]) {
+  const { data: pending, error } = await admin
+    .from("fiscal_verifications")
+    .select("front_path, back_path")
+    .eq("workspace_id", workspaceId)
+    .eq("status", "pending");
+  if (error) return;
+  const kept = new Set(pending.flatMap((r) => [r.front_path, r.back_path]));
+  const stale = paths.filter((path) => !kept.has(path));
+  if (stale.length) await admin.storage.from(FISCAL_BUCKET).remove(stale);
 }

@@ -1,11 +1,17 @@
 import sharp from "sharp";
 import { describe, expect, it, vi } from "vitest";
 import { matchFiscalNumbers } from "./match";
-import { normalizeImage, readCardTexts } from "./ocr";
+import { MAX_INPUT_PIXELS, normalizeImage, readCardTexts } from "./ocr";
 
 vi.mock("server-only", () => ({}));
 
 const NUMBERS = { nif: "3000123456", stat: "74111112020001234" };
+
+// PNG uni juste au-dessus de la limite de pixels : quelques dizaines de Ko seulement.
+async function hugePng(): Promise<Buffer> {
+  const side = Math.ceil(Math.sqrt(MAX_INPUT_PIXELS)) + 1;
+  return sharp({ create: { width: side, height: side, channels: 3, background: "#fff" } }).grayscale().png().toBuffer();
+}
 
 // Carte de test : texte noir sur fond clair, comme une photo bien cadrée.
 async function card(): Promise<Buffer> {
@@ -31,6 +37,12 @@ describe("normalizeImage", () => {
     expect(meta.orientation ?? 1).toBe(1);
   });
 
+  it("refuse une image trop grande avant de la décoder (PNG uni très compressible)", async () => {
+    const huge = await hugePng();
+    expect(huge.byteLength).toBeLessThan(10 * 1024 * 1024);
+    await expect(normalizeImage(huge)).rejects.toThrow(/pixel limit/i);
+  }, 30_000);
+
   it("n'agrandit pas une petite image", async () => {
     const meta = await sharp(await normalizeImage(await card())).metadata();
     expect([meta.width, meta.height]).toEqual([1200, 700]);
@@ -39,6 +51,21 @@ describe("normalizeImage", () => {
 
 describe("readCardTexts", () => {
   const enough = (texts: string[]) => matchFiscalNumbers(texts, NUMBERS).verified;
+
+  it("délai dépassé avant toute lecture : null (la demande part en vérification manuelle)", async () => {
+    const photo = new Uint8Array(await card());
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(await readCardTexts([photo, photo], 1, enough)).toBeNull();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("arrêtée après 1 ms"));
+    warn.mockRestore();
+  });
+
+  it("image refusée (trop de pixels) : null, sans planter", async () => {
+    const huge = await hugePng();
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(await readCardTexts([new Uint8Array(huge)], 10_000, enough)).toBeNull();
+    error.mockRestore();
+  }, 30_000);
 
   it.each([0, 90, 180])("retrouve les numéros d'une carte tournée de %i°", async (angle) => {
     const photo = await sharp(await card()).rotate(angle).jpeg().toBuffer();
