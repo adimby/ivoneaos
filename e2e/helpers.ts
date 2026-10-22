@@ -34,8 +34,23 @@ export async function openMore(page: Page, name: string) {
   await nav.getByRole("button", { name }).or(nav.getByRole("link", { name })).click();
 }
 
-// Nouveau compte (parcours P1 abrégé), arrivé sur le tableau de bord. L'accueil guidé ne
-// demande plus NIF, STAT ni régime fiscal ; fiscal (par défaut) les enregistre ensuite
+// Démarrage, étapes 1 et 2 (activité, profil et marque) : workspace prêt, l'application
+// est ouverte ; l'écran est sur l'étape 3 (administratif).
+export async function onboardToAdminStep(page: Page, business: string) {
+  await page.getByLabel("Ton métier").fill("Graphiste");
+  await page.getByLabel("Depuis combien de temps es-tu freelance ?").selectOption("1to3");
+  await page.getByLabel("Combien de clients as-tu en ce moment ?").fill("2");
+  await page.getByLabel("Ton objectif de revenu mensuel").fill("2 000 000");
+  await page.getByRole("button", { name: "Suivant" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Ton profil et ta marque" })).toBeFocused();
+  await page.getByLabel("Nom commercial").fill(business);
+  await page.getByRole("textbox", { name: "Adresse (obligatoire)" }).fill("Lot II A 12, Antananarivo");
+  await page.getByRole("button", { name: "Suivant" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Administratif" })).toBeFocused();
+}
+
+// Nouveau compte (parcours P1 abrégé : « Plus tard » à l'étape administrative), arrivé sur
+// le tableau de bord. fiscal (par défaut) enregistre ensuite NIF, STAT et régime fiscal
 // directement en base, pour les parcours qui émettent des factures sans tester le bloc
 // « Avant ta première facture ». Le nom commercial est unique : il retrouve le workspace.
 // verified (par défaut avec fiscal) : carte fiscale déjà vérifiée, comme le ferait un
@@ -52,16 +67,8 @@ export async function signUpAndOnboard(
   await page.goto("/fr/connexion");
   await signIn(page, email);
   await expect(page).toHaveURL(/\/fr\/demarrage$/);
-  await page.getByLabel("Ton métier").fill("Graphiste");
-  await page.getByLabel("Depuis combien de temps es-tu freelance ?").selectOption("1to3");
-  await page.getByLabel("Combien de clients as-tu en ce moment ?").fill("2");
-  await page.getByLabel("Ton objectif de revenu mensuel").fill("2 000 000");
-  await page.getByRole("button", { name: "Continuer" }).click();
-  await page.getByLabel("Nom commercial").fill(business);
-  await page.getByLabel("Adresse", { exact: true }).fill("Lot II A 12, Antananarivo");
-  await expect(page.getByTestId("fiscal-later").filter({ visible: true })).toBeVisible();
-  await expect(page.getByLabel("NIF", { exact: true })).toHaveCount(0);
-  await page.getByRole("button", { name: "Terminer" }).click();
+  await onboardToAdminStep(page, business);
+  await page.getByRole("button", { name: "Plus tard" }).click();
   await expect(page).toHaveURL(/\/fr\/tableau-de-bord$/);
   if (fiscal) {
     const saved = await adminRest(`workspaces?name=eq.${encodeURIComponent(business)}`, {

@@ -52,15 +52,63 @@
   },
   "Onboarding": {
     "metaTitle": "Bienvenue",
-    "progress": "Étape {current} sur {total}",
+    "stepsLabel": "Étapes du démarrage",
+    "stepOf": "Étape {current} / {total}",
+    "stepLabel": "Étape {n}",
+    "stepItem": "Étape {n} : {name}",
+    "stepDone": "terminée",
+    "steps": {
+      "activity": "Ton activité",
+      "profile": "Profil et marque",
+      "admin": "Administratif"
+    },
+    "required": "obligatoire",
+    "requiredLegend": "Champs obligatoires",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "promise": {
+      "label": "Ce qu'Ivonea OS t'apporte",
+      "badge": "Nouvel espace",
+      "title": "Ton activité freelance, bien en main.",
+      "intro": "Clients, devis, factures et paiements au même endroit, pensé d'abord pour ton téléphone.",
+      "benefits": {
+        "clients": {
+          "title": "Tes clients bien suivis",
+          "text": "Prospects, échanges et rappels, sans rien oublier."
+        },
+        "documents": {
+          "title": "Des devis à ton image",
+          "text": "Ton logo et tes couleurs, envoyés en un lien."
+        },
+        "payments": {
+          "title": "Payé plus vite",
+          "text": "MVola, Orange Money et Airtel Money, grâce à Papi."
+        }
+      }
+    },
     "step1": {
-      "title": "Faisons connaissance",
+      "title": "Ton activité",
       "intro": "4 questions pour adapter Ivonea OS à ton activité."
     },
     "step2": {
-      "title": "Ton profil pro",
+      "title": "Ton profil et ta marque",
       "intro": "Ces informations figurent sur tes devis et factures.",
-      "fiscalLater": "NIF, STAT et régime fiscal ? Pas maintenant : on te les demandera avant ta première facture."
+      "brandTitle": "Ton image de marque",
+      "brandIntro": "Couleurs et police de tes devis et factures. Tu pourras tout changer plus tard dans Réglages.",
+      "previewName": "Ton nom commercial"
+    },
+    "step3": {
+      "title": "Administratif",
+      "intro": "Ton NIF, ton STAT et ta carte fiscale, pour facturer en règle.",
+      "limit": "Tu peux envoyer jusqu'à 3 factures avant que ta carte soit vérifiée.",
+      "cardTitle": "Ta carte fiscale",
+      "cardHint": "Dépose le recto et le verso : on vérifie ton NIF et ton STAT automatiquement, puis les photos sont supprimées. Pas sous la main ? Tu pourras le faire plus tard dans Réglages.",
+      "finish": "Terminer",
+      "later": "Plus tard",
+      "verified": "Ta carte fiscale est vérifiée : tu peux envoyer toutes tes factures.",
+      "pending": "Ta carte fiscale est en cours de vérification. Tu recevras un e-mail dès que c'est fait ; en attendant, tu peux envoyer jusqu'à 3 factures.",
+      "goToApp": "Accéder à mon espace",
+      "requiredLegend": "Obligatoires pour terminer. Sinon : Plus tard."
     },
     "trade": {
       "label": "Ton métier",
@@ -81,9 +129,7 @@
       "hint": "En ariary, par exemple 1 500 000."
     },
     "levelIntro": "Ton point de départ",
-    "next": "Continuer",
-    "submit": "Terminer",
-    "fixErrors": "Corrige les champs signalés pour continuer."
+    "levelPending": "Indique ton nombre de clients pour voir ton point de départ."
   },
   "Levels": {
     "lancer": {
@@ -185,6 +231,7 @@
     "logo_type": "Le logo doit être une image PNG, JPEG ou WebP.",
     "logo_upload": "Le logo n'a pas pu être envoyé. Réessaie.",
     "fix_errors": "Corrige les champs signalés.",
+    "check_answers": "Une réponse n'a pas pu être enregistrée. Vérifie cette étape et réessaie.",
     "phone_format": "Numéro invalide. Exemple : 034 12 345 67, ou +33 6 12 34 56 78 pour l'étranger.",
     "email_format": "Adresse e-mail invalide (exemple : nom@gmail.com).",
     "reachable_required": "Indique un téléphone ou un e-mail pour pouvoir joindre ce contact.",
@@ -1247,15 +1294,19 @@
   },
   "FileDrop": {
     "browse": "Parcourir",
+    "choose": "Choisis un fichier",
+    "chooseOrDrop": "Choisis ou dépose un fichier",
+    "current": "Image actuelle",
+    "limits": "{formats} · {size} max",
+    "selected": "Fichier choisi.",
     "replace": "Remplacer",
     "remove": "Retirer",
-    "dropHere": "Dépose le fichier ici, ou",
     "uploading": "Envoi en cours…",
     "uploaded": "Photo envoyée.",
-    "size": "{size} Mo",
+    "size": "{size} Mo",
     "errors": {
-      "too_large": "Ce fichier dépasse {size}. Choisis une photo plus légère.",
-      "type": "Ce format n'est pas accepté. Choisis une photo JPG, PNG ou WEBP.",
+      "too_large": "Ce fichier dépasse {size}. Choisis un fichier plus léger.",
+      "type": "Ce format n'est pas accepté. Choisis une image {formats}.",
       "upload": "L'envoi a échoué. Vérifie ta connexion et réessaie."
     }
   },
@@ -1264,7 +1315,7 @@
     "intro": "Prends en photo le recto et le verso de ta carte fiscale. On vérifie que ton NIF et ton STAT y figurent, puis les photos sont supprimées.",
     "front": "Recto de la carte fiscale",
     "back": "Verso de la carte fiscale",
-    "fileHint": "Photo nette, JPG, PNG ou WEBP. Une grande photo est réduite avant l'envoi.",
+    "fileHint": "Photo nette. Une grande photo est réduite avant l'envoi.",
     "submit": "Envoyer pour vérification",
     "checkingShort": "Vérification en cours…",
     "checking": "Vérification en cours…",

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
+import { cn } from "@/components/ui/cn";
 import { Button } from "@/components/ui/button";
 import { FileDrop, type UploadResult } from "@/components/ui/file-drop";
 import { useHydrated } from "@/lib/use-hydrated";
@@ -39,13 +40,15 @@ const RESET_ON = new Set<FormError>(["files_invalid", "fiscal_documents_missing"
 // supprimées après une décision) : la page se recharge et montre le vrai statut.
 const REFRESH_ON = new Set<FormError>(["fiscal_already_pending", "fiscal_already_verified", "files_invalid", "fiscal_documents_missing", "network"]);
 
+export type VerificationResult = "verified" | "pending";
+
 // Recto et verso de la carte fiscale : chaque photo part directement du navigateur vers le
 // bucket privé (dossier du workspace, nom nouveau), puis le serveur les relit et les
-// vérifie (route /api/fiscal/verification). La page se met à jour avec le résultat.
-export function FiscalDocumentsForm({ workspaceId, primary = false }: { workspaceId: string; primary?: boolean }) {
+// vérifie (route /api/fiscal/verification). Partagé par Réglages (FiscalDocumentsForm) et
+// l'étape « Administratif » du démarrage.
+export function useFiscalDocuments(workspaceId: string) {
   const t = useTranslations("Verification");
   const router = useRouter();
-  const hydrated = useHydrated();
   const [front, setFront] = useState<string | null>(null);
   const [back, setBack] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
@@ -74,13 +77,17 @@ export function FiscalDocumentsForm({ workspaceId, primary = false }: { workspac
     return uploadError ? { ok: false, error: t("errors.upload") } : { ok: true, value: path };
   }
 
-  async function submit() {
+  // Les deux photos sont-elles déposées ? Sinon, le message « recto et verso » s'affiche.
+  function ready(): boolean {
     setError(null);
-    if (!front || !back) {
-      setMissing(true);
-      return;
-    }
-    setMissing(false);
+    const both = Boolean(front && back);
+    setMissing(!both);
+    return both;
+  }
+
+  // Envoi pour vérification (photos déjà déposées). null : erreur affichée.
+  async function verify(): Promise<VerificationResult | null> {
+    if (!ready()) return null;
     setChecking(true);
     try {
       const response = await fetch("/api/fiscal/verification", {
@@ -89,47 +96,62 @@ export function FiscalDocumentsForm({ workspaceId, primary = false }: { workspac
         body: JSON.stringify({ front, back }),
       });
       const result = (await response.json().catch(() => ({}))) as { status?: string; error?: string };
-      if (result.status === "verified" || result.status === "pending") {
-        router.refresh();
-        return;
-      }
+      // Succès : « vérification en cours » reste affiché jusqu'à ce que l'appelant montre
+      // le résultat (page rechargée, étape suivante).
+      if (result.status === "verified" || result.status === "pending") return result.status;
       fail((ERRORS as readonly string[]).includes(result.error ?? "") ? (result.error as FormError) : "unknown");
     } catch {
       fail("network");
     }
+    return null;
   }
 
+  return { front, back, setFront, setBack, checking, missing, error, round, upload, ready, verify };
+}
+
+export type FiscalDocuments = ReturnType<typeof useFiscalDocuments>;
+
+// Les deux zones de dépôt (recto, verso) et les messages d'état de la vérification.
+// columns : grille des deux zones (par défaut côte à côte dès la tablette).
+export function FiscalDropZones({
+  docs,
+  columns = "md:grid-cols-2",
+}: {
+  docs: FiscalDocuments;
+  columns?: string;
+}) {
+  const t = useTranslations("Verification");
   const hint = t("fileHint");
   return (
-    <div className="flex flex-col gap-4" data-testid="fiscal-documents-form">
-      <div className="grid gap-4 md:grid-cols-2">
+    <>
+      <div className={cn("grid gap-4", columns)}>
         <FileDrop
-          key={`front-${round}`}
+          key={`front-${docs.round}`}
           id="fiscal-front"
           label={t("front")}
           hint={hint}
           accept={FISCAL_FILE_ACCEPT}
           maxBytes={FISCAL_FILE_MAX_BYTES}
-          upload={upload}
+          upload={docs.upload}
           prepare={shrink}
-          onChange={setFront}
-          disabled={checking}
+          onChange={docs.setFront}
+          disabled={docs.checking}
         />
         <FileDrop
-          key={`back-${round}`}
+          key={`back-${docs.round}`}
           id="fiscal-back"
           label={t("back")}
           hint={hint}
           accept={FISCAL_FILE_ACCEPT}
           maxBytes={FISCAL_FILE_MAX_BYTES}
-          upload={upload}
+          upload={docs.upload}
           prepare={shrink}
-          onChange={setBack}
-          disabled={checking}
+          onChange={docs.setBack}
+          disabled={docs.checking}
         />
       </div>
-      <div aria-live="polite" className="flex flex-col gap-2">
-        {checking && (
+      <div aria-live="polite" className="flex flex-col gap-2 empty:hidden">
+        {docs.checking && (
           <Alert tone="info">
             <span className="block font-semibold" data-testid="fiscal-checking">
               {t("checking")}
@@ -137,19 +159,38 @@ export function FiscalDocumentsForm({ workspaceId, primary = false }: { workspac
             <span className="block">{t("checkingHint")}</span>
           </Alert>
         )}
-        {missing && !(front && back) && <Alert tone="error">{t("needBoth")}</Alert>}
-        {error && <Alert tone="error">{t(`errors.${error}`)}</Alert>}
+        {docs.missing && !(docs.front && docs.back) && <Alert tone="error">{t("needBoth")}</Alert>}
+        {docs.error && <Alert tone="error">{t(`errors.${docs.error}`)}</Alert>}
       </div>
+    </>
+  );
+}
+
+// Réglages et pages de facture : dépôt puis vérification ; la page se met à jour avec le
+// résultat.
+export function FiscalDocumentsForm({ workspaceId, primary = false }: { workspaceId: string; primary?: boolean }) {
+  const t = useTranslations("Verification");
+  const router = useRouter();
+  const hydrated = useHydrated();
+  const docs = useFiscalDocuments(workspaceId);
+
+  async function submit() {
+    if (await docs.verify()) router.refresh();
+  }
+
+  return (
+    <div className="flex flex-col gap-4" data-testid="fiscal-documents-form">
+      <FiscalDropZones docs={docs} />
       {/* Attend le JavaScript : l'envoi des photos se fait depuis le navigateur. */}
       <Button
         variant={primary ? "primary" : "secondary"}
         block
         onClick={submit}
-        disabled={!hydrated || checking}
-        aria-busy={checking || undefined}
+        disabled={!hydrated || docs.checking}
+        aria-busy={docs.checking || undefined}
         data-testid="fiscal-submit"
       >
-        {checking ? t("checkingShort") : t("submit")}
+        {docs.checking ? t("checkingShort") : t("submit")}
       </Button>
     </div>
   );

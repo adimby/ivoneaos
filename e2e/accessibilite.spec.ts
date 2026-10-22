@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { adminRest, signUpAndOnboard } from "./helpers";
+import { adminRest, signIn, signUpAndOnboard } from "./helpers";
 
 // Accessibilité (WCAG 2.1 A et AA, axe-core) des écrans principaux à 360 px, remplis :
 // libellés, contrastes, noms des boutons et liens, structure ; aucun débordement.
@@ -65,5 +65,81 @@ test("Accessibilité des écrans principaux (fr) et de la page publique", async 
   // Sans session : accueil et connexion.
   await page.context().clearCookies();
   report.push(...(await violationsOf(page, "/fr")), ...(await violationsOf(page, "/fr/connexion")));
+  expect(report, report.join("\n")).toEqual([]);
+});
+
+// Palettes de l'application (src/modules/appearance/themes.ts), en clair et en sombre.
+const PALETTES = ["ocean", "foret", "prune", "corail", "ardoise", "sable"];
+
+// Une étape du démarrage, à 360 px puis à 1280 px (deux panneaux : la promesse à gauche) :
+// axe complet (WCAG 2.1 A et AA) en Océan clair, puis contraste dans chaque palette, en
+// clair et en sombre (attributs posés comme le fait le script de tête), sans débordement.
+// Mouvement réduit (voir le test) : les couleurs changent sans transition avant chaque
+// analyse.
+async function onboardingViolations(page: Page, step: string): Promise<string[]> {
+  const tags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
+  const found: string[] = [];
+  const theme = (mode: string, palette: string) =>
+    page.evaluate(([m, p]) => {
+      document.documentElement.setAttribute("data-mode", m);
+      document.documentElement.setAttribute("data-palette", p);
+    }, [mode, palette]);
+  for (const width of [360, 1280]) {
+    await page.setViewportSize({ width, height: width === 360 ? 780 : 800 });
+    const at = `${step} ${width} px`;
+    const format = (label: string, violations: { id: string; impact?: string | null; help: string; nodes: { target: unknown[] }[] }[]) =>
+      violations.map((v) => `${at} ${label} ${v.id} (${v.impact}) : ${v.help} → ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`);
+    if (width === 1280) await expect(page.getByTestId("onboarding-promise")).toBeVisible();
+    await theme("light", "ocean");
+    found.push(...format("ocean.light", (await new AxeBuilder({ page }).withTags(tags).analyze()).violations));
+    for (const palette of PALETTES) {
+      for (const mode of ["light", "dark"]) {
+        await theme(mode, palette);
+        found.push(...format(`${palette}.${mode}`, (await new AxeBuilder({ page }).withRules(["color-contrast"]).analyze()).violations));
+      }
+    }
+    await theme("light", "ocean");
+    const scroll = await page.evaluate(() => document.documentElement.scrollWidth);
+    if (scroll > width) found.push(`${at} déborde : ${scroll} px de large`);
+  }
+  await page.setViewportSize({ width: 360, height: 780 });
+  return found;
+}
+
+test("Accessibilité du démarrage : chaque étape, erreurs comprises, à 360 et 1280 px, en clair, en sombre et dans les 6 palettes", async ({ page }) => {
+  test.setTimeout(300_000);
+  // Changements de palette sans transition : axe lit les couleurs finales.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const stamp = Date.now();
+  await page.goto("/fr/connexion");
+  await signIn(page, `a11y-demarrage-${stamp}@example.test`);
+  await expect(page).toHaveURL(/\/fr\/demarrage$/);
+  const report: string[] = [];
+
+  // Étape 1, avec les erreurs affichées.
+  await page.getByRole("button", { name: "Suivant" }).click();
+  await expect(page.getByText("Ce champ est obligatoire.").first()).toBeVisible();
+  report.push(...(await onboardingViolations(page, "étape 1")));
+  await page.getByLabel("Ton métier").fill("Graphiste");
+  await page.getByLabel("Depuis combien de temps es-tu freelance ?").selectOption("gt3");
+  await page.getByLabel("Combien de clients as-tu en ce moment ?").fill("4");
+  await page.getByLabel("Ton objectif de revenu mensuel").fill("3 000 000");
+  await page.getByRole("button", { name: "Suivant" }).click();
+
+  // Étape 2, avec les erreurs affichées.
+  await expect(page.getByRole("heading", { level: 1, name: "Ton profil et ta marque" })).toBeFocused();
+  await page.getByRole("button", { name: "Suivant" }).click();
+  await expect(page.getByText("Ce champ est obligatoire.").first()).toBeVisible();
+  report.push(...(await onboardingViolations(page, "étape 2")));
+  await page.getByLabel("Nom commercial").fill(`Studio a11y ${stamp}`);
+  await page.getByRole("textbox", { name: "Adresse (obligatoire)" }).fill("Lot II A 12, Antananarivo");
+  await page.getByRole("button", { name: "Suivant" }).click();
+
+  // Étape 3, avec les erreurs affichées.
+  await expect(page.getByRole("heading", { level: 1, name: "Administratif" })).toBeFocused();
+  report.push(...(await onboardingViolations(page, "étape 3")));
+  await page.getByRole("button", { name: "Terminer" }).click();
+  await expect(page.getByText("Ce champ est obligatoire.").first()).toBeVisible();
+  report.push(...(await onboardingViolations(page, "étape 3 (erreurs)")));
   expect(report, report.join("\n")).toEqual([]);
 });

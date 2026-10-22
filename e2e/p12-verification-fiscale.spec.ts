@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
-import { adminRest, cronSecret, signUpAndOnboard, sql, storageFiles, storageUpload } from "./helpers";
+import { adminRest, cronSecret, onboardToAdminStep, signIn, signUpAndOnboard, sql, storageFiles, storageUpload } from "./helpers";
 import { readEmail } from "./mailpit";
 
 // Vérification de la carte fiscale (docs/spec-mvp.md, « Vérification fiscale ») : dépôt
@@ -87,6 +87,118 @@ async function violationsOf(page: Page, path: string): Promise<string[]> {
   if (width > viewport) found.push(`${path} déborde : ${width} px de large`);
   return found;
 }
+
+test("Démarrage : NIF, STAT et carte fiscale à l'étape administrative → vérifiée automatiquement", async ({ page }) => {
+  test.setTimeout(120_000);
+  const stamp = Date.now();
+  const business = `Studio p12-demarrage ${stamp}`;
+  await page.goto("/fr/connexion");
+  await signIn(page, `p12-demarrage-${stamp}@example.test`);
+  await expect(page).toHaveURL(/\/fr\/demarrage$/);
+  await onboardToAdminStep(page, business);
+  const ws = await workspaceOf(business);
+
+  await page.getByLabel("NIF", { exact: false }).fill("300 012 3456");
+  await page.getByLabel("STAT", { exact: false }).fill(STAT);
+  await page.getByLabel("Régime fiscal", { exact: false }).selectOption("impot_synthetique");
+  // Une seule photo : les deux faces sont demandées, rien n'est envoyé.
+  const photos = await cardPhotos(page, NIF, STAT);
+  await page.locator("#fiscal-front").setInputFiles({ name: "recto.png", mimeType: "image/png", buffer: photos.front });
+  await expect(page.getByTestId("file-drop-fiscal-front")).toHaveAttribute("data-status", "done");
+  await page.getByRole("button", { name: "Terminer" }).click();
+  await expect(page.getByText("Ajoute la photo du recto et celle du verso.")).toBeVisible();
+
+  await page.locator("#fiscal-back").setInputFiles({ name: "verso.png", mimeType: "image/png", buffer: photos.back });
+  await expect(page.getByTestId("file-drop-fiscal-back")).toHaveAttribute("data-status", "done");
+  await page.getByRole("button", { name: "Terminer" }).click();
+  await expect(page.getByTestId("onboarding-fiscal-result")).toHaveText(
+    "Ta carte fiscale est vérifiée : tu peux envoyer toutes tes factures.",
+    { timeout: 60_000 },
+  );
+  const [workspace] = (await (await adminRest(`workspaces?select=nif,stat,tax_regime,fiscal_status&id=eq.${ws}`)).json()) as {
+    nif: string;
+    stat: string;
+    tax_regime: string;
+    fiscal_status: string;
+  }[];
+  expect(workspace).toEqual({ nif: NIF, stat: STAT, tax_regime: "impot_synthetique", fiscal_status: "verified" });
+  expect(await storageFiles(BUCKET, ws)).toEqual([]);
+
+  await page.getByRole("button", { name: "Accéder à mon espace" }).click();
+  await expect(page).toHaveURL(/\/fr\/tableau-de-bord$/);
+  // Démarrage terminé : /demarrage renvoie vers l'application.
+  await page.goto("/fr/demarrage");
+  await expect(page).toHaveURL(/\/fr\/tableau-de-bord$/);
+  await page.goto("/fr/reglages");
+  await expect(page.getByTestId("fiscal-status").filter({ visible: true })).toHaveText("Vérifiée");
+});
+
+test("Démarrage : « Terminer » sans photo enregistre les numéros puis ouvre le tableau de bord", async ({ page }) => {
+  const stamp = Date.now();
+  const business = `Studio p12-sans-photo ${stamp}`;
+  await page.goto("/fr/connexion");
+  await signIn(page, `p12-sans-photo-${stamp}@example.test`);
+  await expect(page).toHaveURL(/\/fr\/demarrage$/);
+  await onboardToAdminStep(page, business);
+  const ws = await workspaceOf(business);
+
+  await page.getByLabel("NIF", { exact: false }).fill(NIF);
+  await page.getByLabel("STAT", { exact: false }).fill("7411 1112 0200 01234");
+  await page.getByLabel("Régime fiscal", { exact: false }).selectOption("tva");
+  await page.getByRole("button", { name: "Terminer" }).click();
+  await expect(page).toHaveURL(/\/fr\/tableau-de-bord$/);
+  const [workspace] = (await (await adminRest(`workspaces?select=nif,stat,tax_regime,fiscal_status&id=eq.${ws}`)).json()) as object[];
+  expect(workspace).toEqual({ nif: NIF, stat: STAT, tax_regime: "tva", fiscal_status: "unverified" });
+  const [answers] = (await (await adminRest(`onboarding_answers?select=completed_at&workspace_id=eq.${ws}`)).json()) as { completed_at: string | null }[];
+  expect(answers.completed_at).not.toBeNull();
+});
+
+test("Démarrage : carte à vérifier à la main → « en cours de vérification » ; refus avec motif ; « déjà en cours » à jour", async ({ page }) => {
+  test.setTimeout(120_000);
+  const stamp = Date.now();
+  const business = `Studio p12-demarrage-attente ${stamp}`;
+  await page.goto("/fr/connexion");
+  await signIn(page, `p12-demarrage-attente-${stamp}@example.test`);
+  await expect(page).toHaveURL(/\/fr\/demarrage$/);
+  await onboardToAdminStep(page, business);
+  const ws = await workspaceOf(business);
+  const pendingText =
+    "Ta carte fiscale est en cours de vérification. Tu recevras un e-mail dès que c'est fait ; en attendant, tu peux envoyer jusqu'à 3 factures.";
+
+  // Numéros lus différents de ceux saisis : vérification à la main, en attente.
+  await page.getByLabel("NIF", { exact: false }).fill(NIF);
+  await page.getByLabel("STAT", { exact: false }).fill(STAT);
+  await page.getByLabel("Régime fiscal", { exact: false }).selectOption("impot_synthetique");
+  const other = await cardPhotos(page, "3000999999", "74111112020009999");
+  await page.locator("#fiscal-front").setInputFiles({ name: "recto.png", mimeType: "image/png", buffer: other.front });
+  await expect(page.getByTestId("file-drop-fiscal-front")).toHaveAttribute("data-status", "done");
+  await page.locator("#fiscal-back").setInputFiles({ name: "verso.png", mimeType: "image/png", buffer: other.back });
+  await expect(page.getByTestId("file-drop-fiscal-back")).toHaveAttribute("data-status", "done");
+  await page.getByRole("button", { name: "Terminer" }).click();
+  await expect(page.getByTestId("onboarding-fiscal-result")).toHaveText(pendingText, { timeout: 60_000 });
+  expect((await lastRequest(ws)).status).toBe("pending");
+  // Rechargement : le résultat reste affiché (statut de la carte).
+  await page.reload();
+  await expect(page.getByTestId("onboarding-fiscal-result")).toHaveText(pendingText);
+
+  // Carte refusée (décision d'un admin) : le motif est montré au-dessus du formulaire.
+  const patch = (body: object) => adminRest(`workspaces?id=eq.${ws}`, { method: "PATCH", body: JSON.stringify(body) });
+  expect((await patch({ fiscal_status: "rejected", fiscal_rejection_reason: "Photo floue" })).ok).toBe(true);
+  await page.reload();
+  await expect(page.getByTestId("onboarding-fiscal-rejected")).toHaveText("Ta carte fiscale n'a pas pu être vérifiée. Motif : Photo floue");
+  await expect(page.getByLabel("NIF", { exact: false })).toHaveValue(NIF);
+
+  // Carte envoyée entre-temps depuis un autre onglet : « déjà en cours », la page se met à
+  // jour et montre le résultat.
+  const photos = await cardPhotos(page, NIF, STAT);
+  await page.locator("#fiscal-front").setInputFiles({ name: "recto.png", mimeType: "image/png", buffer: photos.front });
+  await expect(page.getByTestId("file-drop-fiscal-front")).toHaveAttribute("data-status", "done");
+  await page.locator("#fiscal-back").setInputFiles({ name: "verso.png", mimeType: "image/png", buffer: photos.back });
+  await expect(page.getByTestId("file-drop-fiscal-back")).toHaveAttribute("data-status", "done");
+  expect((await patch({ fiscal_status: "pending", fiscal_rejection_reason: null })).ok).toBe(true);
+  await page.getByRole("button", { name: "Terminer" }).click();
+  await expect(page.getByTestId("onboarding-fiscal-result")).toHaveText(pendingText, { timeout: 30_000 });
+});
 
 test("Cas 1 : numéros lus sur la carte → vérifiée automatiquement, photos supprimées", async ({ page }) => {
   test.setTimeout(120_000);

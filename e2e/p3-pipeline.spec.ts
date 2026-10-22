@@ -58,7 +58,8 @@ test("P3 : contact → opportunité → étape suivante → note", async ({ page
   await page.getByLabel("Montant estimé (facultatif)").fill("450 000");
   await page.getByRole("button", { name: "Créer l'opportunité" }).click();
   await expect(page.getByRole("heading", { name: "Logo boutique" })).toBeVisible();
-  await expect(page.getByText(money("450 000 Ar"))).toBeVisible();
+  // Visible seulement : l'aperçu de devis du démarrage (même montant) reste dans le DOM, masqué.
+  await expect(page.getByText(money("450 000 Ar")).filter({ visible: true })).toBeVisible();
   await expect(page.getByTestId("deal-stage").filter({ visible: true })).toHaveText("Étape : Prospect");
 
   // Pipeline : la carte est dans « Prospect », avec le total de l'étape.

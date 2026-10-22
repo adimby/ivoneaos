@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
-import { adminRest, signIn, signUpAndOnboard } from "./helpers";
+import { adminRest, onboardToAdminStep, signIn, signUpAndOnboard } from "./helpers";
 
 // Mise en page ordinateur (1440 × 900), petits portables (1024 × 768, 1280 × 800,
 // 1366 × 768) et tablette (820 × 1180) ; le téléphone (360 px) reste couvert par les autres
@@ -333,4 +333,89 @@ test("captures d'écran 360, 820, 1024, 1280, 1366 et 1440 px (E2E_SCREENSHOTS_D
     await expect(page.locator("[aria-busy=true]")).toHaveCount(0);
     await page.screenshot({ path: join(dir!, `${viewport.width}-demarrage.png`), fullPage: true });
   }
+});
+
+// Démarrage en 3 étapes : deux panneaux sur ordinateur (promesse à gauche, formulaire à
+// droite, indicateur complet), carte sur tablette, une colonne et indicateur compact sur
+// téléphone ; aucun débordement, accessibilité (axe) de chaque étape sur ordinateur.
+// Captures 360 et 1280 px, en clair et en sombre, de chaque étape (E2E_SCREENSHOTS_DIR).
+test.describe("démarrage (360, 820 et 1280 px)", () => {
+  test.use({ viewport: { width: 1280, height: 800 }, isMobile: false, hasTouch: false });
+
+  test("deux panneaux sur ordinateur, indicateur d'étapes, aucun débordement, accessibilité", async ({ page }) => {
+    test.setTimeout(180_000);
+    const dir = process.env.E2E_SCREENSHOTS_DIR;
+    if (dir) mkdirSync(dir, { recursive: true });
+    const stamp = Date.now();
+    await page.goto("/fr/connexion");
+    await signIn(page, `demarrage-ecrans-${stamp}@example.test`);
+    await expect(page).toHaveURL(/\/fr\/demarrage$/);
+    const report: string[] = [];
+
+    // Captures et contrôles de l'étape affichée, aux trois largeurs, en clair puis en sombre.
+    async function check(step: number) {
+      for (const viewport of [{ width: 360, height: 780 }, TABLET, { width: 1280, height: 800 }]) {
+        await page.setViewportSize(viewport);
+        const at = `étape ${step} ${viewport.width} px`;
+        const promise = page.getByTestId("onboarding-promise");
+        const stepper = page.getByTestId("onboarding-stepper");
+        const current = stepper.locator("[aria-current=step]").filter({ visible: true });
+        await expect(current).toHaveCount(1);
+        if (viewport.width >= 1024) {
+          await expect(promise).toBeVisible();
+          // Formulaire à droite de la promesse.
+          const left = (await promise.boundingBox())!;
+          const title = (await page.getByRole("heading", { level: 1 }).boundingBox())!;
+          if (title.x < left.x + left.width) report.push(`${at} : formulaire pas à droite de la promesse`);
+          await expect(page.getByTestId("onboarding-step-pill")).toHaveText(`Étape ${step} / 3`);
+          await expect(current).toContainText(`Étape ${step}`);
+        } else {
+          await expect(promise).toBeHidden();
+        }
+        if (viewport.width < 768) await expect(page.getByText(`Étape ${step} / 3`).filter({ visible: true })).toBeVisible();
+        else {
+          // Indicateur complet : chaque nom d'étape sur une ligne, liaisons de même largeur.
+          const layout = await stepper.evaluate((nav) => ({
+            lines: [...nav.querySelectorAll<HTMLElement>("[data-step-name]")].map(
+              (el) => el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight),
+            ),
+            connectors: [...nav.querySelectorAll<HTMLElement>("[data-connector]")].map((el) => el.getBoundingClientRect().width),
+          }));
+          if (layout.lines.some((lines) => lines > 1.5)) report.push(`${at} : nom d'étape sur plusieurs lignes`);
+          const [a, b] = layout.connectors;
+          if (!(a >= 16 && Math.abs(a - b) <= 1)) report.push(`${at} : liaisons inégales (${layout.connectors.join(", ")} px)`);
+        }
+        const extra = await overflow(page);
+        if (extra > 0) report.push(`${at} déborde de ${extra} px`);
+        if (viewport.width === 1280) {
+          const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
+          report.push(...violations.map((v) => `${at} ${v.id} (${v.impact}) : ${v.help} → ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`));
+        }
+        if (dir && viewport.width !== TABLET.width) {
+          for (const mode of ["light", "dark"]) {
+            await page.evaluate((m) => document.documentElement.setAttribute("data-mode", m), mode);
+            // Fin des transitions de couleur avant la capture.
+            await page.waitForTimeout(300);
+            await page.screenshot({ path: join(dir, `demarrage-${step}-${viewport.width}-${mode}.png`), fullPage: true });
+          }
+          await page.evaluate(() => document.documentElement.setAttribute("data-mode", "light"));
+        }
+      }
+      await page.setViewportSize({ width: 1280, height: 800 });
+    }
+
+    await check(1);
+    await onboardToAdminStep(page, `Studio ecrans ${stamp}`);
+    await check(3);
+    // Étape 2 (retour) : profil et marque enregistrés.
+    await page.getByRole("button", { name: "Précédent" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Ton profil et ta marque" })).toBeFocused();
+    // Ordinateur : étapes faites cochées, ligne de liaison colorée.
+    const steps = page.getByTestId("onboarding-stepper").locator("ol").filter({ visible: true }).locator("li");
+    await expect(steps.nth(0)).toContainText("terminée");
+    await expect(steps.nth(1)).toHaveAttribute("aria-current", "step");
+    await expect(steps.nth(2)).not.toContainText("terminée");
+    await check(2);
+    expect(report, report.join("\n")).toEqual([]);
+  });
 });

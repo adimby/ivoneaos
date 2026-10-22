@@ -5,6 +5,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import type { FieldErrors } from "@/lib/forms";
+import { RequiredMark } from "@/components/ui/required-mark";
 import { CURRENCIES } from "@/lib/money";
 import { LogoField } from "./logo-field";
 
@@ -123,12 +124,18 @@ export function FiscalFields({
   defaults,
   error,
   fiscalStatus,
+  required,
 }: {
   defaults: Pick<ProfileDefaults, "nif" | "stat" | "tax_regime">;
   error: (field: string) => string | undefined;
   fiscalStatus?: string;
+  // Texte « obligatoire » pour les lecteurs d'écran : libellés marqués d'un astérisque.
+  required?: string;
 }) {
   const t = useTranslations("Profile");
+  const label = (text: string) => (required ? <>{text}<RequiredMark label={required} /></> : text);
+  // Contrôle local avant l'envoi (démarrage) : champs marqués obligatoires.
+  const mark = required ? { "data-required": "" } : {};
   const warning =
     fiscalStatus === "verified" || fiscalStatus === "pending" ? (
       <span className="mt-1 block font-semibold text-ink" data-testid="fiscal-reset-warning">
@@ -139,7 +146,7 @@ export function FiscalFields({
     <>
       <Field
         id="nif"
-        label={t("nif.label")}
+        label={label(t("nif.label"))}
         hint={
           <>
             {t("nif.hint")}
@@ -148,11 +155,11 @@ export function FiscalFields({
         }
         error={error("nif")}
       >
-        {(c) => <Input {...c} name="nif" inputMode="numeric" autoComplete="off" defaultValue={defaults.nif} maxLength={20} />}
+        {(c) => <Input {...c} {...mark} name="nif" inputMode="numeric" autoComplete="off" defaultValue={defaults.nif} maxLength={20} />}
       </Field>
       <Field
         id="stat"
-        label={t("stat.label")}
+        label={label(t("stat.label"))}
         hint={
           <>
             {t("stat.hint")}
@@ -161,11 +168,11 @@ export function FiscalFields({
         }
         error={error("stat")}
       >
-        {(c) => <Input {...c} name="stat" inputMode="numeric" autoComplete="off" defaultValue={defaults.stat} maxLength={30} />}
+        {(c) => <Input {...c} {...mark} name="stat" inputMode="numeric" autoComplete="off" defaultValue={defaults.stat} maxLength={30} />}
       </Field>
-      <Field id="tax_regime" label={t("taxRegime.label")} hint={t("taxRegime.hint")} error={error("tax_regime")}>
+      <Field id="tax_regime" label={label(t("taxRegime.label"))} hint={t("taxRegime.hint")} error={error("tax_regime")}>
         {(c) => (
-          <Select {...c} name="tax_regime" defaultValue={defaults.tax_regime}>
+          <Select {...c} {...mark} name="tax_regime" defaultValue={defaults.tax_regime}>
             <option value="">{t("choose")}</option>
             <option value="impot_synthetique">{t("taxRegime.impot_synthetique")}</option>
             <option value="tva">{t("taxRegime.tva")}</option>

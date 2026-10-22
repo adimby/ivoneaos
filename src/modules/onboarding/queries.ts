@@ -2,17 +2,19 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { EMPTY_DIAGNOSTIC, EXPERIENCES, type DiagnosticDefaults } from "./diagnostic-fields";
 
-// Réponses du diagnostic déjà enregistrées (accueil guidé interrompu après l'envoi) :
-// reprises dans le formulaire, au format de saisie (« 1 500 000 »).
-export async function getDiagnosticDefaults(workspaceId: string): Promise<DiagnosticDefaults> {
+export type OnboardingAnswers = { diagnostic: DiagnosticDefaults; completedAt: string | null };
+
+// Réponses du diagnostic déjà enregistrées (étape 1 validée, démarrage interrompu) :
+// reprises dans le formulaire, au format de saisie (« 1 500 000 »). null : aucune.
+export async function getOnboardingAnswers(workspaceId: string): Promise<OnboardingAnswers | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("onboarding_answers")
-    .select("answers")
+    .select("answers, completed_at")
     .eq("workspace_id", workspaceId)
     .maybeSingle();
   if (error) throw error;
-  return diagnosticDefaults(data?.answers);
+  return data ? { diagnostic: diagnosticDefaults(data.answers), completedAt: data.completed_at } : null;
 }
 
 export function diagnosticDefaults(answers: unknown): DiagnosticDefaults {

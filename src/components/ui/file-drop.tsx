@@ -1,28 +1,35 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type DragEvent } from "react";
+import { useEffect, useId, useRef, useState, type DragEvent, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import { buttonClasses } from "./button";
 import { cn } from "./cn";
 
-// Dépôt d'un fichier : zone où l'on dépose (ordinateur) ou bouton « Parcourir » (téléphone,
+// Dépôt d'un fichier : zone où l'on dépose (ordinateur) ou lien « Parcourir » (téléphone,
 // clavier), aperçu miniature pour une image, remplacer, retirer, état d'envoi et erreurs
-// claires. Le fichier part dès qu'il est choisi (upload, fourni par l'appelant : envoi
-// direct vers le stockage, par exemple) ; onChange reçoit la valeur renvoyée (chemin) ou
-// null. prepare (facultatif) transforme le fichier avant le contrôle de taille et l'envoi
-// (réduire une grande photo, par exemple). Utilisé pour la carte fiscale, et prévu pour
-// l'étape « Administratif » du démarrage.
+// claires. Deux usages :
+// - envoi immédiat (upload fourni) : le fichier part dès qu'il est choisi (envoi direct vers
+//   le stockage, par exemple) ; onChange reçoit la valeur renvoyée (chemin) ou null.
+//   prepare (facultatif) transforme le fichier avant le contrôle de taille et l'envoi
+//   (réduire une grande photo). Carte fiscale (Réglages, démarrage).
+// - champ de formulaire (name, sans upload) : le fichier reste dans le champ natif et part
+//   avec le formulaire (POST) ; onFile reçoit le fichier choisi ou null. Logo du démarrage.
 //
 // Accessibilité : le champ natif (masqué visuellement, focalisable) porte le libellé, l'aide
-// et l'erreur ; le bouton visible est son second libellé et montre le focus. L'état d'envoi
+// et l'erreur ; le lien visible est son second libellé et montre le focus. L'état d'envoi
 // est annoncé (aria-live), l'erreur aussi (role=alert).
 
 export type UploadResult<T> = { ok: true; value: T } | { ok: false; error: string };
 
 type Status = "empty" | "uploading" | "done" | "error";
 
+// « image/jpeg, image/png » → « JPG, PNG » (formats montrés sous le titre).
+function formatList(types: string[]): string {
+  return types.map((type) => (type === "image/jpeg" ? "JPG" : (type.split("/")[1] ?? type).toUpperCase())).join(", ");
+}
+
 export function FileDrop<T>({
   id,
+  name,
   label,
   hint,
   accept,
@@ -30,18 +37,28 @@ export function FileDrop<T>({
   upload,
   prepare,
   onChange,
+  onFile,
+  currentUrl = null,
+  error: externalError,
   disabled = false,
 }: {
   id: string;
-  label: string;
+  // Champ de formulaire (sans upload) : nom du champ envoyé avec le formulaire.
+  name?: string;
+  label: ReactNode;
   hint?: string;
   // Types MIME acceptés, séparés par des virgules (attribut accept).
   accept: string;
   maxBytes: number;
-  upload: (file: File) => Promise<UploadResult<T>>;
+  upload?: (file: File) => Promise<UploadResult<T>>;
   // Fichier transformé avant le contrôle de taille et l'envoi (en cas d'échec : l'original).
   prepare?: (file: File) => Promise<File>;
-  onChange: (value: T | null) => void;
+  onChange?: (value: T | null) => void;
+  onFile?: (file: File | null) => void;
+  // Image déjà enregistrée (URL signée), montrée tant qu'aucun fichier n'est choisi.
+  currentUrl?: string | null;
+  // Erreur renvoyée par le serveur (déjà traduite).
+  error?: string;
   disabled?: boolean;
 }) {
   const t = useTranslations("FileDrop");
@@ -50,7 +67,7 @@ export function FileDrop<T>({
   const [status, setStatus] = useState<Status>("empty");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const statusId = useId();
 
@@ -61,74 +78,94 @@ export function FileDrop<T>({
   const types = accept.split(",").map((type) => type.trim());
   const sizeLabel = t("size", { size: Math.round(maxBytes / (1024 * 1024)) });
   const busy = status === "uploading";
+  const formField = !upload;
+  // Erreur locale d'abord ; celle du serveur, le parent l'efface à un nouveau choix (onFile).
+  const error = localError ?? externalError ?? null;
+  const shownImage = preview ?? (status === "empty" ? currentUrl : null);
 
-  async function choose(next: File | undefined) {
+  async function choose(next: File | undefined, dropped?: FileList) {
     if (!next || disabled || busy) return;
-    if (inputRef.current) inputRef.current.value = "";
-    if (!types.includes(next.type)) return fail(t("errors.type"));
+    if (!types.includes(next.type)) return fail(t("errors.type", { formats: formatList(types) }));
     if (!prepare && next.size > maxBytes) return fail(t("errors.too_large", { size: sizeLabel }));
     const current = ++attempt.current;
     setFile(next);
     setPreview(null);
-    setError(null);
+    setLocalError(null);
+
+    if (formField) {
+      // Fichier déposé : placé dans le champ natif, envoyé avec le formulaire.
+      if (dropped && inputRef.current) inputRef.current.files = dropped;
+      setPreview(next.type.startsWith("image/") ? URL.createObjectURL(next) : null);
+      setStatus("done");
+      onFile?.(next);
+      return;
+    }
+
+    if (inputRef.current) inputRef.current.value = "";
     setStatus("uploading");
-    onChange(null);
+    onChange?.(null);
     const ready = prepare ? await prepare(next).catch(() => next) : next;
     if (current !== attempt.current) return;
     if (ready.size > maxBytes) return fail(t("errors.too_large", { size: sizeLabel }));
-    if (!types.includes(ready.type)) return fail(t("errors.type"));
+    if (!types.includes(ready.type)) return fail(t("errors.type", { formats: formatList(types) }));
     setPreview(ready.type.startsWith("image/") ? URL.createObjectURL(ready) : null);
+    onFile?.(ready);
     let result: UploadResult<T>;
     try {
-      result = await upload(ready);
+      result = await upload!(ready);
     } catch {
       result = { ok: false, error: t("errors.upload") };
     }
     if (current !== attempt.current) return;
     if (result.ok) {
       setStatus("done");
-      onChange(result.value);
+      onChange?.(result.value);
     } else {
       fail(result.error);
     }
   }
 
-  function fail(message: string) {
+  function clear() {
     attempt.current++;
+    if (inputRef.current) inputRef.current.value = "";
     setFile(null);
     setPreview(null);
+    onChange?.(null);
+    onFile?.(null);
+  }
+
+  function fail(message: string) {
+    clear();
     setStatus("error");
-    setError(message);
-    onChange(null);
+    setLocalError(message);
   }
 
   function remove() {
-    attempt.current++;
-    setFile(null);
-    setPreview(null);
-    setError(null);
+    clear();
+    setLocalError(null);
     setStatus("empty");
-    onChange(null);
     inputRef.current?.focus();
   }
 
   const onDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragging(false);
-    void choose(event.dataTransfer.files?.[0]);
+    void choose(event.dataTransfer.files?.[0], event.dataTransfer.files);
   };
 
   const describedBy = [error && `${id}-error`, hint && `${id}-hint`, statusId].filter(Boolean).join(" ");
+  const done = status === "done";
 
   return (
-    <div data-field className="flex flex-col gap-1.5" data-testid={`file-drop-${id}`} data-status={status}>
+    <div data-field className="@container flex flex-col gap-1.5" data-testid={`file-drop-${id}`} data-status={status}>
       <label htmlFor={id} className="text-sm font-semibold text-ink">
         {label}
       </label>
-      {/* Champ natif masqué (son texte n'est pas traduisible) ; le bouton est son libellé. */}
+      {/* Champ natif masqué (son texte n'est pas traduisible) ; le lien est son libellé. */}
       <input
         ref={inputRef}
         id={id}
+        name={formField ? name : undefined}
         type="file"
         accept={accept}
         disabled={disabled || busy}
@@ -150,15 +187,15 @@ export function FileDrop<T>({
           "peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-lagoon",
         )}
       >
-        <div className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-sand bg-sand-light">
-          {preview ? (
-            // Aperçu local (blob:) : pas d'optimisation next/image.
+        <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-turquoise-soft text-lagoon">
+          {shownImage ? (
+            // Aperçu local (blob:) ou URL signée : pas d'optimisation next/image.
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={preview} alt="" className="size-full object-cover" />
+            <img src={shownImage} alt="" className="size-full bg-surface object-contain" />
           ) : (
-            <svg viewBox="0 0 24 24" className="size-7 text-ink-muted" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-              <path d="M12 16V4m0 0-4 4m4-4 4 4" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" strokeLinecap="round" />
+            <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 8.5a4 4 0 0 1-.5 9.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M12 20v-8m0 0-3 3m3-3 3 3" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           )}
           {busy && (
@@ -170,38 +207,48 @@ export function FileDrop<T>({
             </span>
           )}
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <p className="min-w-0 truncate text-sm text-ink-muted">
-            {file ? file.name : <span className="hidden lg:inline">{t("dropHere")}</span>}
-          </p>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <label
-              htmlFor={id}
-              className={buttonClasses(
-                "secondary",
-                false,
-                cn("min-h-11 px-4", disabled || busy ? "pointer-events-none opacity-60" : "cursor-pointer"),
-              )}
-            >
-              {status === "done" || busy ? t("replace") : t("browse")}
-            </label>
-            {(status === "done" || busy) && (
-              <button
-                type="button"
-                onClick={remove}
-                disabled={disabled}
-                className="inline-flex min-h-11 items-center px-1 text-base font-semibold text-danger underline-offset-4 hover:underline disabled:opacity-60"
-              >
-                {t("remove")}
-                <span className="sr-only"> {label}</span>
-              </button>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <p className={cn("text-base font-semibold text-ink", file && "truncate")}>
+            {file ? (
+              file.name
+            ) : shownImage ? (
+              t("current")
+            ) : (
+              <>
+                {/* « dépose » seulement sur ordinateur et quand la zone est assez large. */}
+                <span className="lg:@md:hidden">{t("choose")}</span>
+                <span className="hidden lg:@md:inline">{t("chooseOrDrop")}</span>
+              </>
             )}
-          </div>
+          </p>
+          <p className="text-sm text-ink-muted">{t("limits", { formats: formatList(types), size: sizeLabel })}</p>
         </div>
+        <label
+          htmlFor={id}
+          className={cn(
+            "inline-flex min-h-11 shrink-0 items-center px-1 text-base font-semibold text-lagoon underline underline-offset-4",
+            disabled || busy ? "pointer-events-none opacity-60" : "cursor-pointer",
+          )}
+        >
+          {done || busy || shownImage ? t("replace") : t("browse")}
+        </label>
       </div>
-      <p id={statusId} aria-live="polite" className={cn("text-sm font-medium", status === "done" ? "text-success" : "text-ink-muted")}>
-        {busy ? t("uploading") : status === "done" ? t("uploaded") : ""}
-      </p>
+      <div className="flex min-h-0 items-center justify-between gap-3">
+        <p id={statusId} aria-live="polite" className={cn("text-sm font-medium", done && !error ? "text-success" : "text-ink-muted")}>
+          {busy ? t("uploading") : done ? (formField ? t("selected") : t("uploaded")) : ""}
+        </p>
+        {(done || busy) && (
+          <button
+            type="button"
+            onClick={remove}
+            disabled={disabled}
+            className="inline-flex min-h-11 shrink-0 items-center px-1 text-base font-semibold text-danger underline-offset-4 hover:underline disabled:opacity-60"
+          >
+            {t("remove")}
+            <span className="sr-only"> {typeof label === "string" ? label : ""}</span>
+          </button>
+        )}
+      </div>
       {error && (
         <p id={`${id}-error`} role="alert" className="flex items-start gap-1.5 text-sm font-medium text-danger">
           <svg className="mt-0.5 size-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
