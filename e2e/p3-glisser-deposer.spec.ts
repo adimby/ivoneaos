@@ -11,7 +11,7 @@ const TABLET = { width: 820, height: 1180 };
 const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 const money = (text: string) => new RegExp(text.replace(/ /g, "\\s"));
 
-type Seeded = { stages: Record<string, string>; deals: Record<string, string> };
+type Seeded = { ws: string; contact: string; stages: Record<string, string>; deals: Record<string, string> };
 
 async function insert<T>(table: string, row: object): Promise<T> {
   const response = await adminRest(table, { method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify(row) });
@@ -36,7 +36,7 @@ async function seed(page: Page, prefix: string): Promise<Seeded> {
   }
   await page.goto("/fr/pipeline");
   await expect(page.getByTestId("deal-card")).toHaveCount(3);
-  return { stages, deals };
+  return { ws, contact: contact.id, stages, deals };
 }
 
 async function stageOf(dealId: string): Promise<string> {
@@ -45,6 +45,7 @@ async function stageOf(dealId: string): Promise<string> {
 }
 
 const column = (page: Page, name: string) => page.getByTestId(`stage-${name}`);
+const announcement = (page: Page) => page.getByTestId("pipeline-announcement");
 const card = (scope: Page | Locator, title: string) => scope.getByTestId("deal-card").filter({ hasText: title });
 
 // Glisser à la souris : appui, quelques pixels pour lancer le glisser, puis dépôt au point visé.
@@ -76,10 +77,16 @@ test.describe("ordinateur (1440 × 900)", () => {
     await expect(prospect.getByTestId("stage-count")).toContainText("2 opportunités");
     await expect(contacted.getByTestId("stage-count")).toContainText("1 opportunité");
 
-    // Colonne survolée mise en évidence pendant le glisser.
+    // Le lien de la carte a le focus avant le glisser (appui de la souris).
+    await card(prospect, "Contrat LinkedIn").focus();
+    // Colonne survolée mise en évidence pendant le glisser : contour de la couleur des
+    // titres (lagon), pas celui des autres colonnes.
+    const lagoon = await contacted.getByRole("heading", { level: 2 }).evaluate((el) => getComputedStyle(el).color);
     await drag(page, card(prospect, "Contrat LinkedIn"), await centerOf(contacted), async () => {
       await expect(contacted).toHaveAttribute("data-over", "true");
       await expect(prospect).not.toHaveAttribute("data-over");
+      await expect(contacted).toHaveCSS("border-top-color", lagoon);
+      await expect(prospect).not.toHaveCSS("border-top-color", lagoon);
     });
 
     // Glisser n'ouvre pas la carte ; la carte, les nombres et les totaux changent aussitôt.
@@ -90,7 +97,9 @@ test.describe("ordinateur (1440 × 900)", () => {
     await expect(prospect.getByTestId("stage-total")).toHaveText(money("100 000 Ar"));
     await expect(contacted.getByTestId("stage-count")).toContainText("2 opportunités");
     await expect(contacted.getByTestId("stage-total")).toHaveText(money("650 000 Ar"));
-    await expect(page.getByTestId("pipeline-announcement")).toHaveText("Contrat LinkedIn déplacé vers Contacté");
+    await expect(announcement(page)).toHaveText("Carte Contrat LinkedIn déplacée vers Contacté.");
+    // La carte, remontée dans sa nouvelle colonne, garde le focus.
+    await expect(card(contacted, "Contrat LinkedIn")).toBeFocused();
 
     // En base, et toujours là après rechargement.
     await expect.poll(() => stageOf(deals["Contrat LinkedIn"])).toBe(stages.contacted);
@@ -118,9 +127,9 @@ test.describe("ordinateur (1440 × 900)", () => {
     const dialog = page.getByRole("dialog", { name: "Marquer comme gagnée ?" });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole("button", { name: "Annuler" })).toBeFocused();
-    await page.waitForTimeout(100);
     await dialog.getByRole("button", { name: "Annuler" }).click();
     await expect(dialog).toBeHidden();
+    await expect(announcement(page)).toHaveText("Carte Contrat LinkedIn reposée, rien n'a changé.");
     await expect(card(column(page, "prospect"), "Contrat LinkedIn")).toBeVisible();
     expect(await stageOf(deals["Contrat LinkedIn"])).toBe(stages.prospect);
 
@@ -132,6 +141,7 @@ test.describe("ordinateur (1440 × 900)", () => {
     await page.waitForTimeout(100);
     await dialog.getByRole("button", { name: "Confirmer" }).click();
     await expect(card(won, "Contrat LinkedIn")).toBeVisible();
+    await expect(announcement(page)).toHaveText("Carte Contrat LinkedIn déplacée vers Gagné.");
     await expect(won.getByTestId("stage-total")).toHaveText(money("450 000 Ar"));
     await expect.poll(() => stageOf(deals["Contrat LinkedIn"])).toBe(stages.won);
     await card(won, "Contrat LinkedIn").click();
@@ -170,10 +180,16 @@ test.describe("ordinateur (1440 × 900)", () => {
         if (route.request().method() !== "POST") return route.continue();
         return failure === "abort" ? route.abort("internetdisconnected") : route.fulfill({ status: 500, body: "refus" });
       });
+      await card(prospect, "Contrat LinkedIn").focus();
       await drag(page, card(prospect, "Contrat LinkedIn"), await centerOf(contacted));
       const alert = page.getByRole("alert").filter({ hasText: "La carte Contrat LinkedIn n'a pas pu être déplacée" });
       await expect(alert).toBeVisible();
-      await expect(alert).toContainText("Elle est restée dans Prospect.");
+      await expect(alert).toHaveText(
+        "La carte Contrat LinkedIn n'a pas pu être déplacée (connexion coupée ou refus du serveur). Elle est restée dans Prospect. Réessaie.",
+      );
+      await expect(announcement(page)).toHaveText("");
+      // Revenue dans sa colonne, la carte garde le focus.
+      await expect(card(prospect, "Contrat LinkedIn")).toBeFocused();
       await expect(card(prospect, "Contrat LinkedIn")).toBeVisible();
       await expect(card(contacted, "Contrat LinkedIn")).toHaveCount(0);
       await expect(prospect.getByTestId("stage-count")).toContainText("2 opportunités");
@@ -183,7 +199,7 @@ test.describe("ordinateur (1440 × 900)", () => {
     }
 
     // Réseau lent (2 s) : la carte change de colonne sans attendre la réponse, et le geste
-    // réussit en effaçant le message.
+    // réussit en effaçant le message ; « déplacée » n'est annoncé qu'après la réponse.
     await page.route("**/fr/pipeline", async (route) => {
       if (route.request().method() === "POST") await new Promise((resolve) => setTimeout(resolve, 2000));
       await route.continue();
@@ -192,11 +208,107 @@ test.describe("ordinateur (1440 × 900)", () => {
     await expect(card(contacted, "Contrat LinkedIn")).toBeVisible({ timeout: 1000 });
     await expect(contacted.getByTestId("stage-count")).toContainText("2 opportunités", { timeout: 1000 });
     await expect(page.getByRole("alert").filter({ hasText: "n'a pas pu être déplacée" })).toHaveCount(0);
+    expect(await announcement(page).textContent()).toBe("");
+    await expect(announcement(page)).toHaveText("Carte Contrat LinkedIn déplacée vers Contacté.");
     await expect.poll(() => stageOf(deals["Contrat LinkedIn"])).toBe(stages.contacted);
+  });
+
+  test("opportunité archivée ailleurs pendant que la page est ouverte : refus clair, carte retirée", async ({ page }) => {
+    const { stages, deals } = await seed(page, "dndarch");
+    const prospect = column(page, "prospect");
+    const contacted = column(page, "contacted");
+    const archived = await adminRest(`deals?id=eq.${deals["Contrat LinkedIn"]}`, {
+      method: "PATCH",
+      body: JSON.stringify({ archived_at: new Date().toISOString() }),
+    });
+    expect(archived.ok).toBe(true);
+
+    await drag(page, card(prospect, "Contrat LinkedIn"), await centerOf(contacted));
+    await expect(page.getByRole("alert").filter({ hasText: "Contrat LinkedIn" })).toHaveText(
+      "La carte Contrat LinkedIn n'a pas été déplacée : cette opportunité a été archivée ou n'est plus disponible.",
+    );
+    // Page rafraîchie par l'action : la carte archivée quitte le pipeline, nombres à jour.
+    await expect(card(page, "Contrat LinkedIn")).toHaveCount(0);
+    await expect(prospect.getByTestId("stage-count")).toContainText("1 opportunité");
+    await expect(contacted.getByTestId("stage-count")).toContainText("1 opportunité");
+    await expect(announcement(page)).not.toContainText("déplacée");
+    expect(await stageOf(deals["Contrat LinkedIn"])).toBe(stages.prospect);
+  });
+
+  test("déplacement en attente : la carte ne se reprend pas, aucun message faux", async ({ page }) => {
+    const { stages, deals } = await seed(page, "dndtwice");
+    const prospect = column(page, "prospect");
+    const contacted = column(page, "contacted");
+    const call = column(page, "call");
+
+    // Premier envoi lent (1,5 s) puis refusé ; les suivants passent.
+    let posts = 0;
+    await page.route("**/fr/pipeline", async (route) => {
+      if (route.request().method() !== "POST") return route.continue();
+      if (++posts > 1) return route.continue();
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      return route.fulfill({ status: 500, body: "refus" });
+    });
+    await drag(page, card(prospect, "Contrat LinkedIn"), await centerOf(contacted));
+    await expect(card(contacted, "Contrat LinkedIn")).toBeVisible({ timeout: 1000 });
+    // En attente : la carte ne se glisse pas vers Appel.
+    await expect(contacted.locator("li[aria-busy=true]")).toHaveCount(1);
+    await drag(page, card(contacted, "Contrat LinkedIn"), await centerOf(call));
+    await expect(card(call, "Contrat LinkedIn")).toHaveCount(0);
+
+    // Le refus du premier envoi dit la vérité : la carte est revenue dans Prospect.
+    // (Le titre « Contrat LinkedIn » écarte l'annonceur de route de Next, role=alert lui aussi.)
+    const alert = page.getByRole("alert").filter({ hasText: "Contrat LinkedIn" });
+    await expect(alert).toHaveCount(1);
+    await expect(alert).toContainText("Elle est restée dans Prospect.");
+    await expect(card(prospect, "Contrat LinkedIn")).toBeVisible();
+    await expect(page.locator("li[aria-busy=true]")).toHaveCount(0);
+    expect(posts).toBe(1);
+    expect(await stageOf(deals["Contrat LinkedIn"])).toBe(stages.prospect);
+
+    // Réponse reçue : la carte se reprend et le déplacement suivant réussit.
+    await drag(page, card(prospect, "Contrat LinkedIn"), await centerOf(call));
+    await expect(card(call, "Contrat LinkedIn")).toBeVisible();
+    await expect(announcement(page)).toHaveText("Carte Contrat LinkedIn déplacée vers Appel.");
+    await expect(alert).toHaveCount(0);
+    await expect.poll(() => stageOf(deals["Contrat LinkedIn"])).toBe(stages.call);
+  });
+
+  test("total de colonne : un montant ne se coupe jamais à l'intérieur", async ({ page }) => {
+    const { ws, contact, stages } = await seed(page, "dndamount");
+    await insert("deals", { workspace_id: ws, contact_id: contact, stage_id: stages.contacted, title: "Traduction", currency: "EUR", amount: 120000 });
+    for (const width of [1024, 1280, 1366, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/fr/pipeline");
+      const total = column(page, "contacted").getByTestId("stage-total");
+      await expect(total).toHaveText(/^200\s000 Ar · 1\s200,00\s€$/);
+      // Chaque montant (« 200 000 Ar », « 1 200,00 € ») tient sur une ligne : mêmes
+      // ordonnées pour tous ses caractères.
+      const split = await total.evaluate((el) => {
+        const text = el.firstChild!;
+        const value = text.textContent!;
+        const lines = (from: number, to: number) => {
+          const tops = new Set<number>();
+          for (let i = from; i < to; i++) {
+            if (/\s/.test(value[i])) continue;
+            const range = document.createRange();
+            range.setStart(text, i);
+            range.setEnd(text, i + 1);
+            tops.add(Math.round(range.getBoundingClientRect().top));
+          }
+          return tops.size;
+        };
+        const sep = value.indexOf(" · ");
+        return [lines(0, sep), lines(sep + 3, value.length)];
+      });
+      expect(split, `${width} px`).toEqual([1, 1]);
+      const fits = await total.evaluate((el) => el.scrollWidth <= el.clientWidth);
+      expect(fits, `${width} px`).toBe(true);
+    }
   });
 });
 
-// Tactile : un appui long (250 ms) saisit la carte ; un glissement rapide fait défiler.
+// Tactile : un appui long (250 ms) prend la carte ; un glissement rapide fait défiler.
 async function touchDrag(page: Page, from: Locator, to: Locator, holdMs: number) {
   const cdp = await page.context().newCDPSession(page);
   const a = await centerOf(from);
@@ -216,6 +328,8 @@ test.describe("tablette (820 × 1180)", () => {
   test("appui long puis glisser : déplacée ; sans appui long, rien ne bouge", async ({ page }) => {
     const { stages, deals } = await seed(page, "dndtab");
     await expect(page.locator("[data-draggable]")).toHaveCount(3);
+    // touch-action: manipulation, recommandé par @dnd-kit pour le capteur tactile.
+    await expect(page.locator("[data-draggable]").first()).toHaveCSS("touch-action", "manipulation");
     const prospect = column(page, "prospect");
     const contacted = column(page, "contacted");
 

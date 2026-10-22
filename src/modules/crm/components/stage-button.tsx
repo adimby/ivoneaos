@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { useHydrated } from "@/lib/use-hydrated";
-import { moveDeal } from "../actions";
+import { moveDeal, moveDealForm } from "../actions";
 import { needsConfirmation, type StageKind } from "../stages";
 
 // Passe l'opportunité à une étape en un geste (« Étape suivante » ou choix d'une étape) :
@@ -43,7 +43,7 @@ export function StageButton({
 
   if (!needsConfirmation(stage)) {
     return (
-      <form action={moveDeal} className="flex flex-1">
+      <form action={moveDealForm} className="flex flex-1">
         {fields}
         <SubmitButton variant={variant} className={className} aria-label={label}>
           {children}
@@ -88,7 +88,9 @@ function ConfirmedMove({
     data.set("back", back);
     data.set("id", dealId);
     data.set("stage_id", stage.id);
-    startTransition(() => moveDeal(data));
+    startTransition(async () => {
+      await moveDeal(data);
+    });
   }
 
   return (

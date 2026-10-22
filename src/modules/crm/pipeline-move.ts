@@ -26,9 +26,10 @@ export function applyMove<D extends BoardDeal>(state: BoardState<D>, dealId: str
       const count = row.deal_count - 1;
       if (count <= 0) continue;
       const sum = deal.amount === null || row.amount_sum === null ? row.amount_sum : row.amount_sum - deal.amount;
-      // Somme nulle : plus de montant connu dans cette devise (approximation corrigée par
-      // le rafraîchissement si des montants à 0 restent dans l'étape).
-      totals.push({ ...row, deal_count: count, amount_sum: sum === 0 ? null : sum });
+      // Somme nulle : 0 s'il reste dans l'étape une carte affichée de cette devise avec un
+      // montant (0 Ar, comme le calcule la base), sinon plus de montant connu.
+      const known = state.deals.some((d) => d.id !== dealId && d.stage_id === deal.stage_id && d.currency === deal.currency && d.amount !== null);
+      totals.push({ ...row, deal_count: count, amount_sum: sum === 0 && !known ? null : sum });
     } else if (row.stage_id === toStageId) {
       added = true;
       const sum = deal.amount === null ? row.amount_sum : (row.amount_sum ?? 0) + deal.amount;

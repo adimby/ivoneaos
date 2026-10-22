@@ -683,8 +683,9 @@
       "over": "Over stage {stage}.",
       "outside": "Outside the stages.",
       "unchanged": "{title} dropped, nothing changed.",
-      "moved": "{title} moved to {stage}",
-      "error": "{title} could not be moved (slow or lost connection, or refused by the server). It stayed in {stage}. Try again."
+      "moved": "{title} moved to {stage}.",
+      "error": "{title} could not be moved (connection lost or refused by the server). It stayed in {stage}. Try again.",
+      "unavailable": "{title} was not moved: this deal has been archived or is no longer available."
     },
     "moveTo": "Move to stage {stage}",
     "confirm": {

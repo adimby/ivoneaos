@@ -20,7 +20,6 @@ import { cn } from "@/components/ui/cn";
 import { moveDeal } from "../actions";
 import { applyMove, stageSummary, type BoardDeal, type StageTotalRow } from "../pipeline-move";
 import { needsConfirmation, type StageKind } from "../stages";
-import { breakableAmount } from "./deal-card";
 import { StageConfirmDialog } from "./stage-button";
 
 type BoardStage = { id: string; name: string; kind: StageKind; label: string };
@@ -68,6 +67,13 @@ export function PipelineBoard({
   const [announcement, setAnnouncement] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<{ deal: Deal; stage: BoardStage } | null>(null);
+  // Cartes dont le déplacement attend la réponse du serveur : on ne peut pas les reprendre
+  // avant (deux envois croisés pourraient arriver dans le désordre et le message d'erreur
+  // du premier dirait une étape fausse).
+  const [pending, setPending] = useState<ReadonlySet<string>>(new Set());
+  // Carte dont le lien avait le focus au début du glisser : remontée dans une autre
+  // colonne, elle le perd ; on le lui rend.
+  const refocus = useRef<string | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const dndId = useId();
 
@@ -82,6 +88,19 @@ export function PipelineBoard({
     if (confirm && !dialog.current?.open) dialog.current?.showModal();
   }, [confirm]);
 
+  // Après chaque changement des cartes (dépôt, retour arrière, rafraîchissement), sans
+  // voler le focus s'il est ailleurs que sur la page elle-même.
+  useEffect(() => {
+    const id = refocus.current;
+    if (!id) return;
+    const frame = requestAnimationFrame(() => {
+      const current = document.activeElement;
+      if (current && current !== document.body) return;
+      document.querySelector<HTMLElement>(`[data-deal-id="${id}"] a`)?.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [board]);
+
   const stageById = (id: unknown) => stages.find((s) => s.id === id);
   const dealById = (id: unknown) => board.deals.find((d) => d.id === id);
 
@@ -93,10 +112,22 @@ export function PipelineBoard({
     onDragCancel: ({ active }) => t("drag.unchanged", { title: dealById(active.id)?.title ?? "" }),
   };
 
+  function setPendingFor(id: string, on: boolean) {
+    setPending((ids) => {
+      const next = new Set(ids);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  // La carte change de colonne aussitôt (optimiste) ; l'annonce « déplacée » attend la
+  // confirmation du serveur.
   function commit(deal: Deal, stage: BoardStage) {
     const from = stageById(deal.stage_id);
     setError(null);
-    setAnnouncement(t("drag.moved", { title: deal.title, stage: stage.label }));
+    setAnnouncement("");
+    setPendingFor(deal.id, true);
     const data = new FormData();
     data.set("locale", locale);
     data.set("back", "/pipeline");
@@ -104,14 +135,19 @@ export function PipelineBoard({
     data.set("stage_id", stage.id);
     startTransition(async () => {
       moveOptimistic({ id: deal.id, to: stage.id });
+      let moved: boolean | null = null;
       try {
-        await moveDeal(data);
+        ({ moved } = await moveDeal(data));
       } catch {
-        // Réseau coupé ou refus du serveur : la carte revient d'elle-même (fin de la
+        // Réseau coupé ou erreur du serveur : la carte revient d'elle-même (fin de la
         // transition), le message dit où elle est restée.
-        setAnnouncement("");
-        setError(t("drag.error", { title: deal.title, stage: from?.label ?? "" }));
       }
+      setPendingFor(deal.id, false);
+      if (moved) setAnnouncement(t("drag.moved", { title: deal.title, stage: stage.label }));
+      // Refus : opportunité archivée ou disparue ailleurs. L'action a rafraîchi la page,
+      // la carte quitte le pipeline.
+      else if (moved === false) setError(t("drag.unavailable", { title: deal.title }));
+      else setError(t("drag.error", { title: deal.title, stage: from?.label ?? "" }));
     });
   }
 
@@ -130,10 +166,12 @@ export function PipelineBoard({
       id={dndId}
       sensors={sensors}
       collisionDetection={pointerWithin}
-      accessibility={{ announcements, screenReaderInstructions: { draggable: t("drag.instructions") } }}
+      accessibility={{ announcements }}
       onDragStart={({ active }) => {
         setError(null);
         setActiveId(String(active.id));
+        const focused = document.activeElement?.closest<HTMLElement>("[data-deal-id]");
+        refocus.current = focused?.dataset.dealId === active.id ? String(active.id) : null;
       }}
       onDragEnd={onDragEnd}
       onDragCancel={() => setActiveId(null)}
@@ -173,7 +211,7 @@ export function PipelineBoard({
             {board.deals
               .filter((d) => d.stage_id === stage.id)
               .map((deal) => (
-                <DraggableDeal key={deal.id} id={deal.id} enabled={enabled}>
+                <DraggableDeal key={deal.id} id={deal.id} enabled={enabled} busy={pending.has(deal.id)}>
                   {cards[deal.id]}
                 </DraggableDeal>
               ))}
@@ -192,9 +230,13 @@ export function PipelineBoard({
         <StageConfirmDialog
           dialogRef={dialog}
           kind={confirm.stage.kind as "won" | "lost"}
-          onClose={() => setConfirm(null)}
+          onClose={() => {
+            // Annuler, Échap : la carte reste à sa place, comme un dépôt hors d'une colonne.
+            if (dialog.current?.returnValue !== "confirmed") setAnnouncement(t("drag.unchanged", { title: confirm.deal.title }));
+            setConfirm(null);
+          }}
           onConfirm={() => {
-            dialog.current?.close();
+            dialog.current?.close("confirmed");
             commit(confirm.deal, confirm.stage);
           }}
         />
@@ -214,23 +256,27 @@ function Column({ stage, summary, children }: { stage: BoardStage; summary: { co
       data-testid={`stage-${stage.name}`}
       data-over={isOver || undefined}
       className={cn(
-        "flex w-[85%] shrink-0 snap-start flex-col gap-3 rounded-card border border-sand/70 bg-sand-light p-3 md:w-[calc(50%-0.375rem)] lg:min-h-48 lg:w-auto lg:min-w-0 xl:min-h-80",
-        // Colonne survolée pendant un glisser : contour et fond légers du thème.
-        isOver && "border-lagoon bg-turquoise-soft ring-2 ring-lagoon",
+        "flex w-[85%] shrink-0 snap-start flex-col gap-3 rounded-card border p-3 md:w-[calc(50%-0.375rem)] lg:min-h-48 lg:w-auto lg:min-w-0 xl:min-h-80",
+        // Colonne survolée pendant un glisser : contour et fond légers du thème. Alternative
+        // explicite : cn ne fusionne pas, deux couleurs de bordure se départageraient par
+        // l'ordre du CSS, pas par celui des classes.
+        isOver ? "border-lagoon bg-turquoise-soft ring-2 ring-lagoon" : "border-sand/70 bg-sand-light",
       )}
     >
       <header className="flex flex-col gap-0.5">
         <h2 id={`etape-${stage.id}-title`} className="text-base font-bold text-lagoon">
           {stage.label}
         </h2>
-        {/* Ordinateur (colonne étroite) : nombre et total sur deux lignes. */}
+        {/* Ordinateur (colonne étroite) : nombre et total sur deux lignes. Le total passe à
+            la ligne entre deux devises, jamais dans un nombre (espaces insécables du format) ;
+            un nombre plus large que la colonne seul se coupe plutôt que de déborder. */}
         <p className="text-sm text-ink-muted" data-testid="stage-count">
           {t("stageCount", { count: summary.count })}
           {summary.total && (
             <>
               <span className="lg:hidden">{" · "}</span>
-              <span className="font-semibold text-ink lg:block" data-testid="stage-total">
-                {breakableAmount(summary.total)}
+              <span className="font-semibold break-words text-ink lg:block" data-testid="stage-total">
+                {summary.total}
               </span>
             </>
           )}
@@ -246,16 +292,21 @@ function Column({ stage, summary, children }: { stage: BoardStage; summary: { co
 }
 
 // La carte reste un lien (clic ou Entrée ouvrent l'opportunité) : seuls les écouteurs du
-// glisser sont posés sur l'élément qui l'entoure, sans rôle ni tabindex ajoutés.
-function DraggableDeal({ id, enabled, children }: { id: string; enabled: boolean; children: ReactNode }) {
-  const { setNodeRef, listeners, isDragging } = useDraggable({ id, disabled: !enabled });
+// glisser sont posés sur l'élément qui l'entoure, sans rôle ni tabindex ajoutés. busy :
+// déplacement en attente du serveur, la carte ne se reprend pas avant la réponse.
+// touch-manipulation : recommandé par @dnd-kit pour le capteur tactile (pas de zoom au
+// double appui).
+function DraggableDeal({ id, enabled, busy, children }: { id: string; enabled: boolean; busy: boolean; children: ReactNode }) {
+  const { setNodeRef, listeners, isDragging } = useDraggable({ id, disabled: !enabled || busy });
   return (
     <li
       ref={setNodeRef}
       {...listeners}
+      data-deal-id={id}
       data-draggable={enabled || undefined}
       data-dragging={isDragging || undefined}
-      className={cn(enabled && "select-none [-webkit-touch-callout:none]", isDragging && "opacity-40")}
+      aria-busy={busy || undefined}
+      className={cn(enabled && "touch-manipulation select-none [-webkit-touch-callout:none]", isDragging && "opacity-40")}
     >
       {children}
     </li>

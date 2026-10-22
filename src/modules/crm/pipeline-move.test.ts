@@ -37,6 +37,25 @@ describe("applyMove", () => {
     expect(stageSummary(next.totals, "won", "fr")).toEqual({ count: 1, total: null });
   });
 
+  it("total à 0 : gardé s'il reste une carte de cette devise avec un montant, comme en base", () => {
+    const zero: BoardState = {
+      deals: [
+        { id: "a", stage_id: "prospect", currency: "MGA", amount: 450000 },
+        { id: "z", stage_id: "prospect", currency: "MGA", amount: 0 },
+        { id: "n", stage_id: "call", currency: "MGA", amount: 300000 },
+        { id: "m", stage_id: "call", currency: "MGA", amount: null },
+      ],
+      totals: [
+        { stage_id: "prospect", currency: "MGA", deal_count: 2, amount_sum: 450000 },
+        { stage_id: "call", currency: "MGA", deal_count: 2, amount_sum: 300000 },
+      ],
+    };
+    // Reste « z » (0 Ar) : total 0 Ar, pas de total disparu.
+    expect(stageSummary(applyMove(zero, "a", "won").totals, "prospect", "fr")).toEqual({ count: 1, total: "0 Ar" });
+    // Reste « m », sans montant : plus de total.
+    expect(stageSummary(applyMove(zero, "n", "won").totals, "call", "fr")).toEqual({ count: 1, total: null });
+  });
+
   it("dernière opportunité de l'étape : nombre à 0 et plus de total", () => {
     const next = applyMove(state, "c", "prospect");
     expect(stageSummary(next.totals, "contacted", "fr")).toEqual({ count: 0, total: null });

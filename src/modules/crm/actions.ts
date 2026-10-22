@@ -253,22 +253,38 @@ export async function saveDeal(_prev: CrmFormState, formData: FormData): Promise
 }
 
 // « Étape suivante » ou choix d'une étape (la confirmation de gagné / perdu est demandée
-// dans l'interface avant l'envoi).
-export async function moveDeal(formData: FormData) {
+// dans l'interface avant l'envoi). Refus (opportunité archivée ou disparue entre-temps) :
+// résultat moved: false, sans erreur levée (le formulaire sans JavaScript de StageButton
+// revient simplement à la page) ; la page est rafraîchie dans les deux cas, la carte
+// archivée quitte le pipeline.
+export type MoveDealResult = { moved: boolean };
+
+export async function moveDeal(formData: FormData): Promise<MoveDealResult> {
   const { supabase, locale, back, workspaceId } = await context(formData);
   const id = readId(formData, "id");
   const stageId = readId(formData, "stage_id");
-  if (!id || !stageId) return;
+  let moved = false;
   // Opportunité ou contact archivés : étape figée.
-  if (!(await activeDeal(supabase, workspaceId, id))) return;
-  const { error } = await supabase
-    .from("deals")
-    .update({ stage_id: stageId })
-    .eq("id", id)
-    .eq("workspace_id", workspaceId)
-    .is("archived_at", null);
-  if (error) throw error;
+  if (id && stageId && (await activeDeal(supabase, workspaceId, id))) {
+    const { data, error } = await supabase
+      .from("deals")
+      .update({ stage_id: stageId })
+      .eq("id", id)
+      .eq("workspace_id", workspaceId)
+      .is("archived_at", null)
+      .select("id");
+    if (error) throw error;
+    // Archivée entre la lecture et l'écriture : aucune ligne touchée.
+    moved = data.length > 0;
+  }
   await settle(locale, back);
+  return { moved };
+}
+
+// Même action pour un <form action> (StageButton, utilisable sans JavaScript), qui
+// n'accepte pas de valeur de retour.
+export async function moveDealForm(formData: FormData): Promise<void> {
+  await moveDeal(formData);
 }
 
 export async function archiveDeal(formData: FormData) {
