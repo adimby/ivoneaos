@@ -32,9 +32,9 @@ export function SideNav({ locale }: { locale: Locale }) {
   return (
     <div
       data-testid="side-nav"
-      className="on-dark fixed inset-y-0 left-0 z-20 hidden w-64 flex-col gap-6 overflow-y-auto bg-lagoon px-4 pt-6 pb-5 text-sand lg:flex"
+      className="on-dark fixed inset-y-0 left-0 z-20 hidden w-64 flex-col gap-6 overflow-y-auto bg-chrome px-4 pt-6 pb-5 text-on-chrome-muted lg:flex"
     >
-      <Link href="/tableau-de-bord" className="self-start rounded-lg px-2 text-white">
+      <Link href="/tableau-de-bord" className="self-start rounded-lg px-2 text-on-chrome">
         <Brand />
       </Link>
 
@@ -48,7 +48,7 @@ export function SideNav({ locale }: { locale: Locale }) {
                 <Link
                   href={href}
                   aria-current={active ? "page" : undefined}
-                  className={cn(itemClass, active ? "bg-white/15 text-white" : "hover:bg-white/10 hover:text-white")}
+                  className={cn(itemClass, active ? "bg-on-chrome/15 text-on-chrome" : "hover:bg-on-chrome/10 hover:text-on-chrome")}
                 >
                   <Icon className="size-5 shrink-0" />
                   {t(label)}
@@ -59,7 +59,7 @@ export function SideNav({ locale }: { locale: Locale }) {
         </ul>
       </nav>
 
-      <div className="flex flex-col gap-2 border-t border-white/15 pt-4">
+      <div className="flex flex-col gap-2 border-t border-on-chrome/15 pt-4">
         {/* Langue enregistrée dans le profil, retour sur la même page (avec ses paramètres,
             par exemple ?vue=devis). */}
         <form action={setLanguage} aria-label={tCommon("languageLabel")} className="flex gap-1">
@@ -75,7 +75,7 @@ export function SideNav({ locale }: { locale: Locale }) {
               value={value}
               lang={value}
               aria-pressed={value === locale}
-              className="min-h-11 flex-1 rounded-lg px-2 text-sm font-semibold hover:text-white aria-pressed:bg-white/15 aria-pressed:text-white"
+              className="min-h-11 flex-1 rounded-lg px-2 text-sm font-semibold hover:text-on-chrome aria-pressed:bg-on-chrome/15 aria-pressed:text-on-chrome"
             >
               {tCommon(`languages.${value}`)}
             </button>
@@ -83,7 +83,7 @@ export function SideNav({ locale }: { locale: Locale }) {
         </form>
         <form action={signOut}>
           <input type="hidden" name="locale" value={locale} />
-          <button type="submit" className={cn(itemClass, "w-full hover:bg-white/10 hover:text-white")}>
+          <button type="submit" className={cn(itemClass, "w-full hover:bg-on-chrome/10 hover:text-on-chrome")}>
             <SignOutIcon className="size-5 shrink-0" />
             {t("signOut")}
           </button>

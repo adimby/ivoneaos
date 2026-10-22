@@ -46,7 +46,7 @@ export function BottomNav({ locale }: { locale: string }) {
   const moreActive = isActive("/plus") || MORE.some((item) => isActive(item.href));
   const moreContent = (
     <>
-      <span className={cn("flex h-7 w-12 items-center justify-center rounded-full", moreActive && "bg-white/15")}>
+      <span className={cn("flex h-7 w-12 items-center justify-center rounded-full", moreActive && "bg-on-chrome/15")}>
         <MoreIcon className="size-6" />
       </span>
       {t("more")}
@@ -55,7 +55,7 @@ export function BottomNav({ locale }: { locale: string }) {
 
   return (
     <>
-    <nav aria-label={t("label")} data-testid="bottom-nav" className="on-dark fixed inset-x-0 bottom-0 z-20 bg-lagoon pb-safe text-sand shadow-[0_-4px_16px_rgb(11_42_46/0.15)] lg:hidden">
+    <nav aria-label={t("label")} data-testid="bottom-nav" className="on-dark fixed inset-x-0 bottom-0 z-20 bg-chrome pb-safe text-on-chrome-muted shadow-[0_-4px_16px_rgb(11_42_46/0.15)] lg:hidden">
       <ul className="px-safe mx-auto flex max-w-md gap-1 py-1">
         {TABS.map((tab) => {
           const { href, label, Icon } = tab;
@@ -65,9 +65,9 @@ export function BottomNav({ locale }: { locale: string }) {
               <Link
                 href={href}
                 aria-current={active ? "page" : undefined}
-                className={cn(tabClass, active ? "text-white" : "hover:text-white")}
+                className={cn(tabClass, active ? "text-on-chrome" : "hover:text-on-chrome")}
               >
-                <span className={cn("flex h-7 w-12 items-center justify-center rounded-full", active && "bg-white/15")}>
+                <span className={cn("flex h-7 w-12 items-center justify-center rounded-full", active && "bg-on-chrome/15")}>
                   <Icon className="size-6" />
                 </span>
                 {t(label)}
@@ -80,7 +80,7 @@ export function BottomNav({ locale }: { locale: string }) {
             <button
               type="button"
               popoverTarget="plus-menu"
-              className={cn(tabClass, moreActive ? "text-white" : "hover:text-white")}
+              className={cn(tabClass, moreActive ? "text-on-chrome" : "hover:text-on-chrome")}
             >
               {moreContent}
             </button>
@@ -88,7 +88,7 @@ export function BottomNav({ locale }: { locale: string }) {
             <Link
               href="/plus"
               aria-current={isActive("/plus") ? "page" : undefined}
-              className={cn(tabClass, moreActive ? "text-white" : "hover:text-white")}
+              className={cn(tabClass, moreActive ? "text-on-chrome" : "hover:text-on-chrome")}
             >
               {moreContent}
             </Link>
@@ -102,7 +102,7 @@ export function BottomNav({ locale }: { locale: string }) {
           ref={menu}
           id="plus-menu"
           popover="auto"
-          className="fixed inset-x-3 top-auto bottom-[calc(4.5rem+env(safe-area-inset-bottom))] m-0 mx-auto w-auto max-w-md rounded-card border border-sand bg-white p-2 text-ink shadow-card backdrop:bg-ink/30 lg:hidden"
+          className="fixed inset-x-3 top-auto bottom-[calc(4.5rem+env(safe-area-inset-bottom))] m-0 mx-auto w-auto max-w-md rounded-card border border-sand bg-surface p-2 text-ink shadow-card backdrop:bg-black/40 lg:hidden"
         >
           <nav aria-label={t("more")}>
             <MoreMenu locale={locale} isActive={isActive} onNavigate={() => menu.current?.hidePopover()} />

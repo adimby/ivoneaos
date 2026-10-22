@@ -124,7 +124,7 @@ export default async function ContactsPage({ params, searchParams }: Props) {
                           href={`/contacts/${contact.id}`}
                           className={cn(
                             columns,
-                            "flex min-h-16 items-center gap-3 rounded-xl border border-sand/70 bg-white p-3 hover:border-lagoon lg:grid lg:px-4",
+                            "flex min-h-16 items-center gap-3 rounded-xl border border-sand/70 bg-surface p-3 hover:border-lagoon lg:grid lg:px-4",
                           )}
                         >
                           <span className="flex min-w-0 flex-1 items-center gap-3">

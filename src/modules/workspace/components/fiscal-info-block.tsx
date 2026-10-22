@@ -87,7 +87,7 @@ export function FiscalInfoBlock({
   return (
     <section
       aria-labelledby="fiscal-title"
-      className="flex flex-col gap-4 rounded-card border-2 border-turquoise bg-white p-4 shadow-card"
+      className="flex flex-col gap-4 rounded-card border-2 border-turquoise bg-surface p-4 shadow-card"
       data-testid="fiscal-block"
     >
       {compact ? (

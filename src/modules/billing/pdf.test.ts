@@ -3,6 +3,7 @@ import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { describe, expect, it, vi } from "vitest";
 import en from "../../../messages/en.json";
 import fr from "../../../messages/fr.json";
+import { BRAND_FONTS, brandColors, FONT_FAMILIES } from "@/modules/branding/brand";
 import { parsePublicDocument } from "./document";
 import { documentView } from "./view";
 
@@ -63,7 +64,7 @@ describe("PDF d'un document", () => {
       now: new Date("2026-10-15T09:00:00Z"),
       publicUrl: "https://app.test/fr/p/tok",
     });
-    const text = await pdfText(await renderDocumentPdf(view, translator("fr"), null));
+    const text = await pdfText(await renderDocumentPdf(view, translator("fr")));
 
     expect(text).toContain("DEVIS");
     expect(text).toContain("D-2026-0001");
@@ -81,9 +82,49 @@ describe("PDF d'un document", () => {
   it("suit la langue du document (anglais : « NIF: », mention traduite)", async () => {
     const doc = parsePublicDocument({ ...quote, language: "en" })!;
     const view = documentView(doc, { locale: "en", now: new Date("2026-10-15T09:00:00Z"), publicUrl: null });
-    const text = await pdfText(await renderDocumentPdf(view, translator("en"), null));
+    const text = await pdfText(await renderDocumentPdf(view, translator("en")));
     expect(text).toContain("QUOTE");
     expect(text).toContain("NIF: 3000123456");
     expect(text).toContain("Invoiced with Ivonea OS");
+  });
+
+  // Chaque police de l'image de marque : embarquée (nom PostScript dans le PDF) et
+  // complète pour nos textes (accents, n̈, signe moins, espace fine, €).
+  for (const font of BRAND_FONTS) {
+    it(`police ${font} : embarquée et sans caractère perdu`, async () => {
+      const doc = parsePublicDocument({
+        ...quote,
+        currency: "EUR",
+        freelancer: { ...quote.freelancer, brand: { font, primary_color: "#5B2B5E", accent_color: "#D4A24C", logo_position: "center" } },
+      })!;
+      const view = documentView(doc, { locale: "fr", now: new Date("2026-10-15T09:00:00Z"), publicUrl: null });
+      const pdf = await renderDocumentPdf(view, translator("fr"));
+      const postscript = FONT_FAMILIES[font].files[1].replace(".ttf", "");
+      expect(pdf.toString("latin1")).toContain(postscript);
+      const text = await pdfText(pdf);
+      expect(text).toContain("Ran̈aivo Andrianjafy");
+      expect(text).toContain("Logo « Océan » – déclinaisons");
+      expect(text).toContain("− 250,00 €");
+      expect(text).toContain("4 500,00 €");
+    });
+  }
+
+  it("marque de la copie figée, rendue sans erreur (accent clair : texte noir sur son aplat)", async () => {
+    const doc = parsePublicDocument({
+      ...quote,
+      freelancer: { ...quote.freelancer, brand: { primary_color: "#5B2B5E", accent_color: "#F2C14E" } },
+    })!;
+    const view = documentView(doc, { locale: "fr", now: new Date("2026-10-15T09:00:00Z"), publicUrl: null });
+    expect(view.brand.primary).toBe("#5B2B5E");
+    expect(brandColors(view.brand)).toEqual({
+      primary: "#5B2B5E",
+      onPrimary: "#FFFFFF",
+      primarySoft: "#EBE6EC",
+      accent: "#F2C14E",
+      onAccent: "#000000",
+      accentPressed: "#D5AA45",
+      accentEdge: "#5B2B5E",
+    });
+    expect(await pdfText(await renderDocumentPdf(view, translator("fr")))).toContain("450 000 Ar");
   });
 });

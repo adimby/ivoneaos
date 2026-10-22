@@ -8,7 +8,7 @@ import { parseManualInstructions } from "./manual-instructions";
 import { canUse, PLAN_LIMITS, type Feature, type PlanUsage } from "./plan";
 
 const WORKSPACE_COLUMNS =
-  "id, name, trade, level, default_currency, nif, stat, tax_regime, address, logo_path, invoice_footer, plan, profile_completed_at, onboarded_at";
+  "id, name, trade, level, default_currency, nif, stat, tax_regime, address, logo_path, invoice_footer, plan, profile_completed_at, onboarded_at, brand_show_logo, brand_logo_size, brand_logo_position, brand_banner_path, brand_primary_color, brand_accent_color, brand_font";
 
 // Au MVP, un freelance = un workspace (le plus ancien dont il est membre ; RLS).
 export const getCurrentWorkspace = cache(async () => {

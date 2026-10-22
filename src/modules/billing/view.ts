@@ -1,5 +1,6 @@
 import { formatMoney } from "@/lib/money";
 import { localDate } from "@/lib/time";
+import { parseBrand, type Brand } from "@/modules/branding/brand";
 import type { BillingDocument } from "./document";
 import { invoiceDisplayStatus, quoteDisplayStatus, type InvoiceStatus, type QuoteStatus } from "./status";
 
@@ -23,6 +24,7 @@ export type DocumentView = {
     footer: string | null;
     logoPath: string | null;
   };
+  brand: Brand;
   client: { name: string; company: string | null };
   dates: { key: DateKey; value: string }[];
   lines: { description: string; quantity: string; unitPrice: string; total: string }[];
@@ -101,6 +103,7 @@ export function documentView(
       footer: doc.freelancer.invoice_footer,
       logoPath: doc.freelancer.logo_path,
     },
+    brand: parseBrand(doc.freelancer.brand),
     client: { name: doc.client.name, company: doc.client.company_name },
     dates,
     lines: doc.lines.map((line) => ({

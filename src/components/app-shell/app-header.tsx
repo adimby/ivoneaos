@@ -5,7 +5,7 @@ import { Brand } from "../brand";
 // marque est en haut de la navigation de gauche.
 export function AppHeader() {
   return (
-    <header className="on-dark sticky top-0 z-10 bg-lagoon pt-safe text-white lg:hidden">
+    <header className="on-dark sticky top-0 z-10 bg-chrome pt-safe text-on-chrome lg:hidden">
       <div className="px-safe mx-auto flex h-14 w-full max-w-md items-center md:max-w-3xl md:px-8">
         <Link href="/tableau-de-bord" className="rounded-lg">
           <Brand />

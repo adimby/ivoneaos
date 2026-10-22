@@ -146,6 +146,58 @@ Doc : https://docs.whop.com/developer/platforms/collect-payments-for-connected-a
 Le compte plateforme Whop d'Ivonea OS n'existe pas encore : implémenter derrière une variable `WHOP_API_KEY`,
 désactivé proprement (bouton masqué) quand elle est absente.
 
+## Personnalisation
+Offerte sur toutes les offres (aucune limite).
+
+**Apparence de l'application** (Réglages > Apparence), propre à chaque personne (`profiles.theme_mode`,
+`profiles.theme_palette`) :
+- Mode Clair (défaut, l'aspect d'origine), Sombre ou Automatique (suit le réglage du téléphone ou de l'ordinateur).
+- Couleur principale parmi 6 palettes vérifiées : Océan (défaut, palette de marque ci-dessous), Forêt, Prune, Corail,
+  Ardoise, Sable. Pas de couleur libre pour l'application (contraste). Chaque palette définit tous les jetons de
+  `globals.css` en clair et en sombre (`src/modules/appearance/themes.ts`, seule source ; `src/app/themes.css` en est
+  généré par `npm run themes:css`) ; un test calcule le contraste AA de chaque couple texte / fond pour chaque
+  palette × mode. Jetons de rôle : `surface` (cartes, champs), `chrome` (navigation, en-têtes), `on-*` (texte posé
+  sur l'aplat du même nom) ; plus de `bg-white` / `text-white` dans les écrans.
+- Affichage sans éclair : le choix est recopié dans un cookie `ivn_apparence` (à l'enregistrement et à la connexion) ;
+  un court script en tête de `<html>` pose `data-mode` / `data-palette` et la couleur `theme-color` avant la
+  première peinture. Lire le cookie côté serveur rendrait toute l'application dynamique (plus de coquille statique,
+  Cache Components) : choix écarté. Sans JavaScript, une feuille `/apparence.css` (dans `<noscript>`) applique la
+  palette. Profil et cookie divergents (autre appareil) : la page connectée réaligne le cookie. Écart assumé avec
+  « appliqué côté serveur sur `<html>` » : le HTML serveur ne porte pas `data-mode`, le test E2E vérifie les
+  attributs dès la première image (script), pas dans le HTML serveur.
+- Apparence appliquée seulement une fois enregistrée (un échec garde l'apparence du profil). Navigations sans
+  rechargement (connexion, déconnexion, accueil guidé) : l'apparence est relue depuis le cookie. La déconnexion
+  efface le cookie : sur un appareil partagé, l'écran de connexion revient à Océan clair.
+- `theme-color` : suit la palette et, en mode Automatique, le changement de mode du système. Sans JavaScript, elle
+  reste celle d'Océan clair (variante sombre selon le système écartée : elle se tromperait pour le cas le plus
+  courant, le mode Clair par défaut).
+- Les pages publiques (`/p/…`) et les PDF ne suivent jamais le thème de la freelance : ils suivent son image de marque.
+
+**Image de marque des devis et factures** (Réglages > Image de marque), au niveau du workspace (colonnes `brand_*`,
+plus `invoice_footer` devenu « Pied de page des documents ») ; appliquée au PDF et à la page client, avec un aperçu
+en direct et un PDF d'exemple dans Réglages :
+- Logo affiché ou non, petit / moyen / grand, à gauche ou centré.
+- Bannière d'en-tête facultative : PNG ou JPEG (le moteur PDF ne lit pas le WebP), 1 Mo, format conseillé
+  1600 × 400 px (4:1), toute la largeur en haut du document. Même stockage que le logo (bucket privé `logos`, dossier
+  du workspace, ajouts seulement, type reconnu à ses premiers octets) ; visible sans session seulement si elle figure
+  dans un document émis (`is_public_logo`), jamais supprimée tant qu'un document émis l'affiche.
+- Couleur principale (titres, en-tête du tableau, total) et d'accent (reste à payer, bouton du client, détails) au
+  nuancier ou en `#RRVVBB`, avec 6 associations prêtes. La principale sert de texte sur fond clair : refusée si son
+  contraste est sous 4,5:1 sur blanc, sable clair ou fond de page (message clair, contrôle navigateur et serveur).
+  Sur les aplats des deux couleurs, le texte passe automatiquement en blanc ou en noir (toujours ≥ 4,5:1). L'accent
+  reste libre (or, corail : sous 3:1 sur fond clair, mais au cœur de nombreuses marques) ; s'il est trop pâle
+  (< 3:1), le bouton du client et l'aplat « Reste à payer » du PDF reçoivent un contour à la couleur principale
+  (WCAG 1.4.11).
+- Police parmi 5, sous licence SIL OFL, embarquées dans le PDF et servies par le site en WOFF2 (aucune police
+  téléchargée à l'exécution, aucun CDN) : Liberation Sans (Classique), Montserrat (Moderne), Nunito (Arrondie),
+  Spectral (Élégante), Barlow Condensed (Condensée). Préparées par `scripts/build-brand-fonts.py` (sous-ensemble
+  latin, n̈ malgache, € $, espace fine des montants) ; licences dans `src/modules/billing/fonts` et
+  `public/fonts/brand`. « Liberation » étant un nom réservé (OFL), sa version web sous-ensemble s'appelle
+  « Ivonea Classique » (même dessin) ; le PDF garde le TTF d'origine.
+- Documents envoyés : l'image de marque entre dans la copie figée prise à l'émission (`snapshot.freelancer.brand`) ;
+  le PDF et la page client d'un document envoyé gardent la marque de leur envoi, même si elle change ensuite. Les
+  documents émis avant cette fonctionnalité gardent l'aspect Océan d'origine.
+
 ## Hors MVP
 SMS (Mapi, V2), avoirs, abonnements payants, portfolio, prospection, projets/tâches, saisie hors ligne.
 

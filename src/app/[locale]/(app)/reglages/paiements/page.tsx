@@ -136,7 +136,7 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
           <li key={step} className="flex gap-3">
             <span
               aria-hidden="true"
-              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-lagoon text-sm font-bold text-white"
+              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-lagoon text-sm font-bold text-on-lagoon"
             >
               {index + 1}
             </span>
@@ -259,7 +259,7 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
         <>
           {manualCard}
           {/* Clé remplacée (autre boutique, clé régénérée) : même vérification. */}
-          <details className="rounded-card border border-sand/70 bg-white p-4">
+          <details className="rounded-card border border-sand/70 bg-surface p-4">
             <summary className="flex min-h-11 cursor-pointer list-none items-center font-semibold text-lagoon [&::-webkit-details-marker]:hidden">
               {t("guide.titleReplace")}
             </summary>

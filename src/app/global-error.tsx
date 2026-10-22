@@ -45,7 +45,7 @@ function GlobalErrorContent({ retry }: { retry: () => void }) {
       <button
         type="button"
         onClick={() => retry()}
-        className="min-h-11 rounded-xl bg-terracotta px-5 text-base font-semibold text-white"
+        className="min-h-11 rounded-xl bg-terracotta px-5 text-base font-semibold text-on-terracotta"
       >
         {t("retry")}
       </button>

@@ -405,14 +405,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "created_at": string,"full_name": string | null,"locale": Database["public"]['Enums']["locale"],"phone": string | null,"updated_at": string,"user_id": string
+                    "created_at": string,"full_name": string | null,"locale": Database["public"]['Enums']["locale"],"phone": string | null,"theme_mode": string,"theme_palette": string,"updated_at": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"full_name"?: string | null,"locale"?: Database["public"]['Enums']["locale"],"phone"?: string | null,"updated_at"?: string,"user_id": string
+                    "created_at"?: string,"full_name"?: string | null,"locale"?: Database["public"]['Enums']["locale"],"phone"?: string | null,"theme_mode"?: string,"theme_palette"?: string,"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "created_at"?: string,"full_name"?: string | null,"locale"?: Database["public"]['Enums']["locale"],"phone"?: string | null,"updated_at"?: string,"user_id"?: string
+                    "created_at"?: string,"full_name"?: string | null,"locale"?: Database["public"]['Enums']["locale"],"phone"?: string | null,"theme_mode"?: string,"theme_palette"?: string,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     
@@ -535,14 +535,14 @@ isOneToOne: false
                   ]
                 },"workspaces": {
                   Row: {
-                    "address": string | null,"created_at": string,"default_currency": Database["public"]['Enums']["currency"],"id": string,"invoice_footer": string | null,"level": Database["public"]['Enums']["workspace_level"],"logo_path": string | null,"name": string,"nif": string | null,"onboarded_at": string | null,"plan": Database["public"]['Enums']["plan"],"profile_completed_at": string | null,"stat": string | null,"tax_regime": Database["public"]['Enums']["tax_regime"] | null,"trade": string | null,"updated_at": string
+                    "address": string | null,"brand_accent_color": string,"brand_banner_path": string | null,"brand_font": string,"brand_logo_position": string,"brand_logo_size": string,"brand_primary_color": string,"brand_show_logo": boolean,"created_at": string,"default_currency": Database["public"]['Enums']["currency"],"id": string,"invoice_footer": string | null,"level": Database["public"]['Enums']["workspace_level"],"logo_path": string | null,"name": string,"nif": string | null,"onboarded_at": string | null,"plan": Database["public"]['Enums']["plan"],"profile_completed_at": string | null,"stat": string | null,"tax_regime": Database["public"]['Enums']["tax_regime"] | null,"trade": string | null,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "address"?: string | null,"created_at"?: string,"default_currency"?: Database["public"]['Enums']["currency"],"id"?: string,"invoice_footer"?: string | null,"level"?: Database["public"]['Enums']["workspace_level"],"logo_path"?: string | null,"name": string,"nif"?: string | null,"onboarded_at"?: string | null,"plan"?: Database["public"]['Enums']["plan"],"profile_completed_at"?: string | null,"stat"?: string | null,"tax_regime"?: Database["public"]['Enums']["tax_regime"] | null,"trade"?: string | null,"updated_at"?: string
+                    "address"?: string | null,"brand_accent_color"?: string,"brand_banner_path"?: string | null,"brand_font"?: string,"brand_logo_position"?: string,"brand_logo_size"?: string,"brand_primary_color"?: string,"brand_show_logo"?: boolean,"created_at"?: string,"default_currency"?: Database["public"]['Enums']["currency"],"id"?: string,"invoice_footer"?: string | null,"level"?: Database["public"]['Enums']["workspace_level"],"logo_path"?: string | null,"name": string,"nif"?: string | null,"onboarded_at"?: string | null,"plan"?: Database["public"]['Enums']["plan"],"profile_completed_at"?: string | null,"stat"?: string | null,"tax_regime"?: Database["public"]['Enums']["tax_regime"] | null,"trade"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "address"?: string | null,"created_at"?: string,"default_currency"?: Database["public"]['Enums']["currency"],"id"?: string,"invoice_footer"?: string | null,"level"?: Database["public"]['Enums']["workspace_level"],"logo_path"?: string | null,"name"?: string,"nif"?: string | null,"onboarded_at"?: string | null,"plan"?: Database["public"]['Enums']["plan"],"profile_completed_at"?: string | null,"stat"?: string | null,"tax_regime"?: Database["public"]['Enums']["tax_regime"] | null,"trade"?: string | null,"updated_at"?: string
+                    "address"?: string | null,"brand_accent_color"?: string,"brand_banner_path"?: string | null,"brand_font"?: string,"brand_logo_position"?: string,"brand_logo_size"?: string,"brand_primary_color"?: string,"brand_show_logo"?: boolean,"created_at"?: string,"default_currency"?: Database["public"]['Enums']["currency"],"id"?: string,"invoice_footer"?: string | null,"level"?: Database["public"]['Enums']["workspace_level"],"logo_path"?: string | null,"name"?: string,"nif"?: string | null,"onboarded_at"?: string | null,"plan"?: Database["public"]['Enums']["plan"],"profile_completed_at"?: string | null,"stat"?: string | null,"tax_regime"?: Database["public"]['Enums']["tax_regime"] | null,"trade"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     

@@ -1,4 +1,5 @@
 import type { Currency } from "@/lib/money";
+import type { BrandSnapshot } from "@/modules/branding/brand";
 import type { InvoiceStatus, QuoteStatus } from "./status";
 
 // Document tel que le client le voit : forme renvoyée par get_public_quote et
@@ -15,6 +16,8 @@ export type Freelancer = {
   tax_regime: "tva" | "impot_synthetique" | null;
   address: string | null;
   invoice_footer: string | null;
+  // Image de marque à l'émission ; absente des documents émis avant cette fonctionnalité.
+  brand?: BrandSnapshot | null;
 };
 
 export type Client = { name: string; company_name: string | null };

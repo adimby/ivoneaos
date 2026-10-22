@@ -44,7 +44,7 @@ export function ConfirmAction({
       <dialog
         ref={dialog}
         aria-labelledby={titleId}
-        className="m-auto w-[min(22rem,calc(100%-2rem))] rounded-card border border-sand bg-white p-5 text-ink shadow-card backdrop:bg-ink/40"
+        className="m-auto w-[min(22rem,calc(100%-2rem))] rounded-card border border-sand bg-surface p-5 text-ink shadow-card backdrop:bg-black/40"
       >
         <form action={action} className="flex flex-col gap-4">
           {Object.entries(fields).map(([name, value]) => (

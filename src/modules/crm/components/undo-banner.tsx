@@ -33,7 +33,7 @@ export function UndoBanner({
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="back" value={back} />
       <input type="hidden" name="id" value={id} />
-      <div role="status" className="flex items-center justify-between gap-3 rounded-xl bg-lagoon px-4 py-2 text-white on-dark">
+      <div role="status" className="flex items-center justify-between gap-3 rounded-xl bg-chrome px-4 py-2 text-on-chrome on-dark">
         <span className="text-sm font-medium">{message}</span>
         <SubmitButton pending={pending} variant="secondary" className="shrink-0 px-3 text-sm">
           {undoLabel}

@@ -52,7 +52,7 @@ export default async function ContactPage({ params }: Props) {
   const back = `/contacts/${contact.id}`;
   // Archivé : consultation seule (rappels, échanges et modification après désarchivage).
   const active = !contact.archived_at;
-  const quickAction = "flex min-h-16 flex-1 flex-col items-center justify-center gap-1 rounded-xl border border-sand/70 bg-white px-2 text-sm font-semibold text-lagoon hover:border-lagoon";
+  const quickAction = "flex min-h-16 flex-1 flex-col items-center justify-center gap-1 rounded-xl border border-sand/70 bg-surface px-2 text-sm font-semibold text-lagoon hover:border-lagoon";
 
   return (
     <div className="flex flex-1 flex-col gap-6 lg:grid lg:grid-cols-2 lg:content-start lg:items-start lg:gap-x-10">

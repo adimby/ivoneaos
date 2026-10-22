@@ -109,7 +109,7 @@ function ConfirmedMove({
       <dialog
         ref={dialog}
         aria-labelledby={titleId}
-        className="m-auto w-[min(22rem,calc(100%-2rem))] rounded-card border border-sand bg-white p-5 text-ink shadow-card backdrop:bg-ink/40"
+        className="m-auto w-[min(22rem,calc(100%-2rem))] rounded-card border border-sand bg-surface p-5 text-ink shadow-card backdrop:bg-black/40"
       >
         <h2 id={titleId} className="text-lg font-bold text-lagoon">
           {t(`${kind}.title`)}

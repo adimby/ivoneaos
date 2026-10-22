@@ -39,7 +39,7 @@ export default async function OnboardingPage({ params, searchParams }: Props) {
 function Shell({ controls, children }: { controls: ReactNode; children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="on-dark bg-lagoon pt-safe text-white">
+      <header className="on-dark bg-chrome pt-safe text-on-chrome">
         {/* Langue et déconnexion : possibles avant la fin de l'accueil (mauvais compte, langue). */}
         <div className="px-safe mx-auto flex h-14 w-full max-w-md items-center justify-between gap-2 md:max-w-6xl md:px-8">
           <Brand />

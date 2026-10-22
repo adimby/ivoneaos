@@ -60,7 +60,7 @@ export default async function BillingPage({ params, searchParams }: Props) {
             aria-current={view === tab.key ? "page" : undefined}
             className={cn(
               "flex min-h-11 items-center justify-center rounded-lg text-base font-semibold",
-              view === tab.key ? "bg-lagoon text-white" : "text-lagoon hover:bg-white",
+              view === tab.key ? "bg-lagoon text-on-lagoon" : "text-lagoon hover:bg-surface",
             )}
           >
             {tab.label}

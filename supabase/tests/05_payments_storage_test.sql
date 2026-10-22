@@ -1,7 +1,7 @@
 -- Paiements (colonnes chiffrées, idempotence, facture payée), webhook_events, Storage.
 begin;
 \ir helpers.psql
-select plan(67);
+select plan(68);
 
 select tests.create_user('alice@example.test') as alice \gset
 select tests.create_user('bob@example.test') as bob \gset
@@ -211,8 +211,12 @@ select is((select array_agg(id || '=' || public order by id) from storage.bucket
 select tests.as_anon();
 select is((select count(*)::int from storage.objects where bucket_id = 'documents'), 0,
   'anon ne lit aucun PDF');
-select is((select count(*)::int from storage.objects where bucket_id = 'logos'), 0,
+-- Dossiers des workspaces de ce test (la base locale peut contenir les fichiers des tests
+-- E2E), puis tout le bucket : anon ne voit jamais un fichier absent des documents émis.
+select is((select count(*)::int from storage.objects where bucket_id = 'logos' and split_part(name, '/', 1) in (:'wa', :'wb')), 0,
   'anon ne lit pas un logo absent de tout document émis');
+select is((select count(*)::int from storage.objects where bucket_id = 'logos' and not public.is_public_logo(name)), 0,
+  'bucket logos entier : anon ne voit que des fichiers figurant sur un document émis');
 select throws_ok(format($$ insert into storage.objects (bucket_id, name) values ('logos', %L) $$, :'wa' || '/pirate.png'),
   '42501', null, 'anon n''écrit pas dans le bucket des logos');
 

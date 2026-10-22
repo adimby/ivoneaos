@@ -1,7 +1,7 @@
 -- Pages publiques : get_public_quote, get_public_invoice, accept_quote (rôle anon).
 begin;
 \ir helpers.psql
-select plan(37);
+select plan(38);
 -- Date du jour à Antananarivo (comme les règles de la base), pas celle d'UTC.
 select (now() at time zone 'Indian/Antananarivo')::date as today \gset
 
@@ -101,8 +101,13 @@ select ok(not ((:'pi'::jsonb)::text ~ '(enc:|IVN-|"id"|workspace_id|public_token
 select is(public.get_public_invoice(:'tid'), null, 'facture brouillon : rien');
 select is(public.get_public_invoice('inconnu'), null, 'facture : jeton inconnu, rien');
 
-select is((select array_agg(name) from storage.objects where bucket_id = 'logos'), array[:'wa' || '/logo.png'],
-  'anon lit le logo figurant sur un document émis, et aucun autre fichier du bucket privé');
+-- Dossier du workspace de ce test (la base locale peut contenir les fichiers des tests E2E),
+-- puis tout le bucket : anon ne voit jamais un fichier absent des documents émis.
+select is((select array_agg(name) from storage.objects where bucket_id = 'logos' and split_part(name, '/', 1) = :'wa'),
+  array[:'wa' || '/logo.png'],
+  'anon lit le logo figurant sur un document émis, et aucun autre fichier de ce workspace');
+select is((select count(*)::int from storage.objects where bucket_id = 'logos' and not public.is_public_logo(name)), 0,
+  'bucket logos entier : anon ne voit que des fichiers figurant sur un document émis');
 select is(public.is_public_logo(:'wa' || '/brouillon.png'), false, 'logo jamais utilisé sur un document émis : non public');
 
 select throws_ok(format($$ select public.document_snapshot(%L, %L) $$, :'wa', :'ca'),
