@@ -111,7 +111,8 @@ export function AdminStep({
           </h2>
           <p className="text-sm text-ink-muted">{t("step3.cardHint")}</p>
         </div>
-        <FiscalDropZones docs={docs} />
+        {/* Ordinateur : le panneau du formulaire est étroit à côté de la promesse, une zone par ligne. */}
+        <FiscalDropZones docs={docs} columns="md:grid-cols-2 lg:grid-cols-1 2xl:grid-cols-2" />
       </section>
       <RequiredLegend className="mt-5 md:hidden" />
       <StepFooter

@@ -87,20 +87,23 @@ export function ActivityStep({
             )}
           </Field>
         </div>
-        <Field id="experience" label={required(t("experience.label"))} error={error("experience")}>
-          {(c) => (
-            <Select {...c} name="experience" data-required defaultValue={defaults.experience}>
-              <option value="" disabled>
-                {tAll("Profile.choose")}
-              </option>
-              {EXPERIENCES.map((value) => (
-                <option key={value} value={value}>
-                  {t(`experience.${value}`)}
+        {/* Pleine largeur : sa longue question ne décale pas le champ voisin. */}
+        <div className="md:col-span-2">
+          <Field id="experience" label={required(t("experience.label"))} error={error("experience")}>
+            {(c) => (
+              <Select {...c} name="experience" data-required defaultValue={defaults.experience}>
+                <option value="" disabled>
+                  {tAll("Profile.choose")}
                 </option>
-              ))}
-            </Select>
-          )}
-        </Field>
+                {EXPERIENCES.map((value) => (
+                  <option key={value} value={value}>
+                    {t(`experience.${value}`)}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+        </div>
         <Field id="current_clients" label={required(t("clients.label"))} hint={t("clients.hint")} error={error("current_clients")}>
           {(c) => (
             <Input
@@ -135,7 +138,7 @@ export function ActivityStep({
           )}
         </Field>
         {/* Aperçu du niveau, mis à jour avec le nombre de clients. */}
-        <div className="flex flex-col gap-1.5 self-start rounded-card border border-sand bg-sand-light p-4" data-testid="level-preview" aria-live="polite">
+        <div className="flex flex-col gap-1.5 rounded-card border border-sand bg-sand-light p-4 md:col-span-2" data-testid="level-preview" aria-live="polite">
           <span className="text-sm font-semibold text-ink-muted">{t("levelIntro")}</span>
           {level ? (
             <>

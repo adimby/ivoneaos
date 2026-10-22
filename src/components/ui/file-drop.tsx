@@ -157,7 +157,7 @@ export function FileDrop<T>({
   const done = status === "done";
 
   return (
-    <div data-field className="flex flex-col gap-1.5" data-testid={`file-drop-${id}`} data-status={status}>
+    <div data-field className="@container flex flex-col gap-1.5" data-testid={`file-drop-${id}`} data-status={status}>
       <label htmlFor={id} className="text-sm font-semibold text-ink">
         {label}
       </label>
@@ -215,8 +215,9 @@ export function FileDrop<T>({
               t("current")
             ) : (
               <>
-                <span className="lg:hidden">{t("choose")}</span>
-                <span className="hidden lg:inline">{t("chooseOrDrop")}</span>
+                {/* « dépose » seulement sur ordinateur et quand la zone est assez large. */}
+                <span className="lg:@md:hidden">{t("choose")}</span>
+                <span className="hidden lg:@md:inline">{t("chooseOrDrop")}</span>
               </>
             )}
           </p>

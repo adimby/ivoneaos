@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
+import { cn } from "@/components/ui/cn";
 import { Button } from "@/components/ui/button";
 import { FileDrop, type UploadResult } from "@/components/ui/file-drop";
 import { useHydrated } from "@/lib/use-hydrated";
@@ -111,16 +112,23 @@ export function useFiscalDocuments(workspaceId: string) {
 export type FiscalDocuments = ReturnType<typeof useFiscalDocuments>;
 
 // Les deux zones de dépôt (recto, verso) et les messages d'état de la vérification.
-export function FiscalDropZones({ docs, label }: { docs: FiscalDocuments; label?: (side: "front" | "back") => ReactNode }) {
+// columns : grille des deux zones (par défaut côte à côte dès la tablette).
+export function FiscalDropZones({
+  docs,
+  columns = "md:grid-cols-2",
+}: {
+  docs: FiscalDocuments;
+  columns?: string;
+}) {
   const t = useTranslations("Verification");
   const hint = t("fileHint");
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className={cn("grid gap-4", columns)}>
         <FileDrop
           key={`front-${docs.round}`}
           id="fiscal-front"
-          label={label?.("front") ?? t("front")}
+          label={t("front")}
           hint={hint}
           accept={FISCAL_FILE_ACCEPT}
           maxBytes={FISCAL_FILE_MAX_BYTES}
@@ -132,7 +140,7 @@ export function FiscalDropZones({ docs, label }: { docs: FiscalDocuments; label?
         <FileDrop
           key={`back-${docs.round}`}
           id="fiscal-back"
-          label={label?.("back") ?? t("back")}
+          label={t("back")}
           hint={hint}
           accept={FISCAL_FILE_ACCEPT}
           maxBytes={FISCAL_FILE_MAX_BYTES}
